@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #fbf8f3;
+    --foreground: #2b241e;
+
+    --card: #fffefb;
+    --card-foreground: #2b241e;
+
+    --popover: #fffefb;
+    --popover-foreground: #2b241e;
+
+    --primary: #a67c52;
+    --primary-foreground: #ffffff;
+
+    --secondary: #e5ded5;
+    --secondary-foreground: #2b241e;
+
+    --muted: #f0eae1;
+    --muted-foreground: #73685c;
+
+    --accent: #d9cdbd;
+    --accent-foreground: #2b241e;
+
+    --destructive: #bc473b;
+    --destructive-foreground: #ffffff;
+
+    --border: #d9cdbd;
+    --input: #e5ded5;
+    --ring: #a67c52;
+
+    --radius: 0.25rem;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, .font-serif, .font-sans {
+    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+  }
+
+  .font-mono, code, pre, kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  header, footer, nav, .print\:hidden {
+    display: none !important;
+  }
+}
+
