@@ -35,7 +35,11 @@
     --radius: 0.25rem;
   }
 
-  body {
+  *, ::before, ::after {
+    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+  }
+
+  html, body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
@@ -43,12 +47,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, .font-serif, .font-sans {
-    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
-  }
-
-  .font-mono, code, pre, kbd {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label, div, b, strong, em, i, svg text, .font-serif, .font-sans, .font-mono, code, pre, kbd {
+    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif !important;
   }
 }
 
@@ -58,6 +58,7 @@
     color: #000000 !important;
     margin: 0 !important;
     padding: 10mm !important;
+    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

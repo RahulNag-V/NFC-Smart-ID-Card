@@ -57,6 +57,7 @@ export default {
       fontFamily: {
         serif: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
         sans: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
+        mono: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
       },
       borderRadius: {
         DEFAULT: "0.25rem",
