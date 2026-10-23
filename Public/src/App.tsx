@@ -91,9 +91,9 @@ const socialChannels: SocialChannel[] = [
   {
     id: 'instagram',
     name: 'Instagram',
-    handle: '@RahulNag-V',
+    handle: '@__rahul_nag__',
     actionText: 'Redirect to Instagram Profile',
-    url: 'https://www.instagram.com/RahulNag-V',
+    url: 'https://www.instagram.com/__rahul_nag__?srtk=ODFpdHAxdHlud3Iw',
     brandColor: '#E1306C',
     gradient: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
     icon: <InstagramGlyph className="w-5 h-5 text-white" />,
@@ -263,7 +263,14 @@ export function App() {
     setActiveClickedId(channel.id);
     setSocialTransition(channel);
     redirectTimerRef.current = setTimeout(() => {
-      window.open(channel.url, '_blank', 'noopener,noreferrer');
+      try {
+        const opened = window.open(channel.url, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          window.location.href = channel.url;
+        }
+      } catch {
+        window.location.href = channel.url;
+      }
       closeTimerRef.current = setTimeout(() => {
         setSocialTransition(null);
         setActiveClickedId(null);
@@ -708,11 +715,18 @@ export function App() {
                   {socialChannels.map((channel) => {
                     const isClicked = activeClickedId === channel.id;
                     return (
-                      <button
+                      <a
                         key={channel.id}
-                        type="button"
-                        onClick={() => handleSocialTransition(channel)}
-                        className={`w-full p-3.5 rounded-2xl border transition-all duration-300 shadow-xs flex items-center justify-between group active:scale-[0.98] text-left relative overflow-hidden ${isClicked
+                        href={channel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                            e.preventDefault();
+                            handleSocialTransition(channel);
+                          }
+                        }}
+                        className={`w-full p-3.5 rounded-2xl border transition-all duration-300 shadow-xs flex items-center justify-between group active:scale-[0.98] text-left relative overflow-hidden cursor-pointer ${isClicked
                             ? 'text-white border-transparent shadow-lg ring-2 ring-white/50'
                             : 'bg-[#fffefb] border-[#d9cdbd] hover:border-[#a67c52]'
                           }`}
@@ -774,7 +788,7 @@ export function App() {
                         >
                           <ArrowUpRight className="w-4 h-4" />
                         </div>
-                      </button>
+                      </a>
                     );
                   })}
                 </div>
@@ -928,10 +942,16 @@ export function App() {
                 {socialTransition.handle}
               </p>
 
-              <div className="mt-5 flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/25 backdrop-blur-md text-xs font-semibold text-white tracking-wide shadow-lg">
+              <a
+                href={socialTransition.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mt-5 flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/25 backdrop-blur-md text-xs font-semibold text-white tracking-wide shadow-lg hover:bg-white/35 transition cursor-pointer"
+              >
                 <span className="w-2 h-2 rounded-full bg-white animate-ping shrink-0" />
                 <span>Redirecting to {socialTransition.name}...</span>
-              </div>
+              </a>
             </motion.div>
           </motion.div>
         )}
