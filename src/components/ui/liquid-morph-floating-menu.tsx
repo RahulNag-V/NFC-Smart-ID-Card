@@ -8,6 +8,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export interface MenuItem {
   label: string;
   onClick?: () => void;
+  isActive?: boolean;
 }
 
 export interface FloatingMenuProps {
@@ -129,6 +130,7 @@ export function FloatingMenu({
     { label: "Home" },
     { label: "Works" },
     { label: "Contact" },
+    { label: "Edit" },
   ];
 
   // Close on outside click
@@ -164,7 +166,7 @@ export function FloatingMenu({
         }}
         animate={{
           width: isOpen ? 280 : 140,
-          height: isOpen ? 260 : 48,
+          height: isOpen ? (menuItems.length > 3 ? 315 : 260) : 48,
           borderRadius: isOpen ? 28 : 72,
           scale: 1,
         }}
@@ -211,7 +213,9 @@ export function FloatingMenu({
 
         {/* Menu items */}
         <div
-          className="relative z-10 flex flex-col gap-6 items-center justify-center"
+          className={`relative z-10 flex flex-col items-center justify-center ${
+            menuItems.length > 3 ? 'gap-4 py-1' : 'gap-6'
+          }`}
           style={{
             pointerEvents: isOpen ? "auto" : "none",
             opacity: isOpen ? 1 : 0,
@@ -229,7 +233,7 @@ export function FloatingMenu({
               }}
               isOpen={isOpen}
               index={idx}
-              isActive={activeLabel?.toLowerCase() === item.label.toLowerCase()}
+              isActive={item.isActive !== undefined ? item.isActive : activeLabel?.toLowerCase() === item.label.toLowerCase()}
             />
           ))}
         </div>

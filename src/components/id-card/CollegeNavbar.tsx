@@ -1,16 +1,18 @@
 import React from 'react';
 import { CollegeEmblem } from './CollegeEmblem';
-import { FolderGit2, Mail, Menu, X } from 'lucide-react';
+import { FolderGit2, Mail, Menu, X, Pencil } from 'lucide-react';
 import { defaultStudentData } from '../../data/student';
 
 interface CollegeNavbarProps {
   activeTab: 'home' | 'works' | 'contact';
   onSelectTab: (tab: 'home' | 'works' | 'contact') => void;
+  onEdit?: () => void;
 }
 
 export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
   activeTab,
   onSelectTab,
+  onEdit,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -126,6 +128,17 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
             <Mail className="w-3.5 h-3.5" />
             <span>Contact</span>
           </button>
+
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-[#704a29] hover:bg-[#f0eae1] font-semibold"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>Edit</span>
+            </button>
+          )}
         </nav>
 
         {/* Student Quick Pill (Desktop) */}
@@ -225,6 +238,19 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
           >
             Direct Inquiries &bull; Contact
           </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                onEdit();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-[#704a29] hover:bg-[#f0eae1] flex items-center gap-2"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>Owner Edit Mode</span>
+            </button>
+          )}
         </div>
       )}
     </header>

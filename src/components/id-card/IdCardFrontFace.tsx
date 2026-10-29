@@ -1,9 +1,10 @@
 import React from 'react';
 import btiLogo from '../../assets/bti-logo.jpeg';
-import studentPhoto from '../../assets/student-photo.png';
+import defaultPhoto from '../../assets/student-photo.png';
 import { BarcodeView } from './BarcodeView';
-
-import { defaultStudentData } from '../../data/student';
+import { StudentProfile, defaultStudentData } from '../../data/student';
+import { useSiteContent } from '../../context/SiteContentContext';
+import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 interface IdCardFrontFaceProps {
   id?: string;
@@ -11,6 +12,7 @@ interface IdCardFrontFaceProps {
   isHovered?: boolean;
   glarePos?: { x: number; y: number };
   isExport?: boolean;
+  student?: StudentProfile;
 }
 
 export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
@@ -19,13 +21,22 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
   isHovered = false,
   glarePos,
   isExport = false,
+  student: studentProp,
 }) => {
+  const { activeContent, updateStudent, isEditMode } = useSiteContent();
+  const currentStudent = studentProp || activeContent.student || defaultStudentData;
+  const theme = activeContent.theme;
+
   const student = {
-    name: defaultStudentData.fullName,
-    usn: defaultStudentData.usn,
-    department: defaultStudentData.department,
-    validity: defaultStudentData.academicYear,
+    name: currentStudent.fullName,
+    usn: currentStudent.usn,
+    department: currentStudent.department,
+    validity: currentStudent.academicYear,
+    photoUrl: currentStudent.photoUrl || defaultPhoto,
   };
+
+  const cardBorderColor = theme?.colors?.idCardBorder || '#8c7860';
+  const cardBgColor = theme?.colors?.idCardBackground || '#ffffff';
 
   const cardBoxShadow = isExport
     ? '0 4px 12px rgba(35, 25, 18, 0.12), 0 0 0 1px rgba(112, 74, 41, 0.18)'
@@ -60,16 +71,17 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
   return (
     <div
       id={id}
-      className={`w-full h-full rounded-2xl bg-[#ffffff] text-[#1e1713] border-2 border-[#8c7860] overflow-hidden flex flex-col justify-between relative select-none ${className}`}
+      className={`w-full h-full rounded-2xl text-[#1e1713] border-2 overflow-hidden flex flex-col justify-between relative select-none ${className}`}
       style={{
+        backgroundColor: cardBgColor,
+        borderColor: cardBorderColor,
         boxShadow: cardBoxShadow,
-        transition: 'box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease',
       }}
     >
       {/* Realistic PVC Surface Reflection & Specular Lamination Sheen */}
       {!isExport && (
         <>
-          {/* Subtle semi-gloss PVC diagonal reflection */}
           <div
             className="absolute inset-0 pointer-events-none rounded-2xl z-20 overflow-hidden"
             style={{
@@ -78,7 +90,6 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
               mixBlendMode: 'overlay',
             }}
           />
-          {/* Dynamic Specular Sheen (Shifts with hover & tilt) */}
           <div
             className="absolute inset-0 pointer-events-none rounded-2xl z-20 overflow-hidden transition-opacity duration-300"
             style={{
@@ -120,7 +131,6 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           </linearGradient>
         </defs>
 
-        {/* 1. Large Fluid Organic Wave Shapes */}
         <path
           d="M0,170 C90,135 150,225 240,185 C295,160 325,180 340,195 L340,335 C285,370 215,315 130,355 C65,385 20,360 0,340 Z"
           fill="url(#frontWaveGrad1)"
@@ -134,7 +144,6 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           fill="url(#frontWaveGrad3)"
         />
 
-        {/* 2. Precision Undulating Guilloche Wave Ribbons (Mid Section) */}
         <g stroke="#855b33" strokeWidth="1.1" fill="none" opacity="0.36">
           <path d="M-10,180 C60,140 130,230 210,185 C270,150 310,200 350,175" />
           <path d="M-10,192 C60,152 130,242 210,197 C270,162 310,212 350,187" />
@@ -144,7 +153,6 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           <path d="M-10,240 C60,200 130,290 210,245 C270,210 310,260 350,235" />
         </g>
 
-        {/* 3. High-Security Counter Harmonic Wave Ribbons (Lower Section) */}
         <g stroke="#b8860b" strokeWidth="1" fill="none" opacity="0.32">
           <path d="M-10,385 C75,435 155,350 235,400 C285,430 325,385 350,410" />
           <path d="M-10,397 C75,447 155,362 235,412 C285,442 325,397 350,422" />
@@ -153,7 +161,6 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           <path d="M-10,433 C75,483 155,398 235,448 C285,478 325,433 350,458" />
         </g>
 
-        {/* 4. Concentric Guilloche Wave Crests (Security Watermark Rings) */}
         <circle cx="80" cy="270" r="65" fill="none" stroke="#a67c52" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.25" />
         <circle cx="260" cy="330" r="75" fill="none" stroke="#a67c52" strokeWidth="0.8" strokeDasharray="4 2" opacity="0.25" />
       </svg>
@@ -167,13 +174,9 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
       <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[#a67c52]/60 pointer-events-none" />
       <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-[#a67c52]/60 pointer-events-none" />
 
-
       {/* 1. TOP SECTION: Full-Width College Logo Header */}
       <div className="w-full relative flex flex-col items-center z-10 shrink-0 bg-white border-b-2 border-[#704a29]/60 shadow-2xs">
-        {/* Precision Lanyard Slot Punch Hole */}
         <div className="w-10 h-2 rounded-full bg-[#1c1612] border border-black/20 my-1 shadow-inner" />
-
-        {/* 1. College Logo (Full Width of ID Card) */}
         <div className="w-full overflow-hidden">
           <img
             src={btiLogo}
@@ -185,44 +188,77 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
 
       {/* MIDDLE SECTION: Photo, Name, USN, Department */}
       <div className="flex-1 flex flex-col items-center justify-center px-3 py-1 z-10 text-center">
-        {/* 2. Student Photograph (Passport-size with Official Dual Border) */}
+        {/* 2. Student Photograph with Inline Edit option */}
         <div className="relative w-25 h-32 sm:w-27 sm:h-35 rounded-lg overflow-hidden border-2 border-[#704a29] ring-2 ring-[#d9cdbd]/80 bg-[#f8f5ee] shadow-sm shrink-0">
           <img
-            src={studentPhoto}
+            src={student.photoUrl}
             alt={student.name}
             className="w-full h-full object-cover object-top"
           />
+          {isEditMode && (
+            <InlineEditPopover
+              value={student.photoUrl}
+              label="Student Photo"
+              type="image"
+              pencilPosition="top-right"
+              onSave={(url) => updateStudent({ photoUrl: url })}
+            />
+          )}
         </div>
 
         {/* 3. Student Name */}
         <h2 className="text-[18px] sm:text-[19.5px] font-serif font-bold text-[#1e1713] tracking-tight mt-2 leading-tight whitespace-nowrap">
-          {student.name}
+          <InlineEditPopover
+            value={student.name}
+            label="Student Full Name"
+            onSave={(name) => updateStudent({ fullName: name })}
+          >
+            {student.name}
+          </InlineEditPopover>
         </h2>
 
         {/* 4. USN */}
         <div className="mt-1 px-3 py-0.5 rounded-full bg-[#fbf8f3] border border-[#d9cdbd] shadow-2xs">
           <span className="text-[11.5px] sm:text-[12.5px] font-mono font-extrabold text-[#704a29] tracking-wider">
-            {student.usn}
+            <InlineEditPopover
+              value={student.usn}
+              label="Student USN"
+              onSave={(usn) => updateStudent({ usn, studentId: usn })}
+            >
+              {student.usn}
+            </InlineEditPopover>
           </span>
         </div>
 
         {/* 5. Department */}
         <p className="text-[10.5px] sm:text-[11px] font-sans font-semibold text-[#4a3f35] mt-1 px-1 max-w-[260px] leading-snug">
-          {student.department}
+          <InlineEditPopover
+            value={student.department}
+            label="Department"
+            onSave={(dept) => updateStudent({ department: dept, branch: dept })}
+          >
+            {student.department}
+          </InlineEditPopover>
         </p>
       </div>
 
       {/* BOTTOM SECTION: Validity & Barcode */}
       <div className="relative pb-2.5 px-3.5 flex flex-col items-center text-center z-10 shrink-0">
-        {/* 6. Validity */}
         <div className="flex items-center gap-1.5 text-[9.5px] sm:text-[10px] font-mono text-[#73685c] mb-1">
           <span className="tracking-wide font-semibold text-[#8c4e34]">
             Valid:
           </span>
-          <span className="font-bold text-[#1e1713]">{student.validity}</span>
+          <span className="font-bold text-[#1e1713]">
+            <InlineEditPopover
+              value={student.validity}
+              label="Validity Duration"
+              onSave={(validity) => updateStudent({ academicYear: validity })}
+            >
+              {student.validity}
+            </InlineEditPopover>
+          </span>
         </div>
 
-        {/* 7. Barcode (Code 128 encoding exact USN: 1BH24CS051) */}
         <div className="w-full max-w-[220px] px-2 py-0.5 rounded-lg bg-white border border-[#d9cdbd] shadow-2xs">
           <BarcodeView
             value={student.usn}

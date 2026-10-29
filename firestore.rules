@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function: Check if request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function: Check if user is the explicitly configured owner
+    // Checks email against owner email and/or UID
+    function isOwner() {
+      return isAuthenticated() && (
+        request.auth.token.email.lower() == 'rahulnagv.dev@gmail.com' ||
+        (request.resource != null && request.resource.data.ownerUid == request.auth.uid) ||
+        (resource != null && resource.data.ownerUid == request.auth.uid)
+      );
+    }
+
+    // Profile Document Rules
+    match /profiles/{profileId} {
+      // Public visitors can read only the published document
+      allow read: if true;
+
+      // Only the authenticated owner can create, update, or delete profiles
+      allow create, update: if isOwner() &&
+        // Data size validation: ensure reasonable payload (< 1MB)
+        request.resource.data.size() < 1000000;
+
+      allow delete: if isOwner();
+
+      // Private Drafts: Strictly owner-only read and write
+      match /private/draft {
+        allow read, write: if isOwner();
+      }
+
+      // Version History Snapshots: Strictly owner-only read and write
+      match /versions/{versionId} {
+        allow read, write: if isOwner();
+      }
+    }
+
+    // Default deny for all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

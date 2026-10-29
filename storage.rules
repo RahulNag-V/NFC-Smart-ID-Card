@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerUid) {
+      return isAuthenticated() && (
+        request.auth.uid == ownerUid ||
+        request.auth.token.email.lower() == 'rahulnagv.dev@gmail.com'
+      );
+    }
+
+    function isAllowedImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|svg\\+xml)')
+        && request.resource.size < 5 * 1024 * 1024; // 5 MB max
+    }
+
+    // Storage path: profiles/{ownerUid}/{folder}/{fileName}
+    match /profiles/{ownerUid}/{allPaths=**} {
+      // Public visitors can view profile photographs, project thumbnails, etc.
+      allow read: if true;
+
+      // Only the authenticated owner can upload valid images
+      allow write: if isOwner(ownerUid) && isAllowedImage();
+
+      // Only the authenticated owner can delete media
+      allow delete: if isOwner(ownerUid);
+    }
+
+    // Default deny for other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

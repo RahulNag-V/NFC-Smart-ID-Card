@@ -198,7 +198,11 @@ export const allSkills: SkillItem[] = [
 
 type SkillCategory = 'All' | 'Languages' | 'Frontend' | 'Backend' | 'AI & ML' | 'Hardware' | 'Tools';
 
+import { useSiteContent } from '../../context/SiteContentContext';
+
 export const SkillsSection: React.FC = () => {
+  const { activeContent } = useSiteContent();
+  const currentSkills = activeContent?.skills || allSkills;
   const [activeCategory, setActiveCategory] = useState<SkillCategory>('All');
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -214,8 +218,8 @@ export const SkillsSection: React.FC = () => {
 
   const filteredSkills =
     activeCategory === 'All'
-      ? allSkills
-      : allSkills.filter((s) => s.category === activeCategory);
+      ? currentSkills
+      : currentSkills.filter((s) => s.category === activeCategory);
 
   // Show top 10 skills by default; expand to show all when isExpanded is true
   const displayedSkills =

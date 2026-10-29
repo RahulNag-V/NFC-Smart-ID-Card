@@ -8,6 +8,8 @@ import {
   Sparkles,
   Clock,
 } from 'lucide-react';
+import { useSiteContent } from '../../context/SiteContentContext';
+import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 // ================= ACADEMIC DATA REPOSITORY =================
 export interface SemesterScore {
@@ -120,18 +122,41 @@ export const schoolEducationData: SchoolRecord[] = [
     score: 80.33,
     scale: '%',
     board: 'Karnataka Secondary Education Examination Board (KSEEB)',
-    duration: '2021 – 2022',
+    duration: '2020 – 2022',
   },
 ];
 
-export const overallAcademicPerformance = {
-  overallCgpa: 7.62,
-  maxCgpa: 10.0,
-  calculationLabel: 'Calculated average CGPA',
-};
-
 // ================= MAIN COMPONENT =================
 export const EducationSection: React.FC = () => {
+  const { activeContent, updateAcademic, isEditMode } = useSiteContent();
+
+  const engineering = activeContent?.academic?.engineering || engineeringAcademicData;
+  const schooling = activeContent?.academic?.schooling || schoolEducationData;
+  const showSgpa = isEditMode || activeContent?.visibility?.showSgpaScores !== false;
+
+  // Compute overall CGPA dynamically from completed semesters
+  const completedSemesters: SemesterScore[] = [];
+  engineering.forEach((yr) => {
+    if (yr.semesters) {
+      completedSemesters.push(...yr.semesters);
+    }
+  });
+
+  const totalSgpa = completedSemesters.reduce((acc, curr) => acc + curr.sgpa, 0);
+  const calculatedCgpa = completedSemesters.length > 0 ? totalSgpa / completedSemesters.length : 7.62;
+
+  const handleUpdateSemesterSgpa = (yearIndex: number, semIndex: number, newSgpa: number) => {
+    const copy = JSON.parse(JSON.stringify(engineering));
+    if (copy[yearIndex]?.semesters?.[semIndex]) {
+      copy[yearIndex].semesters[semIndex].sgpa = Number(newSgpa);
+      // recalculate year average
+      const semList = copy[yearIndex].semesters;
+      const yrAvg = semList.reduce((acc: number, s: SemesterScore) => acc + s.sgpa, 0) / semList.length;
+      copy[yearIndex].yearlyAverageSgpa = yrAvg;
+      updateAcademic({ engineering: copy });
+    }
+  };
+
   return (
     <section className="space-y-3.5 pt-3 text-[#1e1713]">
       {/* 1. EDUCATION SECTION HEADER WITH PROMINENT OVERALL CGPA BADGE */}
@@ -166,25 +191,33 @@ export const EducationSection: React.FC = () => {
                 Overall CGPA
               </span>
               <span className="text-[9.5px] font-sans font-medium text-[#73685c] block truncate">
-                {overallAcademicPerformance.calculationLabel}
+                Calculated average across {completedSemesters.length} completed semesters
               </span>
             </div>
           </div>
 
           <div className="flex items-baseline gap-1 pl-3.5 border-l border-[#d9cdbd] shrink-0">
-            <span className="font-mono text-2xl font-black text-[#704a29] tracking-tight">
-              {overallAcademicPerformance.overallCgpa.toFixed(2)}
-            </span>
-            <span className="font-mono text-xs font-bold text-[#8c6239]">
-              /{overallAcademicPerformance.maxCgpa}
-            </span>
+            {showSgpa ? (
+              <>
+                <span className="font-mono text-2xl font-black text-[#704a29] tracking-tight">
+                  {calculatedCgpa.toFixed(2)}
+                </span>
+                <span className="font-mono text-xs font-bold text-[#8c6239]">
+                  /10.0
+                </span>
+              </>
+            ) : (
+              <span className="font-mono text-xs font-bold text-[#73685c]">
+                Verified on File
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* 2. ENGINEERING DEGREE SECTIONS (3rd Year, 2nd Year, 1st Year B.E.) */}
       <div className="space-y-3.5">
-        {engineeringAcademicData.map((year, index) => {
+        {engineering.map((year, yearIndex) => {
           const isThirdYearPursuing = year.status === 'In Progress';
 
           return (
@@ -193,7 +226,7 @@ export const EducationSection: React.FC = () => {
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-20px' }}
-              transition={{ duration: 0.35, delay: index * 0.08 }}
+              transition={{ duration: 0.35, delay: yearIndex * 0.08 }}
               className={`p-4 sm:p-5 rounded-2xl bg-[#fffefb] border shadow-2xs transition-all ${
                 isThirdYearPursuing
                   ? 'border-[#704a29]/60 hover:border-[#704a29]'
@@ -224,12 +257,22 @@ export const EducationSection: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Right Badge: Either 5th Semester Pursuing Status or Yearly Average SGPA */}
+                  {/* Right Badge */}
                   {isThirdYearPursuing ? (
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 shadow-2xs shrink-0">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[10px] font-mono font-bold text-emerald-900 whitespace-nowrap">
-                        {year.currentStatusLabel}
+                        <InlineEditPopover
+                          value={year.currentStatusLabel || '5th Semester Pursuing'}
+                          label="Current Status"
+                          onSave={(label) => {
+                            const copy = [...engineering];
+                            copy[yearIndex].currentStatusLabel = label;
+                            updateAcademic({ engineering: copy });
+                          }}
+                        >
+                          {year.currentStatusLabel || '5th Semester Pursuing'}
+                        </InlineEditPopover>
                       </span>
                     </div>
                   ) : (
@@ -240,7 +283,7 @@ export const EducationSection: React.FC = () => {
                       <div className="h-4 w-[1px] bg-[#d9cdbd]" />
                       <div className="flex items-baseline gap-0.5 font-mono">
                         <span className="text-base font-black text-[#704a29]">
-                          {year.yearlyAverageSgpa?.toFixed(2)}
+                          {showSgpa ? year.yearlyAverageSgpa?.toFixed(2) : '•.•'}
                         </span>
                         <span className="text-[10px] font-bold text-[#8c6239]">
                           /10
@@ -251,7 +294,18 @@ export const EducationSection: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-[#524538] font-sans leading-relaxed">
-                  {year.program} &bull;{' '}
+                  <InlineEditPopover
+                    value={year.program}
+                    label="Program Title"
+                    onSave={(val) => {
+                      const copy = [...engineering];
+                      copy[yearIndex].program = val;
+                      updateAcademic({ engineering: copy });
+                    }}
+                  >
+                    {year.program}
+                  </InlineEditPopover>{' '}
+                  &bull;{' '}
                   <span className="text-[#704a29] font-medium">
                     {year.institution}
                   </span>
@@ -273,7 +327,18 @@ export const EducationSection: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-[11px] text-[#524538] font-sans leading-relaxed">
-                      {year.inProgressNote}
+                      <InlineEditPopover
+                        value={year.inProgressNote || ''}
+                        label="In Progress Note"
+                        type="textarea"
+                        onSave={(note) => {
+                          const copy = [...engineering];
+                          copy[yearIndex].inProgressNote = note;
+                          updateAcademic({ engineering: copy });
+                        }}
+                      >
+                        {year.inProgressNote}
+                      </InlineEditPopover>
                     </p>
                   </div>
 
@@ -290,7 +355,7 @@ export const EducationSection: React.FC = () => {
               ) : (
                 /* 1st & 2nd Year Semester-wise SGPA Score Cards with subtle progress indicators */
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
-                  {year.semesters?.map((sem) => {
+                  {year.semesters?.map((sem, semIndex) => {
                     const percent = (sem.sgpa / sem.maxSgpa) * 100;
 
                     return (
@@ -320,16 +385,31 @@ export const EducationSection: React.FC = () => {
                             Semester SGPA
                           </span>
                           <div className="flex items-baseline gap-0.5 font-mono">
-                            <span className="text-lg sm:text-xl font-black text-[#704a29]">
-                              {sem.sgpa.toFixed(2)}
-                            </span>
-                            <span className="text-xs font-bold text-[#8c6239]">
-                              /{sem.maxSgpa} SGPA
-                            </span>
+                            {showSgpa ? (
+                              <>
+                                <span className="text-lg sm:text-xl font-black text-[#704a29]">
+                                  <InlineEditPopover
+                                    value={sem.sgpa}
+                                    label={`${sem.semesterName} SGPA`}
+                                    type="number"
+                                    onSave={(score) => handleUpdateSemesterSgpa(yearIndex, semIndex, score)}
+                                  >
+                                    {sem.sgpa.toFixed(2)}
+                                  </InlineEditPopover>
+                                </span>
+                                <span className="text-xs font-bold text-[#8c6239]">
+                                  /{sem.maxSgpa} SGPA
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-xs font-bold text-[#73685c]">
+                                Protected
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        {/* Subtle Apple-style Progress Indicator Track */}
+                        {/* Progress Indicator Track */}
                         <div className="w-full h-1.5 bg-[#e8dfd3] rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
@@ -356,7 +436,7 @@ export const EducationSection: React.FC = () => {
         })}
       </div>
 
-      {/* 3. SCHOOL EDUCATION SECTION (12th Standard & 10th Standard) */}
+      {/* 3. SCHOOL EDUCATION SECTION */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -364,7 +444,6 @@ export const EducationSection: React.FC = () => {
         transition={{ duration: 0.35, delay: 0.16 }}
         className="p-4 sm:p-5 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] shadow-2xs"
       >
-        {/* Section Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-[#f0eae1]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#f4ece1] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] shrink-0">
@@ -381,13 +460,12 @@ export const EducationSection: React.FC = () => {
           </div>
 
           <span className="text-[10px] font-mono text-[#704a29] font-bold px-2.5 py-0.5 rounded-full bg-[#f4ece1] border border-[#d9cdbd] whitespace-nowrap shrink-0">
-            2 Credentials
+            {schooling.length} Credentials
           </span>
         </div>
 
-        {/* Academic Cards Grid: 12th Standard & 10th Standard */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
-          {schoolEducationData.map((item) => (
+          {schooling.map((item, idx) => (
             <div
               key={item.id}
               className="p-3.5 sm:p-4 rounded-xl bg-[#faf7f2]/70 border border-[#e2d8cb] hover:bg-[#faf7f2] transition-all flex flex-col justify-between shadow-2xs group"
@@ -403,7 +481,17 @@ export const EducationSection: React.FC = () => {
                 </div>
 
                 <h4 className="text-sm font-serif font-bold text-[#1e1713] mt-2 leading-snug">
-                  {item.subTitle}
+                  <InlineEditPopover
+                    value={item.subTitle}
+                    label="School Subtitle"
+                    onSave={(sub) => {
+                      const copy = [...schooling];
+                      copy[idx].subTitle = sub;
+                      updateAcademic({ schooling: copy });
+                    }}
+                  >
+                    {item.subTitle}
+                  </InlineEditPopover>
                 </h4>
 
                 <p className="text-[11px] text-[#524538] font-sans mt-1">
@@ -411,14 +499,24 @@ export const EducationSection: React.FC = () => {
                 </p>
               </div>
 
-              {/* Distinction Score Display with clear % scale */}
               <div className="mt-3 pt-2.5 border-t border-[#d9cdbd]/60 flex items-baseline justify-between">
                 <span className="text-[10px] font-mono uppercase text-[#73685c] font-semibold">
                   Board Score
                 </span>
                 <div className="flex items-baseline gap-0.5 font-mono">
                   <span className="text-xl sm:text-2xl font-black text-[#704a29] tracking-tight">
-                    {item.score.toFixed(2)}
+                    <InlineEditPopover
+                      value={item.score}
+                      label="Board Score"
+                      type="number"
+                      onSave={(sc) => {
+                        const copy = [...schooling];
+                        copy[idx].score = Number(sc);
+                        updateAcademic({ schooling: copy });
+                      }}
+                    >
+                      {item.score.toFixed(2)}
+                    </InlineEditPopover>
                   </span>
                   <span className="text-sm font-extrabold text-[#8c6239]">
                     {item.scale}

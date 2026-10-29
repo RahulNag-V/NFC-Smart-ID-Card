@@ -6,11 +6,15 @@ import { IdCardBackFace } from './IdCardBackFace';
 import { RotateCw, Download, Printer, LayoutGrid, Check, ShieldCheck } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
+import { useSiteContent } from '../../context/SiteContentContext';
+
 interface VerticalStudentIdCardProps {
   student?: StudentProfile;
 }
 
-export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () => {
+export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({ student: studentProp }) => {
+  const { activeContent } = useSiteContent();
+  const currentStudent = studentProp || activeContent.student || defaultStudentData;
   const [isFlipped, setIsFlipped] = useState(false);
   const [viewMode, setViewMode] = useState<'flip' | 'side-by-side'>('flip');
   const [isExporting, setIsExporting] = useState<'front' | 'back' | null>(null);
@@ -126,8 +130,8 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
 
   const handleDownload = async (side: 'front' | 'back') => {
     const elementId = side === 'front' ? 'export-card-front' : 'export-card-back';
-    const cleanName = defaultStudentData.fullName.replace(/[^a-zA-Z0-9]/g, '');
-    const cleanUsn = defaultStudentData.usn.replace(/[^a-zA-Z0-9]/g, '');
+    const cleanName = currentStudent.fullName.replace(/[^a-zA-Z0-9]/g, '');
+    const cleanUsn = currentStudent.usn.replace(/[^a-zA-Z0-9]/g, '');
     const filename = `${cleanName}_${cleanUsn}_ID_${side.toUpperCase()}.png`;
     const node = document.getElementById(elementId);
     if (!node) return;
@@ -289,7 +293,7 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
                     WebkitBackfaceVisibility: 'hidden',
                   }}
                 >
-                  <IdCardFrontFace isHovered={isHovered} glarePos={glarePos} />
+                  <IdCardFrontFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
                 </div>
 
                 {/* BACK FACE */}
@@ -301,7 +305,7 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
                     WebkitBackfaceVisibility: 'hidden',
                   }}
                 >
-                  <IdCardBackFace isHovered={isHovered} glarePos={glarePos} />
+                  <IdCardBackFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
                 </div>
               </motion.div>
             </div>
@@ -382,7 +386,7 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
               Front Side (Student Identity)
             </div>
             <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015]">
-              <IdCardFrontFace isHovered={false} />
+              <IdCardFrontFace isHovered={false} student={currentStudent} />
             </div>
           </div>
 
@@ -393,7 +397,7 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
               Back Side (Official Record &amp; Address)
             </div>
             <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015]">
-              <IdCardBackFace isHovered={false} />
+              <IdCardBackFace isHovered={false} student={currentStudent} />
             </div>
           </div>
 
@@ -430,20 +434,20 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = () =>
       {/* ================= PRINT / PDF LAYOUT (Visible during print) ================= */}
       <div className="hidden print:flex print:flex-row print:justify-center print:gap-8 print:w-full print:py-6">
         <div className="w-[54mm] h-[85.6mm] aspect-[1/1.58] page-break-inside-avoid">
-          <IdCardFrontFace isExport={true} />
+          <IdCardFrontFace isExport={true} student={currentStudent} />
         </div>
         <div className="w-[54mm] h-[85.6mm] aspect-[1/1.58] page-break-inside-avoid">
-          <IdCardBackFace isExport={true} />
+          <IdCardBackFace isExport={true} student={currentStudent} />
         </div>
       </div>
 
       {/* Hidden high-res nodes for canvas PNG generation (Standard CR-80 ratio) */}
       <div className="fixed -left-[9999px] -top-[9999px] pointer-events-none opacity-0">
         <div id="export-card-front" className="w-[340px] aspect-[1/1.58]">
-          <IdCardFrontFace isExport={true} />
+          <IdCardFrontFace isExport={true} student={currentStudent} />
         </div>
         <div id="export-card-back" className="w-[340px] aspect-[1/1.58]">
-          <IdCardBackFace isExport={true} />
+          <IdCardBackFace isExport={true} student={currentStudent} />
         </div>
       </div>
 
