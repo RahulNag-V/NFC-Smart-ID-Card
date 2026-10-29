@@ -70,13 +70,11 @@ export const EditorTopToolbar: React.FC<EditorTopToolbarProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={openLoginModal}
-          className="group flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#fffefb]/90 hover:bg-[#704a29] text-[#704a29] hover:text-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] shadow-lg backdrop-blur-md text-xs font-semibold transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fffefb]/95 hover:bg-[#704a29] text-[#704a29] hover:text-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] shadow-md backdrop-blur-md text-xs font-semibold transition-all cursor-pointer"
           title="Owner Portal Sign In"
         >
-          <Lock className="w-3.5 h-3.5" />
-          <span className="opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-xs transition-all duration-300 overflow-hidden whitespace-nowrap">
-            Owner Sign In
-          </span>
+          <Lock className="w-3.5 h-3.5 shrink-0" />
+          <span className="text-[11px] font-medium tracking-tight">Owner</span>
         </motion.button>
       </div>
     );

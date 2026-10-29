@@ -130,7 +130,6 @@ export function FloatingMenu({
     { label: "Home" },
     { label: "Works" },
     { label: "Contact" },
-    { label: "Edit" },
   ];
 
   // Close on outside click

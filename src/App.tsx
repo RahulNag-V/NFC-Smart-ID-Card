@@ -284,22 +284,6 @@ function AppInner() {
       isActive: activePage === 'contact',
       onClick: () => navigateTo('contact'),
     },
-    {
-      label: 'Edit',
-      isActive: isOwner && isEditMode,
-      onClick: () => {
-        if (!isOwner) {
-          openLoginModal();
-        } else {
-          if (!isEditMode) {
-            setIsEditMode(true);
-            setIsSidebarOpen(true);
-          } else {
-            setIsSidebarOpen((prev) => !prev);
-          }
-        }
-      },
-    },
   ];
 
   const pageVariants = {
