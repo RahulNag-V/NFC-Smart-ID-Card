@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { CONFIGURED_OWNER_EMAIL } from '../../lib/firebase';
@@ -16,14 +16,38 @@ import {
 } from 'lucide-react';
 
 export const OwnerLoginModal: React.FC = () => {
-  const { isLoginModalOpen, closeLoginModal, login, sendResetEmail, isFirebaseConnected } = useAuth();
-  const [email, setEmail] = useState<string>(CONFIGURED_OWNER_EMAIL);
+  const { isLoginModalOpen, closeLoginModal, login, sendResetEmail, isFirebaseConnected, isOwner } = useAuth();
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState<boolean>(false);
   const [isResetMode, setIsResetMode] = useState<boolean>(false);
+
+  // Clear credentials whenever modal opens or closes
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setErrorMessage(null);
+    setShowPassword(false);
+    setResetSent(false);
+    setIsResetMode(false);
+  }, [isLoginModalOpen]);
+
+  // Clear credentials whenever owner logs in or logs out
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setErrorMessage(null);
+  }, [isOwner]);
+
+  const handleClose = () => {
+    setEmail('');
+    setPassword('');
+    setErrorMessage(null);
+    closeLoginModal();
+  };
 
   if (!isLoginModalOpen) return null;
 
@@ -40,7 +64,11 @@ export const OwnerLoginModal: React.FC = () => {
     const result = await login(email, password);
     setIsLoading(false);
 
-    if (!result.success) {
+    if (result.success) {
+      setEmail('');
+      setPassword('');
+      setErrorMessage(null);
+    } else {
       setErrorMessage(result.error || 'Authentication failed. Please verify credentials.');
     }
   };
@@ -59,6 +87,8 @@ export const OwnerLoginModal: React.FC = () => {
 
     if (result.success) {
       setResetSent(true);
+      setEmail('');
+      setPassword('');
     } else {
       setErrorMessage(result.error || 'Failed to dispatch reset instructions.');
     }
@@ -72,7 +102,7 @@ export const OwnerLoginModal: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={closeLoginModal}
+          onClick={handleClose}
           className="fixed inset-0 bg-[#1a1410]/70 backdrop-blur-sm cursor-pointer"
         />
 
@@ -87,7 +117,7 @@ export const OwnerLoginModal: React.FC = () => {
           {/* Close button */}
           <button
             type="button"
-            onClick={closeLoginModal}
+            onClick={handleClose}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer"
             aria-label="Close modal"
           >
@@ -150,7 +180,7 @@ export const OwnerLoginModal: React.FC = () => {
               </button>
             </div>
           ) : isResetMode ? (
-            <form onSubmit={handlePasswordReset} className="space-y-4">
+            <form onSubmit={handlePasswordReset} className="space-y-4" autoComplete="off">
               <div>
                 <label className="block text-xs font-semibold text-[#52493e] mb-1">
                   Owner Email Address
@@ -163,6 +193,7 @@ export const OwnerLoginModal: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter owner email"
+                    autoComplete="off"
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-[#2b241e] placeholder-[#9c9184] focus:outline-none focus:border-[#704a29]"
                   />
                 </div>
@@ -171,7 +202,11 @@ export const OwnerLoginModal: React.FC = () => {
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsResetMode(false)}
+                  onClick={() => {
+                    setIsResetMode(false);
+                    setEmail('');
+                    setPassword('');
+                  }}
                   className="text-xs text-[#73685c] hover:text-[#2b241e] cursor-pointer"
                 >
                   Cancel
@@ -187,7 +222,7 @@ export const OwnerLoginModal: React.FC = () => {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div>
                 <label className="block text-xs font-semibold text-[#52493e] mb-1">
                   Authorized Owner Email
@@ -199,7 +234,8 @@ export const OwnerLoginModal: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="Enter owner email (rahulnagv.dev@gmail.com)"
+                    autoComplete="off"
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-[#2b241e] placeholder-[#9c9184] focus:outline-none focus:border-[#704a29]"
                   />
                 </div>
@@ -224,6 +260,7 @@ export const OwnerLoginModal: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
+                    autoComplete="new-password"
                     className="w-full pl-9 pr-9 py-2 text-xs rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-[#2b241e] placeholder-[#9c9184] focus:outline-none focus:border-[#704a29]"
                   />
                   <button
