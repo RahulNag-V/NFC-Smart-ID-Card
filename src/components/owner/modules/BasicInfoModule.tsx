@@ -15,6 +15,10 @@ import {
   Check,
   AlertCircle,
   FileText,
+  Droplets,
+  Calendar,
+  Home,
+  GraduationCap,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 
@@ -23,12 +27,51 @@ export const BasicInfoModule: React.FC = () => {
     draftContent,
     updateBasicInfo,
     updateVisibility,
+    updateAcademic,
     uploadMedia,
     showToast,
   } = useOwnerEditor();
 
   const student = draftContent.student;
   const visibility = draftContent.visibility;
+  const academic = draftContent.academic || { engineering: [], schooling: [], certifications: [], achievements: [] };
+
+  const handleUpdateSemesterSgpa = (semNumber: number, newSgpa: number) => {
+    const updatedEngineering = (academic.engineering || []).map((year) => {
+      if (!year.semesters) return year;
+      let hasSem = false;
+      const updatedSems = year.semesters.map((sem) => {
+        if (sem.semesterNumber === semNumber) {
+          hasSem = true;
+          return { ...sem, sgpa: newSgpa };
+        }
+        return sem;
+      });
+      if (hasSem) {
+        const validSems = updatedSems.filter((s) => typeof s.sgpa === 'number');
+        const avg =
+          validSems.length > 0
+            ? Number((validSems.reduce((a, b) => a + b.sgpa, 0) / validSems.length).toFixed(2))
+            : year.yearlyAverageSgpa;
+        return { ...year, semesters: updatedSems, yearlyAverageSgpa: avg };
+      }
+      return year;
+    });
+
+    updateAcademic({
+      ...academic,
+      engineering: updatedEngineering,
+    });
+  };
+
+  const allCompletedSemesters = (academic.engineering || [])
+    .flatMap((y) => y.semesters || [])
+    .filter((s) => typeof s.sgpa === 'number');
+
+  const calculatedCgpa =
+    allCompletedSemesters.length > 0
+      ? (allCompletedSemesters.reduce((acc, s) => acc + s.sgpa, 0) / allCompletedSemesters.length).toFixed(2)
+      : '7.62';
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -392,33 +435,352 @@ export const BasicInfoModule: React.FC = () => {
           </div>
         </div>
 
-        {/* Visibility Controls for ID Card Details */}
-        <div className="pt-4 border-t border-[#d9cdbd]">
-          <h4 className="text-xs uppercase tracking-wider text-[#73685c] font-bold mb-3 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#704a29]" />
-            PVC ID Card Backface Privacy Controls
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { key: 'showBloodGroup', label: 'Blood Group', val: visibility.showBloodGroup },
-              { key: 'showDob', label: 'Date of Birth', val: visibility.showDob },
-              { key: 'showPermanentAddress', label: 'Permanent Address', val: visibility.showPermanentAddress },
-              { key: 'showSgpaScores', label: 'Academic SGPA', val: visibility.showSgpaScores },
-            ].map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => updateVisibility({ [item.key]: !item.val })}
-                className={`p-3 rounded-xl border text-left transition flex items-center justify-between cursor-pointer shadow-2xs ${
-                  item.val
-                    ? 'bg-[#f0eae1] border-[#704a29] text-[#704a29] font-bold'
-                    : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c] hover:border-[#a67c52]'
-                }`}
-              >
-                <span className="text-xs">{item.label}</span>
-                {item.val ? <Check className="w-3.5 h-3.5 text-[#704a29]" /> : <EyeOff className="w-3.5 h-3.5 text-[#a89d91]" />}
-              </button>
-            ))}
+        {/* PVC ID Card Backface Attributes & Privacy Controls Section */}
+        <div className="pt-6 border-t border-[#d9cdbd] space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#d9cdbd]/60">
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-[#704a29] font-bold flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#704a29]" />
+                PVC ID Card Backface & Academic Privacy Controls
+              </h4>
+              <p className="text-[11px] text-[#73685c] mt-0.5">
+                Edit the exact values printed on your physical card and toggle sensitive visibility for public visitors.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 self-start sm:self-auto">
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[#704a29] font-bold">
+                Cumulative CGPA: {calculatedCgpa} / 10.0
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Visibility Controls Bar (Matches Card Backface Toggles) */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-wider text-[#73685c] font-bold mb-2">
+              Privacy Masking Quick Toggles
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                {
+                  key: 'showBloodGroup',
+                  label: 'Blood Group',
+                  val: visibility.showBloodGroup,
+                  display: student.bloodGroup || 'O+',
+                },
+                {
+                  key: 'showDob',
+                  label: 'Date of Birth',
+                  val: visibility.showDob,
+                  display: student.dateOfBirth || '14/05/2003',
+                },
+                {
+                  key: 'showPermanentAddress',
+                  label: 'Permanent Address',
+                  val: visibility.showPermanentAddress,
+                  display: 'Home Address',
+                },
+                {
+                  key: 'showSgpaScores',
+                  label: 'Academic SGPA',
+                  val: visibility.showSgpaScores,
+                  display: `${calculatedCgpa} CGPA`,
+                },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => updateVisibility({ [item.key]: !item.val })}
+                  className={`p-3 rounded-xl border text-left transition flex items-center justify-between cursor-pointer shadow-2xs ${
+                    item.val
+                      ? 'bg-[#f0eae1] border-[#704a29] text-[#704a29] font-bold'
+                      : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c] hover:border-[#a67c52]'
+                  }`}
+                  title={`Toggle ${item.label} visibility for public visitors`}
+                >
+                  <div className="min-w-0 pr-1">
+                    <span className="text-xs block truncate">{item.label}</span>
+                    <span className="text-[10px] block opacity-75 font-normal truncate mt-0.5">
+                      {item.val ? 'Publicly Visible' : 'Protected (Masked)'}
+                    </span>
+                  </div>
+                  {item.val ? (
+                    <Check className="w-3.5 h-3.5 text-[#704a29] shrink-0" />
+                  ) : (
+                    <EyeOff className="w-3.5 h-3.5 text-[#a89d91] shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Full Inline Editable Format for All 4 Fields */}
+          <div className="space-y-4 pt-2">
+            <label className="block text-[11px] uppercase tracking-wider text-[#73685c] font-bold">
+              Editable Formats & Attribute Values
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 1. Blood Group Editable Field */}
+              <div className="p-4 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-wider text-[#73685c] font-bold flex items-center gap-1.5">
+                    <Droplets className="w-3.5 h-3.5 text-[#991b1b]" />
+                    Blood Group
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => updateVisibility({ showBloodGroup: !visibility.showBloodGroup })}
+                    className={`text-[10.5px] px-2 py-0.5 rounded-md border flex items-center gap-1 cursor-pointer transition font-semibold ${
+                      visibility.showBloodGroup
+                        ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c]'
+                    }`}
+                  >
+                    {visibility.showBloodGroup ? (
+                      <Eye className="w-3 h-3 text-[#16a34a]" />
+                    ) : (
+                      <EyeOff className="w-3 h-3 text-[#73685c]" />
+                    )}
+                    <span>{visibility.showBloodGroup ? 'Public' : 'Protected'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    value={
+                      ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].includes(student.bloodGroup)
+                        ? student.bloodGroup
+                        : 'custom'
+                    }
+                    onChange={(e) => {
+                      if (e.target.value !== 'custom') {
+                        updateBasicInfo({ bloodGroup: e.target.value });
+                      }
+                    }}
+                    className="col-span-1 px-2.5 py-2 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-xs font-bold text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                  >
+                    {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((bg) => (
+                      <option key={bg} value={bg}>
+                        {bg}
+                      </option>
+                    ))}
+                    <option value="custom">Other...</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    value={student.bloodGroup || ''}
+                    onChange={(e) => updateBasicInfo({ bloodGroup: e.target.value })}
+                    placeholder="e.g. O+"
+                    className="col-span-2 px-3 py-2 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-xs font-mono font-bold text-[#991b1b] focus:outline-none focus:border-[#704a29]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10.5px] text-[#73685c] pt-1.5 border-t border-[#d9cdbd]/60">
+                  <span>Public Visitor Display:</span>
+                  <span className="font-mono font-bold text-[#2b241e]">
+                    {visibility.showBloodGroup ? student.bloodGroup || 'O+' : '•• (Protected)'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 2. Date of Birth (DOB) Editable Field */}
+              <div className="p-4 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-wider text-[#73685c] font-bold flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#704a29]" />
+                    Date of Birth (DOB)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => updateVisibility({ showDob: !visibility.showDob })}
+                    className={`text-[10.5px] px-2 py-0.5 rounded-md border flex items-center gap-1 cursor-pointer transition font-semibold ${
+                      visibility.showDob
+                        ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c]'
+                    }`}
+                  >
+                    {visibility.showDob ? (
+                      <Eye className="w-3 h-3 text-[#16a34a]" />
+                    ) : (
+                      <EyeOff className="w-3 h-3 text-[#73685c]" />
+                    )}
+                    <span>{visibility.showDob ? 'Public' : 'Protected'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-5 gap-2">
+                  <input
+                    type="text"
+                    value={student.dateOfBirth || ''}
+                    onChange={(e) => updateBasicInfo({ dateOfBirth: e.target.value })}
+                    placeholder="14/05/2003 or YYYY-MM-DD"
+                    className="col-span-3 px-3 py-2 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-xs font-mono text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                  />
+                  <input
+                    type="date"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [yyyy, mm, dd] = e.target.value.split('-');
+                        updateBasicInfo({ dateOfBirth: `${dd}/${mm}/${yyyy}` });
+                      }
+                    }}
+                    className="col-span-2 px-2 py-2 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] cursor-pointer"
+                    title="Select Date using Calendar Picker"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10.5px] text-[#73685c] pt-1.5 border-t border-[#d9cdbd]/60">
+                  <span>Public Visitor Display:</span>
+                  <span className="font-mono font-bold text-[#2b241e]">
+                    {visibility.showDob ? student.dateOfBirth || '14/05/2003' : '••/••/•••• (Protected)'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. Permanent Residential Address (Full Row) */}
+              <div className="sm:col-span-2 p-4 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-wider text-[#73685c] font-bold flex items-center gap-1.5">
+                    <Home className="w-3.5 h-3.5 text-[#704a29]" />
+                    Permanent Domicile Address (PVC Card Backface)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateVisibility({ showPermanentAddress: !visibility.showPermanentAddress })
+                    }
+                    className={`text-[10.5px] px-2 py-0.5 rounded-md border flex items-center gap-1 cursor-pointer transition font-semibold ${
+                      visibility.showPermanentAddress
+                        ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c]'
+                    }`}
+                  >
+                    {visibility.showPermanentAddress ? (
+                      <Eye className="w-3 h-3 text-[#16a34a]" />
+                    ) : (
+                      <EyeOff className="w-3 h-3 text-[#73685c]" />
+                    )}
+                    <span>
+                      {visibility.showPermanentAddress ? 'Public Address' : 'Protected (Masked)'}
+                    </span>
+                  </button>
+                </div>
+
+                <textarea
+                  rows={2}
+                  value={student.permanentAddress || ''}
+                  onChange={(e) => updateBasicInfo({ permanentAddress: e.target.value })}
+                  placeholder="e.g. No. 1127, Masidikere, B. Kanaboor, Narasimharajapura, Chikkamagaluru, Karnataka - 577112, India"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] leading-relaxed resize-none"
+                />
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10.5px] text-[#73685c] pt-1.5 border-t border-[#d9cdbd]/60 gap-1">
+                  <span>Public Visitor View:</span>
+                  <span className="font-sans italic text-[#704a29] truncate max-w-xl">
+                    {visibility.showPermanentAddress
+                      ? student.permanentAddress || 'Not specified'
+                      : '••••••••••••••, Narasimharajapura, Chikkamagaluru, Karnataka - 577112'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. Academic Semester SGPA & CGPA Editable Format (Full Row) */}
+              <div className="sm:col-span-2 p-4 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-[#704a29]" />
+                    <div>
+                      <label className="text-xs uppercase tracking-wider text-[#704a29] font-bold block">
+                        Academic Semester SGPA Scores & Grade Points
+                      </label>
+                      <span className="text-[11px] text-[#73685c]">
+                        Edit SGPA grade point scores evaluated under the VTU CBCS Scheme (10.0 scale).
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => updateVisibility({ showSgpaScores: !visibility.showSgpaScores })}
+                    className={`text-[10.5px] px-2.5 py-1 rounded-md border flex items-center gap-1.5 cursor-pointer transition font-semibold self-start sm:self-auto ${
+                      visibility.showSgpaScores
+                        ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c]'
+                    }`}
+                  >
+                    {visibility.showSgpaScores ? (
+                      <Eye className="w-3 h-3 text-[#16a34a]" />
+                    ) : (
+                      <EyeOff className="w-3 h-3 text-[#73685c]" />
+                    )}
+                    <span>{visibility.showSgpaScores ? 'Scores Visible' : 'Scores Masked'}</span>
+                  </button>
+                </div>
+
+                {/* Semester SGPA Input Cards Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                  {allCompletedSemesters.map((sem) => (
+                    <div
+                      key={sem.semesterNumber}
+                      className="p-3 rounded-xl bg-[#fffefb] border border-[#d9cdbd] flex flex-col justify-between shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-[#2b241e]">
+                          {sem.semesterName || `Semester ${sem.semesterNumber}`}
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#f0eae1] text-[#704a29] font-mono font-bold">
+                          /10.0
+                        </span>
+                      </div>
+
+                      <div className="my-1">
+                        <label className="block text-[10px] text-[#73685c] mb-1">
+                          Evaluated SGPA:
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="10"
+                          value={sem.sgpa}
+                          onChange={(e) =>
+                            handleUpdateSemesterSgpa(
+                              sem.semesterNumber,
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="w-full px-2.5 py-1 rounded-lg bg-[#fbf8f3] border border-[#d9cdbd] text-sm font-mono font-bold text-[#704a29] text-center focus:outline-none focus:border-[#704a29]"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-[9px] text-[#73685c] pt-1 border-t border-[#d9cdbd]/50">
+                        <span>Visitor:</span>
+                        <span className="font-mono font-bold text-[#2b241e]">
+                          {visibility.showSgpaScores ? `${sem.sgpa.toFixed(2)}` : '•.• (Masked)'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Academic CGPA Overview */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#73685c] pt-2 border-t border-[#d9cdbd]/60 gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-[#2b241e]">Cumulative CGPA:</span>
+                    <span className="font-mono font-bold text-[#704a29]">{calculatedCgpa} / 10.0</span>
+                    <span className="text-[10px] text-[#166534] bg-[#f2f8f2] px-1.5 py-0.5 rounded border border-[#86efac]">
+                      First Class with Distinction
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#73685c]">
+                    {visibility.showSgpaScores
+                      ? '✓ Published to Education Section & Academic Journey'
+                      : '🔒 Hidden on Public Portfolio view'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
