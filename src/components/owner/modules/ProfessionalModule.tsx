@@ -17,6 +17,11 @@ import {
   Eye,
   EyeOff,
   Layers,
+  Calendar,
+  Clock,
+  Sparkles,
+  Building2,
+  BookOpen,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { Project, ProjectCategory, FilterCategory } from '../../../data/projects';
@@ -164,6 +169,148 @@ export const ProfessionalModule: React.FC = () => {
     });
     showToast('Certification deleted.', 'info');
   };
+
+  // ================= ACADEMIC YEARS & SEMESTER SGPA MANAGERS =================
+  const recalculateAcademic = (engineeringList: YearAcademicData[]): YearAcademicData[] => {
+    return engineeringList.map((year) => {
+      const validSems = (year.semesters || []).filter(
+        (s) => typeof s.sgpa === 'number' && s.sgpa > 0
+      );
+      const avg =
+        validSems.length > 0
+          ? Number((validSems.reduce((a, b) => a + b.sgpa, 0) / validSems.length).toFixed(2))
+          : undefined;
+      return {
+        ...year,
+        yearlyAverageSgpa: avg,
+      };
+    });
+  };
+
+  const handleUpdateYear = (yearIndex: number, patch: Partial<YearAcademicData>) => {
+    const updated = [...(academic.engineering || [])];
+    updated[yearIndex] = { ...updated[yearIndex], ...patch };
+    const recalculated = recalculateAcademic(updated);
+    updateAcademic({ ...academic, engineering: recalculated });
+  };
+
+  const handleAddYear = () => {
+    const list = academic.engineering || [];
+    const nextYearNum = list.length + 1;
+    const suffix =
+      nextYearNum === 1 ? 'st' : nextYearNum === 2 ? 'nd' : nextYearNum === 3 ? 'rd' : 'th';
+    const newYear: YearAcademicData = {
+      id: `be-year-${nextYearNum}-${Date.now()}`,
+      yearTitle: `${nextYearNum}${suffix} Year B.E.`,
+      program: 'Bachelor of Engineering (B.E.) — Computer Science & Engineering',
+      institution: 'Bangalore Technological Institute (BTI)',
+      duration: `${2023 + nextYearNum} – ${2024 + nextYearNum}`,
+      status: nextYearNum <= 2 ? 'Completed' : 'In Progress',
+      currentStatusLabel: `${nextYearNum * 2 - 1}${
+        nextYearNum * 2 - 1 === 1 ? 'st' : nextYearNum * 2 - 1 === 2 ? 'nd' : nextYearNum * 2 - 1 === 3 ? 'rd' : 'th'
+      } Semester Pursuing`,
+      inProgressNote:
+        nextYearNum > 2
+          ? 'Currently enrolled in advanced coursework and laboratory practicals under VTU.'
+          : undefined,
+      semesters: [
+        {
+          semesterNumber: nextYearNum * 2 - 1,
+          semesterName: `${nextYearNum * 2 - 1}${
+            nextYearNum * 2 - 1 === 1
+              ? 'st'
+              : nextYearNum * 2 - 1 === 2
+              ? 'nd'
+              : nextYearNum * 2 - 1 === 3
+              ? 'rd'
+              : 'th'
+          } Semester`,
+          sgpa: 8.0,
+          maxSgpa: 10.0,
+        },
+      ],
+    };
+    const updated = [...list, newYear];
+    updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
+    showToast(`Added ${newYear.yearTitle}.`, 'success');
+  };
+
+  const handleDeleteYear = (yearIndex: number) => {
+    const updated = [...(academic.engineering || [])];
+    const removedTitle = updated[yearIndex]?.yearTitle || 'Academic year';
+    updated.splice(yearIndex, 1);
+    updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
+    showToast(`${removedTitle} removed.`, 'info');
+  };
+
+  const handleMoveYear = (yearIndex: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? yearIndex - 1 : yearIndex + 1;
+    const list = academic.engineering || [];
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const updated = [...list];
+    const [moved] = updated.splice(yearIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+    updateAcademic({ ...academic, engineering: updated });
+  };
+
+  const handleAddSemester = (yearIndex: number) => {
+    const updated = [...(academic.engineering || [])];
+    const year = { ...updated[yearIndex] };
+    const currentSems = [...(year.semesters || [])];
+    const maxNum =
+      currentSems.length > 0
+        ? Math.max(...currentSems.map((s) => s.semesterNumber))
+        : yearIndex * 2;
+    const nextSemNum = maxNum + 1;
+    const suffix =
+      nextSemNum === 1 ? 'st' : nextSemNum === 2 ? 'nd' : nextSemNum === 3 ? 'rd' : 'th';
+
+    currentSems.push({
+      semesterNumber: nextSemNum,
+      semesterName: `${nextSemNum}${suffix} Semester`,
+      sgpa: 8.0,
+      maxSgpa: 10.0,
+    });
+
+    year.semesters = currentSems;
+    updated[yearIndex] = year;
+    updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
+    showToast(`Added ${nextSemNum}${suffix} Semester to ${year.yearTitle}.`, 'success');
+  };
+
+  const handleUpdateSemester = (
+    yearIndex: number,
+    semIndex: number,
+    patch: Partial<SemesterScore>
+  ) => {
+    const updated = [...(academic.engineering || [])];
+    const year = { ...updated[yearIndex] };
+    const sems = [...(year.semesters || [])];
+    sems[semIndex] = { ...sems[semIndex], ...patch };
+    year.semesters = sems;
+    updated[yearIndex] = year;
+    updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
+  };
+
+  const handleDeleteSemester = (yearIndex: number, semIndex: number) => {
+    const updated = [...(academic.engineering || [])];
+    const year = { ...updated[yearIndex] };
+    const sems = [...(year.semesters || [])];
+    const removedName = sems[semIndex]?.semesterName || 'Semester';
+    sems.splice(semIndex, 1);
+    year.semesters = sems;
+    updated[yearIndex] = year;
+    updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
+    showToast(`${removedName} removed.`, 'info');
+  };
+
+  // Cumulative CGPA calculation
+  const allCompletedSemesters = (academic.engineering || [])
+    .flatMap((y) => y.semesters || [])
+    .filter((s) => typeof s.sgpa === 'number' && s.sgpa > 0);
+  const totalSgpa = allCompletedSemesters.reduce((acc, curr) => acc + curr.sgpa, 0);
+  const calculatedCgpa =
+    allCompletedSemesters.length > 0 ? (totalSgpa / allCompletedSemesters.length).toFixed(2) : '7.62';
 
   return (
     <div className="space-y-8 max-w-4xl font-serif">
@@ -499,65 +646,310 @@ export const ProfessionalModule: React.FC = () => {
       {/* ================= ACADEMICS & SGPA SUB-MODULE ================= */}
       {activeSubTab === 'academic' && (
         <div className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-6 sm:p-8 space-y-6 shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-[#d9cdbd]">
+          {/* Header & Overall Metric Ribbon */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#d9cdbd] gap-3">
             <div>
-              <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
-                Engineering Semester Records & SGPA
-              </h3>
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-[#704a29]" />
+                <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
+                  Engineering Semester Records & SGPA
+                </h3>
+              </div>
               <p className="text-xs text-[#73685c] mt-0.5">
                 Manage academic grades, semester performance, and backface ID card visibility.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => updateVisibility({ showSgpaScores: !visibility.showSgpaScores })}
-              className={`px-3 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                visibility.showSgpaScores
-                  ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534] font-bold'
-                  : 'bg-[#f0eae1] border-[#d9cdbd] text-[#73685c]'
-              }`}
-            >
-              {visibility.showSgpaScores ? <Eye className="w-3.5 h-3.5 text-[#16a34a]" /> : <EyeOff className="w-3.5 h-3.5 text-[#73685c]" />}
-              <span>{visibility.showSgpaScores ? 'Scores Visible' : 'Scores Hidden'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-mono px-3 py-1.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[#704a29] font-bold shadow-2xs">
+                Cumulative CGPA: {calculatedCgpa} / 10.0
+              </span>
+
+              <button
+                type="button"
+                onClick={() => updateVisibility({ showSgpaScores: !visibility.showSgpaScores })}
+                className={`px-3 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition ${
+                  visibility.showSgpaScores
+                    ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534] font-bold'
+                    : 'bg-[#f0eae1] border-[#d9cdbd] text-[#73685c]'
+                }`}
+              >
+                {visibility.showSgpaScores ? (
+                  <Eye className="w-3.5 h-3.5 text-[#16a34a]" />
+                ) : (
+                  <EyeOff className="w-3.5 h-3.5 text-[#73685c]" />
+                )}
+                <span>{visibility.showSgpaScores ? 'Scores Visible' : 'Scores Hidden'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAddYear}
+                className="px-3.5 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Year</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {academic.engineering?.map((yearData, yIdx) => (
-              <div key={yearData.id || yearData.yearTitle} className="p-4 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#2b241e]">{yearData.yearTitle}</h4>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-[#f0eae1] text-[#704a29] border border-[#d9cdbd] font-bold">
-                    {yearData.status}
-                  </span>
-                </div>
-                <p className="text-xs text-[#73685c]">{yearData.duration} &bull; {yearData.institution}</p>
+          {/* Academic Years List */}
+          <div className="space-y-5">
+            {(academic.engineering || []).map((yearData, yIdx) => {
+              const semesters = yearData.semesters || [];
+              const isCompleted = yearData.status === 'Completed';
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#d9cdbd]">
-                  {(yearData.semesters || []).map((sem, sIdx) => (
-                    <div key={sem.semesterNumber} className="flex items-center justify-between p-2 rounded-lg bg-[#fffefb] border border-[#d9cdbd]">
-                      <span className="text-xs text-[#73685c]">{sem.semesterName || `Sem ${sem.semesterNumber}`}</span>
+              return (
+                <div
+                  key={yearData.id || `year-${yIdx}`}
+                  className="p-5 rounded-2xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-4 shadow-2xs transition-all hover:border-[#b89574]"
+                >
+                  {/* Year Header Controls */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#d9cdbd]/70 gap-3">
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="10"
-                        value={sem.sgpa}
-                        onChange={(e) => {
-                          const updated = [...academic.engineering];
-                          if (updated[yIdx]?.semesters?.[sIdx]) {
-                            updated[yIdx].semesters![sIdx].sgpa = parseFloat(e.target.value) || 0;
-                            updateAcademic({ ...academic, engineering: updated });
-                          }
-                        }}
-                        className="w-16 px-1.5 py-0.5 rounded bg-[#fbf8f3] border border-[#d9cdbd] text-xs font-bold text-[#704a29] text-right focus:outline-none focus:border-[#704a29]"
+                        type="text"
+                        value={yearData.yearTitle}
+                        onChange={(e) => handleUpdateYear(yIdx, { yearTitle: e.target.value })}
+                        className="px-2.5 py-1 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-sm font-bold font-serif text-[#2b241e] focus:outline-none focus:border-[#704a29] max-w-[180px]"
+                        placeholder="e.g. 3rd Year B.E."
+                      />
+
+                      <select
+                        value={yearData.status}
+                        onChange={(e) =>
+                          handleUpdateYear(yIdx, {
+                            status: e.target.value as 'Completed' | 'In Progress',
+                          })
+                        }
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-semibold focus:outline-none cursor-pointer ${
+                          isCompleted
+                            ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
+                            : 'bg-amber-50 border-amber-300 text-amber-800'
+                        }`}
+                      >
+                        <option value="Completed">Completed</option>
+                        <option value="In Progress">In Progress</option>
+                      </select>
+
+                      {yearData.yearlyAverageSgpa ? (
+                        <span className="text-xs font-mono font-bold text-[#704a29] bg-[#f0eae1] px-2 py-0.5 rounded border border-[#d9cdbd] whitespace-nowrap">
+                          Avg: {yearData.yearlyAverageSgpa.toFixed(2)} / 10
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveYear(yIdx, 'up')}
+                        disabled={yIdx === 0}
+                        className="p-1 rounded bg-[#fffefb] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] disabled:opacity-30 cursor-pointer shadow-2xs"
+                        title="Move Up"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveYear(yIdx, 'down')}
+                        disabled={yIdx === (academic.engineering || []).length - 1}
+                        className="p-1 rounded bg-[#fffefb] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] disabled:opacity-30 cursor-pointer shadow-2xs"
+                        title="Move Down"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      {(academic.engineering || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteYear(yIdx)}
+                          className="p-1 rounded bg-[#fffefb] hover:bg-[#fbf0ef] border border-[#d9cdbd] hover:border-[#f5c6c2] text-[#bc473b] cursor-pointer shadow-2xs"
+                          title="Delete Year"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Year Sub-fields (Duration, Institution, Program) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Academic Duration
+                      </label>
+                      <input
+                        type="text"
+                        value={yearData.duration || ''}
+                        onChange={(e) => handleUpdateYear(yIdx, { duration: e.target.value })}
+                        placeholder="e.g. 2026 – Present"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
                       />
                     </div>
-                  ))}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Institution / College
+                      </label>
+                      <input
+                        type="text"
+                        value={yearData.institution || ''}
+                        onChange={(e) => handleUpdateYear(yIdx, { institution: e.target.value })}
+                        placeholder="e.g. Bangalore Technological Institute (BTI)"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Engineering Curriculum
+                      </label>
+                      <input
+                        type="text"
+                        value={yearData.program || ''}
+                        onChange={(e) => handleUpdateYear(yIdx, { program: e.target.value })}
+                        placeholder="e.g. B.E. — Computer Science & Engineering"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* In-Progress specific controls */}
+                  {!isCompleted && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-[#faf7f2] border border-[#e2d8cb] text-xs">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                          Current Status Badge
+                        </label>
+                        <input
+                          type="text"
+                          value={yearData.currentStatusLabel || ''}
+                          onChange={(e) =>
+                            handleUpdateYear(yIdx, { currentStatusLabel: e.target.value })
+                          }
+                          placeholder="e.g. 5th Semester Pursuing"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                          In-Progress Status Note (Publicly Displayed)
+                        </label>
+                        <input
+                          type="text"
+                          value={yearData.inProgressNote || ''}
+                          onChange={(e) =>
+                            handleUpdateYear(yIdx, { inProgressNote: e.target.value })
+                          }
+                          placeholder="e.g. Currently enrolled in V Semester coursework and laboratory practicals under VTU."
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Semesters Sub-Grid */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-[11px] uppercase tracking-wider text-[#73685c] font-bold">
+                        Evaluated Semesters ({semesters.length})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSemester(yIdx)}
+                        className="px-2.5 py-1 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-xs text-[#704a29] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Semester</span>
+                      </button>
+                    </div>
+
+                    {semesters.length === 0 ? (
+                      <div className="p-4 rounded-xl bg-[#fffefb] border border-dashed border-[#d9cdbd] text-center space-y-2">
+                        <p className="text-xs text-[#73685c]">
+                          No semester grade evaluations added yet for {yearData.yearTitle}.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleAddSemester(yIdx)}
+                          className="px-3 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 cursor-pointer transition"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Semester Evaluation</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {semesters.map((sem, sIdx) => (
+                          <div
+                            key={sem.semesterNumber || `sem-${sIdx}`}
+                            className="p-3 rounded-xl bg-[#fffefb] border border-[#d9cdbd] space-y-2 shadow-2xs relative group"
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <input
+                                type="text"
+                                value={sem.semesterName || `Sem ${sem.semesterNumber}`}
+                                onChange={(e) =>
+                                  handleUpdateSemester(yIdx, sIdx, {
+                                    semesterName: e.target.value,
+                                  })
+                                }
+                                className="px-1.5 py-0.5 rounded bg-transparent border border-transparent hover:border-[#d9cdbd] focus:border-[#704a29] text-xs font-bold text-[#2b241e] focus:outline-none w-28"
+                                placeholder="Semester Name"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSemester(yIdx, sIdx)}
+                                className="p-1 rounded text-[#a89d91] hover:text-[#bc473b] hover:bg-[#fbf0ef] cursor-pointer transition opacity-60 group-hover:opacity-100"
+                                title="Delete Semester"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#f0eae1]">
+                              <span className="text-[10px] text-[#73685c] uppercase font-bold">
+                                SGPA:
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  max="10"
+                                  value={sem.sgpa}
+                                  onChange={(e) =>
+                                    handleUpdateSemester(yIdx, sIdx, {
+                                      sgpa: parseFloat(e.target.value) || 0,
+                                    })
+                                  }
+                                  className="w-16 px-1.5 py-1 rounded bg-[#fbf8f3] border border-[#d9cdbd] text-xs font-mono font-bold text-[#704a29] text-right focus:outline-none focus:border-[#704a29]"
+                                />
+                                <span className="text-[10px] text-[#8c6239] font-mono font-bold">
+                                  /10.0
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <input
+                                type="text"
+                                value={sem.badge || ''}
+                                onChange={(e) =>
+                                  handleUpdateSemester(yIdx, sIdx, {
+                                    badge: e.target.value,
+                                  })
+                                }
+                                placeholder="Badge (e.g. Semester High)"
+                                className="w-full text-[10px] px-1.5 py-0.5 rounded bg-[#fbf8f3] border border-[#d9cdbd]/60 text-[#704a29] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29]"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

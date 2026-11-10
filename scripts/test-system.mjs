@@ -409,3 +409,87 @@ test('Password Complexity and Phone Number Normalization Tests', () => {
   assert.equal(normalizePhoneNumber('+1 (555) 019-2834'), '+15550192834');
 });
 
+// 12. Engineering Academic Year & Semester SGPA Dynamic Management
+test('Engineering Academic Year & Semester SGPA Dynamic Management', () => {
+  function recalculateAcademic(engineeringList) {
+    return engineeringList.map((year) => {
+      const validSems = (year.semesters || []).filter(
+        (s) => typeof s.sgpa === 'number' && s.sgpa > 0
+      );
+      const avg =
+        validSems.length > 0
+          ? Number((validSems.reduce((a, b) => a + b.sgpa, 0) / validSems.length).toFixed(2))
+          : undefined;
+      return {
+        ...year,
+        yearlyAverageSgpa: avg,
+      };
+    });
+  }
+
+  function computeCumulativeCgpa(engineeringList) {
+    const allCompletedSemesters = engineeringList
+      .flatMap((y) => y.semesters || [])
+      .filter((s) => typeof s.sgpa === 'number' && s.sgpa > 0);
+    const totalSgpa = allCompletedSemesters.reduce((acc, curr) => acc + curr.sgpa, 0);
+    return allCompletedSemesters.length > 0
+      ? (totalSgpa / allCompletedSemesters.length).toFixed(2)
+      : '7.62';
+  }
+
+  // Initial mock engineering data (Year 1, 2, 3 where Year 3 initially has 0 semesters)
+  const initialYears = [
+    {
+      id: 'year-1',
+      yearTitle: '1st Year B.E.',
+      status: 'Completed',
+      semesters: [
+        { semesterNumber: 1, semesterName: '1st Semester', sgpa: 7.15 },
+        { semesterNumber: 2, semesterName: '2nd Semester', sgpa: 7.60 },
+      ],
+    },
+    {
+      id: 'year-2',
+      yearTitle: '2nd Year B.E.',
+      status: 'Completed',
+      semesters: [
+        { semesterNumber: 3, semesterName: '3rd Semester', sgpa: 7.71 },
+        { semesterNumber: 4, semesterName: '4th Semester', sgpa: 8.00 },
+      ],
+    },
+    {
+      id: 'year-3',
+      yearTitle: '3rd Year B.E.',
+      status: 'In Progress',
+      semesters: [],
+    },
+  ];
+
+  const calculated = recalculateAcademic(initialYears);
+  assert.equal(calculated[0].yearlyAverageSgpa, 7.38);
+  assert.equal(calculated[1].yearlyAverageSgpa, 7.86);
+  assert.equal(calculated[2].yearlyAverageSgpa, undefined);
+  assert.equal(computeCumulativeCgpa(calculated), '7.62');
+
+  // Owner adds 5th Semester to 3rd Year B.E. with SGPA 8.40
+  const updatedYears = [...initialYears];
+  updatedYears[2] = {
+    ...updatedYears[2],
+    semesters: [
+      { semesterNumber: 5, semesterName: '5th Semester', sgpa: 8.40 },
+    ],
+  };
+
+  const recalculatedAfterAdd = recalculateAcademic(updatedYears);
+  assert.equal(recalculatedAfterAdd[2].yearlyAverageSgpa, 8.40);
+  // (7.15 + 7.60 + 7.71 + 8.00 + 8.40) / 5 = 38.86 / 5 = 7.77
+  assert.equal(computeCumulativeCgpa(recalculatedAfterAdd), '7.77');
+
+  // Owner updates 5th semester score to 8.90
+  recalculatedAfterAdd[2].semesters[0].sgpa = 8.90;
+  const recalculatedAfterEdit = recalculateAcademic(recalculatedAfterAdd);
+  assert.equal(recalculatedAfterEdit[2].yearlyAverageSgpa, 8.90);
+  // (7.15 + 7.60 + 7.71 + 8.00 + 8.90) / 5 = 39.36 / 5 = 7.87
+  assert.equal(computeCumulativeCgpa(recalculatedAfterEdit), '7.87');
+});
+

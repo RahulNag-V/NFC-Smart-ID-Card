@@ -279,40 +279,47 @@ export const EducationSection: React.FC = () => {
                 </p>
               </div>
 
-              {/* 3rd Year B.E. In-Progress Content */}
-              {isThirdYearPursuing ? (
+              {/* In-Progress Content Notice (if applicable) */}
+              {isThirdYearPursuing && (
                 <div className="mt-3.5 p-3.5 rounded-xl bg-[#faf7f2]/70 border border-[#e2d8cb] shadow-2xs space-y-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                       <h4 className="text-xs sm:text-sm font-serif font-bold text-[#2b241e]">
-                        5th Semester
+                        {year.currentStatusLabel || 'Currently Pursuing Coursework'}
                       </h4>
                       <span className="text-[8.5px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                        Currently Pursuing
+                        In Progress
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#524538] font-sans leading-relaxed">
-                      {year.inProgressNote}
-                    </p>
+                    {year.inProgressNote && (
+                      <p className="text-[11px] text-[#524538] font-sans leading-relaxed">
+                        {year.inProgressNote}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd]">
-                    <span className="text-[8.5px] font-mono uppercase font-semibold text-[#73685c]">
-                      Academic Evaluation
-                    </span>
-                    <span className="text-[10.5px] font-mono font-bold text-[#704a29] flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#8c6239]" />
-                      Grade Pending Semester Close
-                    </span>
-                  </div>
+                  {(!year.semesters || year.semesters.length === 0) && (
+                    <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd]">
+                      <span className="text-[8.5px] font-mono uppercase font-semibold text-[#73685c]">
+                        Academic Evaluation
+                      </span>
+                      <span className="text-[10.5px] font-mono font-bold text-[#704a29] flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#8c6239]" />
+                        Grade Pending Semester Close
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                /* 1st & 2nd Year Semester-wise SGPA Score Cards with subtle progress indicators */
+              )}
+
+              {/* Semester-wise SGPA Score Cards */}
+              {year.semesters && year.semesters.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
-                  {year.semesters?.map((sem, semIndex) => {
-                    const percent = (sem.sgpa / sem.maxSgpa) * 100;
+                  {year.semesters.map((sem) => {
+                    const max = sem.maxSgpa || 10.0;
+                    const percent = Math.min(100, Math.max(0, (sem.sgpa / max) * 100));
 
                     return (
                       <div
@@ -347,7 +354,7 @@ export const EducationSection: React.FC = () => {
                                   {sem.sgpa.toFixed(2)}
                                 </span>
                                 <span className="text-xs font-bold text-[#8c6239]">
-                                  /{sem.maxSgpa} SGPA
+                                  /{max} SGPA
                                 </span>
                               </>
                             ) : (
@@ -368,7 +375,7 @@ export const EducationSection: React.FC = () => {
                             className="h-full rounded-full bg-gradient-to-r from-[#8c6239] to-[#704a29]"
                           />
                         </div>
-
+                        {/* Performance Footnote */}
                         <div className="flex items-center justify-between text-[9px] font-mono text-[#8c6239] mt-1.5">
                           <span>Scale: 0.0 – 10.0</span>
                           <span className="font-bold">
