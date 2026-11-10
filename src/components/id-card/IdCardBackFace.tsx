@@ -1,6 +1,7 @@
 import React from 'react';
 import { Phone, Mail, MapPin, Calendar, Droplets, Building2, ShieldCheck } from 'lucide-react';
 import { StudentProfile, defaultStudentData, maskPhone, maskEmail, maskAddress, maskBloodGroup } from '../../data/student';
+import { defaultInitialContent } from '../../data/initialContent';
 import { useSiteContent } from '../../context/SiteContentContext';
 
 interface IdCardBackFaceProps {
@@ -33,27 +34,29 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
   student: studentProp,
 }) => {
   const { activeContent } = useSiteContent();
-  const currentStudent = studentProp || activeContent.student || defaultStudentData;
-  const visibility = activeContent.visibility;
-  const theme = activeContent.theme;
+  const currentStudent = studentProp || activeContent?.student || defaultStudentData;
+  const visibility = activeContent?.visibility || defaultInitialContent.visibility;
+  const theme = activeContent?.theme || defaultInitialContent.theme;
 
   const cardBorderColor = theme?.colors?.idCardBorder || '#8c7860';
   const cardBgColor = theme?.colors?.idCardBackground || '#ffffff';
 
-  const rawAddress = currentStudent.permanentAddress.replace(/, India$/, '');
-  const displayedAddress = maskAddress(rawAddress, visibility.showPermanentAddress);
-  const displayedPhone = maskPhone(currentStudent.phone, visibility.showPhone);
-  const displayedEmail = maskEmail(currentStudent.email, visibility.showEmail);
-  const displayedBlood = maskBloodGroup(currentStudent.bloodGroup, visibility.showBloodGroup);
+  const rawAddress = (currentStudent?.permanentAddress || '').replace(/, India$/, '');
+  const displayedAddress = maskAddress(rawAddress, visibility?.showPermanentAddress ?? false);
+  const displayedPhone = maskPhone(currentStudent?.phone || '', visibility?.showPhone ?? true);
+  const displayedEmail = maskEmail(currentStudent?.email || '', visibility?.showEmail ?? true);
+  const displayedBlood = maskBloodGroup(currentStudent?.bloodGroup || 'O+', visibility?.showBloodGroup ?? false);
 
   const student = {
     address: displayedAddress,
     phone: displayedPhone,
     email: displayedEmail,
-    dob: formatDob(currentStudent.dateOfBirth),
+    dob: formatDob(currentStudent?.dateOfBirth || '14/05/2003'),
     bloodGroup: displayedBlood,
-    collegeName: currentStudent.college.name,
-    collegeAddress: `${currentStudent.college.address}, ${currentStudent.college.city}, ${currentStudent.college.state} - ${currentStudent.college.pincode}`,
+    collegeName: currentStudent?.college?.name || 'Bangalore Technological Institute',
+    collegeAddress: currentStudent?.college
+      ? `${currentStudent.college.address || ''}, ${currentStudent.college.city || ''}, ${currentStudent.college.state || ''} - ${currentStudent.college.pincode || ''}`
+      : 'Sarjapur Road, Bengaluru, Karnataka - 560035',
   };
 
   const cardBoxShadow = isExport

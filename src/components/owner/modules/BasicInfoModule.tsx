@@ -21,6 +21,8 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
+import { defaultStudentData } from '../../../data/student';
+import { defaultVisibility } from '../../../data/initialContent';
 
 export const BasicInfoModule: React.FC = () => {
   const {
@@ -32,9 +34,9 @@ export const BasicInfoModule: React.FC = () => {
     showToast,
   } = useOwnerEditor();
 
-  const student = draftContent.student;
-  const visibility = draftContent.visibility;
-  const academic = draftContent.academic || { engineering: [], schooling: [], certifications: [], achievements: [] };
+  const student = draftContent?.student || defaultStudentData;
+  const visibility = draftContent?.visibility || defaultVisibility;
+  const academic = draftContent?.academic || { engineering: [], schooling: [], certifications: [], achievements: [] };
 
   const handleUpdateSemesterSgpa = (semNumber: number, newSgpa: number) => {
     const updatedEngineering = (academic.engineering || []).map((year) => {

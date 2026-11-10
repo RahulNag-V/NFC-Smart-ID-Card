@@ -5,6 +5,7 @@ import { OwnerEditorProvider } from './context/OwnerEditorContext';
 import { PublicPortfolioView } from './components/public/PublicPortfolioView';
 import { OwnerLogin } from './components/owner/OwnerLogin';
 import { OwnerDashboard } from './components/owner/OwnerDashboard';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 type AppRoute = 'public' | 'owner-login' | 'owner-dashboard' | 'owner-security';
 
@@ -122,11 +123,13 @@ function AppRouter() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <SiteContentProvider>
-        <AppRouter />
-      </SiteContentProvider>
-    </AuthProvider>
+    <ErrorBoundary fallbackTitle="Ananta Sparsha Experience Loader">
+      <AuthProvider>
+        <SiteContentProvider>
+          <AppRouter />
+        </SiteContentProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

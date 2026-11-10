@@ -83,6 +83,60 @@ export function isUserAuthorizedOwner(user: User | { email?: string; uid?: strin
 }
 
 /**
+ * Deep merge helper to prevent undefined schema breaks
+ */
+function mergeWithDefaults(data: any): PublishedProfileData {
+  if (!data || typeof data !== 'object') return defaultInitialContent;
+
+  return {
+    ...defaultInitialContent,
+    ...data,
+    student: {
+      ...defaultInitialContent.student,
+      ...(data.student || {}),
+      college: {
+        ...defaultInitialContent.student.college,
+        ...(data.student?.college || {}),
+      },
+      verification: {
+        ...defaultInitialContent.student.verification,
+        ...(data.student?.verification || {}),
+      },
+    },
+    visibility: {
+      ...defaultInitialContent.visibility,
+      ...(data.visibility || {}),
+    },
+    theme: {
+      ...defaultInitialContent.theme,
+      ...(data.theme || {}),
+      colors: {
+        ...defaultInitialContent.theme.colors,
+        ...(data.theme?.colors || {}),
+      },
+      typography: {
+        ...defaultInitialContent.theme.typography,
+        ...(data.theme?.typography || {}),
+      },
+      layout: {
+        ...defaultInitialContent.theme.layout,
+        ...(data.theme?.layout || {}),
+      },
+    },
+    academic: {
+      ...defaultInitialContent.academic,
+      ...(data.academic || {}),
+      engineering: data.academic?.engineering || defaultInitialContent.academic.engineering,
+      schooling: data.academic?.schooling || defaultInitialContent.academic.schooling,
+    },
+    projects: Array.isArray(data.projects) && data.projects.length > 0 ? data.projects : defaultInitialContent.projects,
+    skills: Array.isArray(data.skills) && data.skills.length > 0 ? data.skills : defaultInitialContent.skills,
+    socialChannels: Array.isArray(data.socialChannels) && data.socialChannels.length > 0 ? data.socialChannels : defaultInitialContent.socialChannels,
+    sections: Array.isArray(data.sections) && data.sections.length > 0 ? data.sections : defaultInitialContent.sections,
+  };
+}
+
+/**
  * Load published profile from Firestore or local fallback
  */
 export async function fetchPublishedProfile(profileId: string = 'rahulnagv'): Promise<PublishedProfileData> {
@@ -93,7 +147,7 @@ export async function fetchPublishedProfile(profileId: string = 'rahulnagv'): Pr
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.publishedContent) {
-          return data.publishedContent as PublishedProfileData;
+          return mergeWithDefaults(data.publishedContent);
         }
       }
     } catch (err) {
@@ -105,7 +159,7 @@ export async function fetchPublishedProfile(profileId: string = 'rahulnagv'): Pr
   try {
     const local = localStorage.getItem(LOCAL_PUBLISHED_KEY) || localStorage.getItem('smart_nfc_published_content');
     if (local) {
-      return JSON.parse(local) as PublishedProfileData;
+      return mergeWithDefaults(JSON.parse(local));
     }
   } catch (e) {
     console.warn('Failed to parse local stored content:', e);
@@ -125,7 +179,7 @@ export async function fetchDraftProfile(profileId: string = 'rahulnagv'): Promis
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.draftContent) {
-          return data.draftContent as PublishedProfileData;
+          return mergeWithDefaults(data.draftContent);
         }
       }
     } catch (err) {
@@ -137,7 +191,7 @@ export async function fetchDraftProfile(profileId: string = 'rahulnagv'): Promis
   try {
     const local = localStorage.getItem(LOCAL_DRAFT_KEY);
     if (local) {
-      return JSON.parse(local) as PublishedProfileData;
+      return mergeWithDefaults(JSON.parse(local));
     }
   } catch (e) {
     console.warn('Failed to parse local draft:', e);

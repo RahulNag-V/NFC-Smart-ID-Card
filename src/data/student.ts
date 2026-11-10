@@ -103,7 +103,8 @@ export const defaultStudentData: StudentProfile = {
 };
 
 // Helper privacy masking functions
-export function maskPhone(phone: string, isVisible: boolean): string {
+export function maskPhone(phone?: string, isVisible: boolean = false): string {
+  if (!phone || typeof phone !== 'string') return '+91 ••••• •••••';
   if (isVisible) return phone;
   const parts = phone.split(' ');
   if (parts.length >= 3) {
@@ -112,7 +113,8 @@ export function maskPhone(phone: string, isVisible: boolean): string {
   return phone.slice(0, 6) + ' •••••';
 }
 
-export function maskEmail(email: string, isVisible: boolean): string {
+export function maskEmail(email?: string, isVisible: boolean = false): string {
+  if (!email || typeof email !== 'string') return '••••••••@••••.com';
   if (isVisible) return email;
   const [user, domain] = email.split('@');
   if (!user || !domain) return '••••••••@••••.com';
@@ -120,7 +122,8 @@ export function maskEmail(email: string, isVisible: boolean): string {
   return `${maskedUser}@${domain}`;
 }
 
-export function maskAddress(address: string, isVisible: boolean): string {
+export function maskAddress(address?: string, isVisible: boolean = false): string {
+  if (!address || typeof address !== 'string') return 'Bengaluru, Karnataka (Full address protected by privacy toggle)';
   if (isVisible) return address;
   const segments = address.split(',');
   if (segments.length > 2) {
@@ -129,7 +132,8 @@ export function maskAddress(address: string, isVisible: boolean): string {
   return 'Bengaluru, Karnataka (Full address protected by privacy toggle)';
 }
 
-export function maskBloodGroup(blood: string, isVisible: boolean): string {
+export function maskBloodGroup(blood?: string, isVisible: boolean = false): string {
+  if (!blood || typeof blood !== 'string') return '•• (Protected)';
   if (isVisible) return blood;
   return '•• (Protected)';
 }
