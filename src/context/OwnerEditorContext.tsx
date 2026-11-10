@@ -62,7 +62,7 @@ interface OwnerEditorContextType {
 
 const OwnerEditorContext = createContext<OwnerEditorContextType | undefined>(undefined);
 
-export const OwnerEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const OwnerEditorProvider: React.FC<{ initialTab?: DashboardTab; children: React.ReactNode }> = ({ initialTab = 'overview', children }) => {
   const { user } = useAuth();
   const [publishedContent, setPublishedContent] = useState<PublishedProfileData>(defaultInitialContent);
   const [draftContent, setDraftContent] = useState<PublishedProfileData>(defaultInitialContent);
@@ -70,9 +70,15 @@ export const OwnerEditorProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Load both published and existing draft on mount
   useEffect(() => {

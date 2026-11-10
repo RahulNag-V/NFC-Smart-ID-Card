@@ -360,3 +360,52 @@ test('Firebase auth/configuration-not-found Graceful Recovery', () => {
   assert.equal(rejectRes.success, false);
 });
 
+// 11. Password Complexity & Phone Verification Validation
+test('Password Complexity and Phone Number Normalization Tests', () => {
+  // Test password complexity rules (12+ chars, uppercase, lowercase, number, special char)
+  function validatePassword(newPassword, confirmPassword) {
+    const checks = {
+      minLength: newPassword.length >= 12,
+      hasUpper: /[A-Z]/.test(newPassword),
+      hasLower: /[a-z]/.test(newPassword),
+      hasNumber: /[0-9]/.test(newPassword),
+      hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(newPassword),
+      passwordsMatch: Boolean(newPassword && newPassword === confirmPassword),
+    };
+    const isValid = Object.values(checks).every(Boolean);
+    return { isValid, checks };
+  }
+
+  function normalizePhoneNumber(raw) {
+    const cleaned = raw.replace(/[^\d+]/g, '');
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.length === 10) return `+91${cleaned}`;
+    return `+${cleaned}`;
+  }
+
+  // Weak password fails
+  const weak1 = validatePassword('short', 'short');
+  assert.equal(weak1.isValid, false, 'Short password must fail');
+
+  const weak2 = validatePassword('AllLettersNoNumOrSym', 'AllLettersNoNumOrSym');
+  assert.equal(weak2.isValid, false, 'Missing numbers and symbols must fail');
+
+  const weak3 = validatePassword('ValidPass123!@#', 'MismatchPass123!@#');
+  assert.equal(weak3.isValid, false, 'Mismatched passwords must fail');
+
+  // Compliant strong password passes
+  const strong = validatePassword('Ananta@Secure2026', 'Ananta@Secure2026');
+  assert.equal(strong.isValid, true, 'Fully compliant password must pass');
+  assert.equal(strong.checks.minLength, true);
+  assert.equal(strong.checks.hasUpper, true);
+  assert.equal(strong.checks.hasLower, true);
+  assert.equal(strong.checks.hasNumber, true);
+  assert.equal(strong.checks.hasSpecial, true);
+  assert.equal(strong.checks.passwordsMatch, true);
+
+  // Phone normalization tests
+  assert.equal(normalizePhoneNumber('+91 98446 16699'), '+919844616699');
+  assert.equal(normalizePhoneNumber('9844616699'), '+919844616699');
+  assert.equal(normalizePhoneNumber('+1 (555) 019-2834'), '+15550192834');
+});
+

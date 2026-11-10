@@ -6,7 +6,7 @@ import { PublicPortfolioView } from './components/public/PublicPortfolioView';
 import { OwnerLogin } from './components/owner/OwnerLogin';
 import { OwnerDashboard } from './components/owner/OwnerDashboard';
 
-type AppRoute = 'public' | 'owner-login' | 'owner-dashboard';
+type AppRoute = 'public' | 'owner-login' | 'owner-dashboard' | 'owner-security';
 
 function getInitialRoute(): AppRoute {
   if (typeof window === 'undefined') return 'public';
@@ -14,6 +14,15 @@ function getInitialRoute(): AppRoute {
   const path = window.location.pathname.toLowerCase();
   const hash = window.location.hash.toLowerCase();
   const search = window.location.search.toLowerCase();
+
+  if (
+    path === '/owner/security' ||
+    path === '/owner/security/' ||
+    hash === '#/owner/security' ||
+    search.includes('mode=owner-security')
+  ) {
+    return 'owner-security';
+  }
 
   if (
     path === '/owner/login' ||
@@ -58,6 +67,7 @@ function AppRouter() {
     let targetPath = '/';
     if (route === 'owner-login') targetPath = '/owner/login';
     if (route === 'owner-dashboard') targetPath = '/owner/dashboard';
+    if (route === 'owner-security') targetPath = '/owner/security';
 
     // Support both pushState and hash fallback for static hosting
     try {
@@ -79,20 +89,20 @@ function AppRouter() {
     );
   }
 
-  // Route 2: Owner Dashboard (Protected)
-  if (currentRoute === 'owner-dashboard') {
+  // Route 2 & 3: Owner Dashboard & Owner Security (Protected)
+  if (currentRoute === 'owner-dashboard' || currentRoute === 'owner-security') {
     if (!authLoading && !isOwner) {
       // Unauthorized or not logged in: redirect to owner login
       return (
         <OwnerLogin
-          onLoginSuccess={() => navigateTo('owner-dashboard')}
+          onLoginSuccess={() => navigateTo(currentRoute === 'owner-security' ? 'owner-security' : 'owner-dashboard')}
           onNavigatePublic={() => navigateTo('public')}
         />
       );
     }
 
     return (
-      <OwnerEditorProvider>
+      <OwnerEditorProvider initialTab={currentRoute === 'owner-security' ? 'security' : 'overview'}>
         <OwnerDashboard
           onNavigatePublic={() => navigateTo('public')}
           onLogout={() => navigateTo('owner-login')}

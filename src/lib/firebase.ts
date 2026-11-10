@@ -59,9 +59,10 @@ export { auth, db, storage };
 const LOCAL_PUBLISHED_KEY = 'ananta_sparsha_published_content';
 const LOCAL_DRAFT_KEY = 'ananta_sparsha_draft_content';
 
-// Configured Owner UID and Email (from environment or defaults)
+// Configured Owner UID, Email, and Phone (from environment or defaults)
 export const CONFIGURED_OWNER_UID = import.meta.env.VITE_OWNER_UID || '';
 export const CONFIGURED_OWNER_EMAIL = (import.meta.env.VITE_OWNER_EMAIL || 'rahulnagv.dev@gmail.com').toLowerCase();
+export const CONFIGURED_OWNER_PHONE = (import.meta.env.VITE_OWNER_PHONE || '+91 98446 16699').trim();
 
 /**
  * Validates if the authenticated user is the designated owner.
