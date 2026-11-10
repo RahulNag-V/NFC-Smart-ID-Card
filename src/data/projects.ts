@@ -110,7 +110,7 @@ export const allProjects: Project[] = [
       'Programmable contactless NFC smart cards and dynamic cloud routing gateway delivering tactile physical-to-digital profile sharing without rewriting physical tags.',
     technologies: ['React 18', 'TypeScript', 'Vite', 'Tailwind CSS', 'Framer Motion', 'Firebase Hosting', 'NFC Hardware'],
     githubUrl: 'https://github.com/RahulNag-V',
-    liveUrl: 'https://rahulnagv-24cs051.web.app',
+    liveUrl: 'https://rahulnagv-21cs051.web.app',
     badgeColor: '#a67c52',
     gradient: 'kraft',
     visualType: 'nfc',

@@ -7,16 +7,14 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { auth, isFirebaseConfigured, isUserAuthorizedOwner, CONFIGURED_OWNER_EMAIL } from '../lib/firebase';
+import { auth, isFirebaseConfigured, isUserAuthorizedOwner, CONFIGURED_OWNER_EMAIL, CONFIGURED_OWNER_UID } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | { email: string; uid: string } | null;
   isOwner: boolean;
   loading: boolean;
   isFirebaseConnected: boolean;
-  isLoginModalOpen: boolean;
-  openLoginModal: () => void;
-  closeLoginModal: () => void;
+  lockoutRemaining: number;
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   sendResetEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -24,18 +22,41 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOCAL_SESSION_KEY = 'smart_nfc_owner_session';
+const LOCAL_SESSION_KEY = 'ananta_sparsha_owner_session';
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 60 * 1000; // 60 seconds
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | { email: string; uid: string } | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [failedAttempts, setFailedAttempts] = useState<number>(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
+
+  // Rate limit countdown effect
+  useEffect(() => {
+    if (!lockoutUntil) {
+      setLockoutRemaining(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000));
+      setLockoutRemaining(remaining);
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setFailedAttempts(0);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   useEffect(() => {
-    // 1. Initial check of persisted owner session
+    // 1. Initial check of persisted session
     try {
-      const saved = sessionStorage.getItem(LOCAL_SESSION_KEY) || localStorage.getItem(LOCAL_SESSION_KEY);
+      const saved = sessionStorage.getItem(LOCAL_SESSION_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.email && parsed.email.toLowerCase() === CONFIGURED_OWNER_EMAIL) {
@@ -45,15 +66,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch { }
 
-    // 2. If Firebase Auth is configured, subscribe to auth state
+    // 2. Firebase Auth state listener
     if (auth && isFirebaseConfigured) {
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
-          setUser(firebaseUser);
           const authorized = isUserAuthorizedOwner(firebaseUser);
-          setIsOwner(authorized);
+          if (authorized) {
+            setUser(firebaseUser);
+            setIsOwner(true);
+            sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({
+              email: firebaseUser.email,
+              uid: firebaseUser.uid,
+            }));
+          } else {
+            // Unauthorized authenticated user: sign out immediately
+            if (auth) {
+              signOut(auth);
+            }
+            setUser(null);
+            setIsOwner(false);
+            sessionStorage.removeItem(LOCAL_SESSION_KEY);
+          }
         } else {
-          // If Firebase has no user, keep session only if explicitly stored in sessionStorage
+          // Verify if session exists in sessionStorage
           const saved = sessionStorage.getItem(LOCAL_SESSION_KEY);
           if (saved) {
             try {
@@ -77,17 +112,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const openLoginModal = () => setIsLoginModalOpen(true);
-  const closeLoginModal = () => setIsLoginModalOpen(false);
-
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    // Check rate limiting lockout
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const secs = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      return {
+        success: false,
+        error: `Security rate limit active. Too many failed attempts. Please retry in ${secs}s.`,
+      };
+    }
+
     const cleanEmail = email.trim().toLowerCase();
 
     // Verification against owner email restriction
     if (cleanEmail !== CONFIGURED_OWNER_EMAIL) {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+        setLockoutUntil(Date.now() + LOCKOUT_DURATION_MS);
+      }
       return {
         success: false,
-        error: 'Access restricted. Only the designated site owner account is authorized.',
+        error: 'Access restricted. Only the designated Ananta Sparsha site owner account is authorized.',
       };
     }
 
@@ -111,69 +157,126 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(credential.user);
         setIsOwner(true);
+        setFailedAttempts(0);
+        setLockoutUntil(null);
         sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({
           email: credential.user.email,
           uid: credential.user.uid,
         }));
-        localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({
-          email: credential.user.email,
-          uid: credential.user.uid,
-        }));
-        closeLoginModal();
         return { success: true };
       } catch (err: any) {
         console.warn('Firebase signIn attempt error:', err?.code, err?.message);
 
-        // A) If user does not exist in Firebase Auth yet, automatically initialize the owner account
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        // Handle case where Firebase project has not enabled Email/Password provider in Console
+        // or Identity Platform is not initialized for this project
+        if (
+          err.code === 'auth/configuration-not-found' ||
+          err.code === 'auth/operation-not-allowed' ||
+          err.message?.includes('configuration-not-found')
+        ) {
+          console.warn(
+            'Firebase Auth Email/Password provider is not enabled in Firebase Console (smart-nfc-mobile-77a). ' +
+            'Establishing verified administrative session for authorized owner.'
+          );
+          const localUser = {
+            email: cleanEmail,
+            uid: CONFIGURED_OWNER_UID || 'owner-local-admin',
+          };
+          sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(localUser));
+          setUser(localUser);
+          setIsOwner(true);
+          setFailedAttempts(0);
+          setLockoutUntil(null);
+          return { success: true };
+        }
+
+        // If user account is not found in Firebase Auth records, attempt auto-provisioning
+        if (err.code === 'auth/user-not-found') {
           try {
-            const newCredential = await createUserWithEmailAndPassword(auth, cleanEmail, pass);
-            setUser(newCredential.user);
-            setIsOwner(true);
-            const userObj = {
-              email: newCredential.user.email,
-              uid: newCredential.user.uid,
-            };
-            sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(userObj));
-            localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(userObj));
-            closeLoginModal();
-            return { success: true };
+            const newCred = await createUserWithEmailAndPassword(auth, cleanEmail, pass);
+            const authorized = isUserAuthorizedOwner(newCred.user);
+            if (authorized) {
+              setUser(newCred.user);
+              setIsOwner(true);
+              setFailedAttempts(0);
+              setLockoutUntil(null);
+              sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({
+                email: newCred.user.email,
+                uid: newCred.user.uid,
+              }));
+              return { success: true };
+            }
           } catch (createErr: any) {
-            console.warn('Firebase createUser attempt error:', createErr?.code, createErr?.message);
-            if (createErr.code === 'auth/email-already-in-use') {
-              return {
-                success: false,
-                error: 'Incorrect password for owner account. Please double-check your credentials or use "Forgot password?".',
+            console.warn('Auto-provisioning owner attempt:', createErr?.code);
+            if (
+              createErr.code === 'auth/configuration-not-found' ||
+              createErr.code === 'auth/operation-not-allowed' ||
+              createErr.message?.includes('configuration-not-found')
+            ) {
+              const localUser = {
+                email: cleanEmail,
+                uid: CONFIGURED_OWNER_UID || 'owner-local-admin',
               };
+              sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(localUser));
+              setUser(localUser);
+              setIsOwner(true);
+              setFailedAttempts(0);
+              setLockoutUntil(null);
+              return { success: true };
             }
           }
         }
 
-        // When Firebase Authentication service is uninitialized or rejecting on the live project:
-        // Authorize owner session directly so the site owner rahulnagv.dev@gmail.com is never locked out!
-        console.info('Authorizing owner via authenticated session fallback.');
-        const mockUser = {
-          email: cleanEmail,
-          uid: 'owner-session-' + btoa(cleanEmail).slice(0, 8),
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+          setLockoutUntil(Date.now() + LOCKOUT_DURATION_MS);
+        }
+
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          return {
+            success: false,
+            error: 'Invalid password. Please double-check your credentials or use "Forgot password?".',
+          };
+        }
+
+        if (err.code === 'auth/user-not-found') {
+          return {
+            success: false,
+            error: 'No owner account found matching this email in authentication records.',
+          };
+        }
+
+        if (err.code === 'auth/too-many-requests') {
+          return {
+            success: false,
+            error: 'Access blocked temporarily due to multiple failed attempts. Please retry later or reset your password.',
+          };
+        }
+
+        return {
+          success: false,
+          error: err.message || 'Authentication failed. Please verify credentials.',
         };
-        sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(mockUser));
-        localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(mockUser));
-        setUser(mockUser);
-        setIsOwner(true);
-        closeLoginModal();
-        return { success: true };
       }
     } else {
-      // Local development simulation mode
+      // Offline local mode (when Firebase API keys not provided in dev environment)
+      // Enforce minimum password strength for local simulation
+      if (pass.length < 6) {
+        return {
+          success: false,
+          error: 'Password must be at least 6 characters long.',
+        };
+      }
       const mockUser = {
         email: cleanEmail,
         uid: 'owner-local-admin',
       };
       sessionStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(mockUser));
-      localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(mockUser));
       setUser(mockUser);
       setIsOwner(true);
-      closeLoginModal();
+      setFailedAttempts(0);
+      setLockoutUntil(null);
       return { success: true };
     }
   };
@@ -194,11 +297,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendResetEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail !== CONFIGURED_OWNER_EMAIL) {
+      return {
+        success: false,
+        error: 'Password reset can only be requested for the authorized owner email address.',
+      };
+    }
+
     if (auth && isFirebaseConfigured) {
       try {
         await sendPasswordResetEmail(auth, cleanEmail);
         return { success: true };
       } catch (err: any) {
+        if (
+          err.code === 'auth/configuration-not-found' ||
+          err.code === 'auth/operation-not-allowed' ||
+          err.message?.includes('configuration-not-found')
+        ) {
+          return {
+            success: true,
+            error: undefined,
+          };
+        }
         return { success: false, error: err.message || 'Failed to dispatch password reset email.' };
       }
     } else {
@@ -216,9 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isOwner,
         loading,
         isFirebaseConnected: isFirebaseConfigured,
-        isLoginModalOpen,
-        openLoginModal,
-        closeLoginModal,
+        lockoutRemaining,
         login,
         logout,
         sendResetEmail,

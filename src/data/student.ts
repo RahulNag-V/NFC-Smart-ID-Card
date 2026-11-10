@@ -2,6 +2,11 @@ import studentPhoto from '../assets/student-photo.png';
 
 export interface StudentProfile {
   fullName: string;
+  headline?: string;
+  biography?: string;
+  location?: string;
+  websiteUrl?: string;
+  coverUrl?: string;
   usn: string;
   studentId: string;
   branch: string;
@@ -48,6 +53,11 @@ export interface StudentProfile {
 
 export const defaultStudentData: StudentProfile = {
   fullName: 'Rahul Nag V',
+  headline: 'Full-Stack Software Engineer & AI Researcher',
+  biography: 'Computer Science and Engineering undergraduate at Bangalore Technological Institute. Specializing in deep learning medical imaging (3D UNETR), full-stack cloud architectures, and tactile contactless NFC hardware systems.',
+  location: 'Bengaluru, Karnataka, India',
+  websiteUrl: 'https://rahulnagv-21cs051.web.app',
+  coverUrl: '',
   usn: '1BH24CS051',
   studentId: '1BH24CS051',
   branch: 'Computer Science and Engineering (CSE)',
@@ -78,17 +88,17 @@ export const defaultStudentData: StudentProfile = {
     pincode: '560035',
     affiliations: 'Affiliated to Visvesvaraya Technological University (VTU)',
     accreditation: 'Approved by AICTE • Recognized by Govt. of Karnataka',
-    website: 'https://rahulnagv-24cs051.web.app',
+    website: 'https://rahulnagv-21cs051.web.app',
     phone: '+91 80 2844 1950 / 1951',
     email: 'registrar@bti.ac.in',
   },
   verification: {
     status: 'VERIFIED & ACTIVE',
     verifiedBy: 'Office of the Registrar & Academic Council',
-    verificationCode: 'VRF-24CS051-99A7',
-    hash: '0x7e8b91c1...24cs051',
-    verificationUrl: 'https://rahulnagv-24cs051.web.app/#verify',
-    lastVerified: 'Academic Year 2024-2028 Validated',
+    verificationCode: 'VRF-21CS051-99A7',
+    hash: '0x7e8b91c1...21cs051',
+    verificationUrl: 'https://rahulnagv-21cs051.web.app/#verify',
+    lastVerified: 'Academic Year Validated',
   },
 };
 

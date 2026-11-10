@@ -2,7 +2,6 @@ import React from 'react';
 import { Phone, Mail, MapPin, Calendar, Droplets, Building2, ShieldCheck } from 'lucide-react';
 import { StudentProfile, defaultStudentData, maskPhone, maskEmail, maskAddress, maskBloodGroup } from '../../data/student';
 import { useSiteContent } from '../../context/SiteContentContext';
-import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 interface IdCardBackFaceProps {
   id?: string;
@@ -33,7 +32,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
   isExport = false,
   student: studentProp,
 }) => {
-  const { activeContent, updateStudent, isEditMode } = useSiteContent();
+  const { activeContent } = useSiteContent();
   const currentStudent = studentProp || activeContent.student || defaultStudentData;
   const visibility = activeContent.visibility;
   const theme = activeContent.theme;
@@ -42,21 +41,10 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
   const cardBgColor = theme?.colors?.idCardBackground || '#ffffff';
 
   const rawAddress = currentStudent.permanentAddress.replace(/, India$/, '');
-  const displayedAddress = isEditMode
-    ? rawAddress
-    : maskAddress(rawAddress, visibility.showPermanentAddress);
-
-  const displayedPhone = isEditMode
-    ? currentStudent.phone
-    : maskPhone(currentStudent.phone, visibility.showPhone);
-
-  const displayedEmail = isEditMode
-    ? currentStudent.email
-    : maskEmail(currentStudent.email, visibility.showEmail);
-
-  const displayedBlood = isEditMode
-    ? currentStudent.bloodGroup
-    : maskBloodGroup(currentStudent.bloodGroup, visibility.showBloodGroup);
+  const displayedAddress = maskAddress(rawAddress, visibility.showPermanentAddress);
+  const displayedPhone = maskPhone(currentStudent.phone, visibility.showPhone);
+  const displayedEmail = maskEmail(currentStudent.email, visibility.showEmail);
+  const displayedBlood = maskBloodGroup(currentStudent.bloodGroup, visibility.showBloodGroup);
 
   const student = {
     address: displayedAddress,
@@ -220,7 +208,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
         </div>
       </div>
 
-      {/* 2. MIDDLE SECTION: Structured Personal Details with Inline Edit Popovers */}
+      {/* 2. MIDDLE SECTION: Structured Personal Details */}
       <div className="flex-1 px-3 py-1.5 z-10 flex flex-col justify-center space-y-1.5">
         <div className="grid grid-cols-2 gap-1.5">
           {/* DOB */}
@@ -230,13 +218,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
               <span>Date of Birth</span>
             </div>
             <p className="font-mono font-bold text-[#1e1713] text-[10.5px] sm:text-[11px] mt-0.5">
-              <InlineEditPopover
-                value={student.dob}
-                label="Date of Birth"
-                onSave={(dob) => updateStudent({ dateOfBirth: dob })}
-              >
-                {student.dob}
-              </InlineEditPopover>
+              {student.dob}
             </p>
           </div>
 
@@ -247,13 +229,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
               <span>Blood Group</span>
             </div>
             <p className="font-mono font-extrabold text-[#991b1b] text-[11.5px] sm:text-[12px] mt-0.5">
-              <InlineEditPopover
-                value={student.bloodGroup}
-                label="Blood Group"
-                onSave={(blood) => updateStudent({ bloodGroup: blood })}
-              >
-                {student.bloodGroup}
-              </InlineEditPopover>
+              {student.bloodGroup}
             </p>
           </div>
         </div>
@@ -268,13 +244,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
               Phone Number
             </span>
             <p className="font-mono font-bold text-[#1e1713] text-[10px] sm:text-[10.5px] truncate">
-              <InlineEditPopover
-                value={currentStudent.phone}
-                label="Student Phone"
-                onSave={(phone) => updateStudent({ phone })}
-              >
-                {student.phone}
-              </InlineEditPopover>
+              {student.phone}
             </p>
           </div>
         </div>
@@ -289,13 +259,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
               Email
             </span>
             <p className="font-mono font-bold text-[#1e1713] text-[9.5px] sm:text-[10px] truncate">
-              <InlineEditPopover
-                value={currentStudent.email}
-                label="Student Email"
-                onSave={(email) => updateStudent({ email })}
-              >
-                {student.email}
-              </InlineEditPopover>
+              {student.email}
             </p>
           </div>
         </div>
@@ -310,14 +274,7 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
               Address
             </span>
             <p className="text-[#2b241e] text-[8px] sm:text-[8.5px] leading-snug font-sans font-medium mt-0.5">
-              <InlineEditPopover
-                value={currentStudent.permanentAddress}
-                label="Permanent Address"
-                type="textarea"
-                onSave={(addr) => updateStudent({ permanentAddress: addr })}
-              >
-                {student.address}
-              </InlineEditPopover>
+              {student.address}
             </p>
           </div>
         </div>

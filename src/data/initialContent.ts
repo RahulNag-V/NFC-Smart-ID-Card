@@ -191,7 +191,7 @@ export const defaultSeo: SeoConfig = {
   keywords: 'Rahul Nag V, 1BH24CS051, BTI, NFC Smart ID Card, Computer Science, Portfolio, Bangalore Technological Institute',
   author: 'Rahul Nag V',
   ogImage: '/bti-logo.jpeg',
-  canonicalUrl: 'https://rahulnagv-24cs051.web.app',
+  canonicalUrl: 'https://rahulnagv-21cs051.web.app',
 };
 
 export const defaultInitialContent: PublishedProfileData = {

@@ -2,7 +2,7 @@
 
 > **Digital Student Identity Card, 3D Tactile Portfolio, and Academic Showcase** for **Rahul Nag V (USN: 24CS051)**, Department of Computer Science & Engineering, Bangalore Technological Institute.
 
-🌐 **Live Production App**: [https://rahulnagv-24cs051.web.app](https://rahulnagv-24cs051.web.app)
+🌐 **Live Production App**: [https://rahulnagv-21cs051.web.app](https://rahulnagv-21cs051.web.app)
 
 ---
 
@@ -103,4 +103,4 @@ npx -y firebase-tools deploy --only hosting
 - USN: `24CS051`
 - Department: Computer Science & Engineering
 - Institution: Bangalore Technological Institute (BTI)
-- Portfolio: [https://rahulnagv-24cs051.web.app](https://rahulnagv-24cs051.web.app)
+- Portfolio: [https://rahulnagv-21cs051.web.app](https://rahulnagv-21cs051.web.app)

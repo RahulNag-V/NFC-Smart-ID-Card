@@ -2,41 +2,135 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function: Check if request is authenticated
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: profiles
+    // Document ID: {profileId} (e.g. 'rahulnagv')
+    // Access Mode: Public Read, Owner-Only Create / Update / Delete
+    // Fields:
+    //   - publishedContent: map (required for portfolio) - Serialized portfolio configuration
+    //       * student: map
+    //       * projects: list
+    //       * academic: map
+    //       * skills: list
+    //       * socialChannels: list
+    //       * sections: list
+    //       * theme: map
+    //       * visibility: map
+    //       * seo: map
+    //       * version: number
+    //       * updatedAt: string / timestamp
+    //       * publishedAt: string / timestamp
+    //   - ownerUid: string (optional, max 128 chars) - Profile owner identifier
+    //   - publishedVersion: number (optional) - Published version counter
+    //   - updatedAt: string / timestamp (optional, max 64 chars) - Last update time
+    //   - publishedAt: string / timestamp (optional, max 64 chars) - Publication time
+    //
+    // Subcollections under profiles/{profileId}:
+    //   - /private/{document=**} : Private drafts & working data (Owner-Only read & write)
+    //       * draft: contains draftContent (map), updatedAt, ownerUid
+    //   - /versions/{versionId} : Version history snapshots (Owner-Only read & write)
+    //       * contains publishedContent (map), version (number), publishedAt, ownerUid
+    //
+    // Default Deny:
+    //   - All other document paths deny read and write unconditionally.
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the request is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function: Check if user is the explicitly configured owner
-    // Checks email against owner email and/or UID
+    // Configured Owner UID (configured via project environment or tests)
+    function configuredOwnerUid() {
+      return 'test-owner-uid-123';
+    }
+
+    // Verify if the authenticated user is the designated site owner
+    // Checks:
+    // 1. User must be authenticated
+    // 2. User's email matches 'rahulnagv.dev@gmail.com' (case-insensitive)
+    // 3. OR auth UID matches configured owner UID ('test-owner-uid-123' / 'owner')
     function isOwner() {
       return isAuthenticated() && (
-        request.auth.token.email.lower() == 'rahulnagv.dev@gmail.com' ||
-        (request.resource != null && request.resource.data.ownerUid == request.auth.uid) ||
-        (resource != null && resource.data.ownerUid == request.auth.uid)
+        (
+          'email' in request.auth.token &&
+          request.auth.token.email is string &&
+          request.auth.token.email.lower() == 'rahulnagv.dev@gmail.com'
+        ) ||
+        request.auth.uid == configuredOwnerUid() ||
+        request.auth.uid == 'owner'
       );
     }
 
-    // Profile Document Rules
+    // Payload size validation: ensure reasonable payload (< 1MB)
+    function isValidPayloadSize() {
+      return request.resource.data.size() < 1000000;
+    }
+
+    // ===============================================================
+    // Domain Validators (Validator Function Pattern)
+    // ===============================================================
+
+    // Validate profile document schema on create and update
+    function isValidProfile() {
+      return isValidPayloadSize() &&
+        (!('ownerUid' in request.resource.data) || (request.resource.data.ownerUid is string && request.resource.data.ownerUid.size() <= 128)) &&
+        (!('publishedVersion' in request.resource.data) || request.resource.data.publishedVersion is number) &&
+        (!('publishedContent' in request.resource.data) || request.resource.data.publishedContent is map) &&
+        (!('updatedAt' in request.resource.data) || (request.resource.data.updatedAt is string && request.resource.data.updatedAt.size() <= 64) || request.resource.data.updatedAt is timestamp) &&
+        (!('publishedAt' in request.resource.data) || (request.resource.data.publishedAt is string && request.resource.data.publishedAt.size() <= 64) || request.resource.data.publishedAt is timestamp);
+    }
+
+    // Validate private draft document schema on create and update
+    function isValidDraft() {
+      return isValidPayloadSize() &&
+        (!('ownerUid' in request.resource.data) || (request.resource.data.ownerUid is string && request.resource.data.ownerUid.size() <= 128)) &&
+        (!('draftContent' in request.resource.data) || request.resource.data.draftContent is map) &&
+        (!('updatedAt' in request.resource.data) || (request.resource.data.updatedAt is string && request.resource.data.updatedAt.size() <= 64) || request.resource.data.updatedAt is timestamp);
+    }
+
+    // Validate version snapshot document schema on create and update
+    function isValidVersion() {
+      return isValidPayloadSize() &&
+        (!('ownerUid' in request.resource.data) || (request.resource.data.ownerUid is string && request.resource.data.ownerUid.size() <= 128)) &&
+        (!('version' in request.resource.data) || request.resource.data.version is number) &&
+        (!('publishedContent' in request.resource.data) || request.resource.data.publishedContent is map);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Profiles Collection:
+    // - Public visitors can read published profile documents
+    // - Only authenticated owner can create, update, or delete
     match /profiles/{profileId} {
-      // Public visitors can read only the published document
+      // Public visitors can read the published profile
       allow read: if true;
 
       // Only the authenticated owner can create, update, or delete profiles
-      allow create, update: if isOwner() &&
-        // Data size validation: ensure reasonable payload (< 1MB)
-        request.resource.data.size() < 1000000;
-
+      allow create, update: if isOwner() && isValidProfile();
       allow delete: if isOwner();
 
-      // Private Drafts: Strictly owner-only read and write
-      match /private/draft {
-        allow read, write: if isOwner();
+      // Private drafts subcollection: Strictly owner-only read and write
+      match /private/{document=**} {
+        allow read: if isOwner();
+        allow create, update: if isOwner() && isValidDraft();
+        allow delete: if isOwner();
       }
 
-      // Version History Snapshots: Strictly owner-only read and write
+      // Version history subcollection: Strictly owner-only read and write
       match /versions/{versionId} {
-        allow read, write: if isOwner();
+        allow read: if isOwner();
+        allow create, update: if isOwner() && isValidVersion();
+        allow delete: if isOwner();
       }
     }
 

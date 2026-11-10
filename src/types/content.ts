@@ -142,12 +142,3 @@ export interface PublishedProfileData {
   updatedAt: string;
   publishedAt: string;
 }
-
-export interface VersionSnapshot {
-  id: string;
-  version: number;
-  timestamp: string;
-  description: string;
-  publishedBy: string;
-  data: PublishedProfileData;
-}

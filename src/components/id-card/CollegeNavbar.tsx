@@ -1,18 +1,16 @@
 import React from 'react';
 import { CollegeEmblem } from './CollegeEmblem';
-import { FolderGit2, Mail, Menu, X, Pencil } from 'lucide-react';
+import { FolderGit2, Mail, Menu, X } from 'lucide-react';
 import { defaultStudentData } from '../../data/student';
 
 interface CollegeNavbarProps {
   activeTab: 'home' | 'works' | 'contact';
   onSelectTab: (tab: 'home' | 'works' | 'contact') => void;
-  onEdit?: () => void;
 }
 
 export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
   activeTab,
   onSelectTab,
-  onEdit,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 

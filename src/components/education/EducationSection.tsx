@@ -9,7 +9,6 @@ import {
   Clock,
 } from 'lucide-react';
 import { useSiteContent } from '../../context/SiteContentContext';
-import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 // ================= ACADEMIC DATA REPOSITORY =================
 export interface SemesterScore {
@@ -128,11 +127,11 @@ export const schoolEducationData: SchoolRecord[] = [
 
 // ================= MAIN COMPONENT =================
 export const EducationSection: React.FC = () => {
-  const { activeContent, updateAcademic, isEditMode } = useSiteContent();
+  const { activeContent } = useSiteContent();
 
   const engineering = activeContent?.academic?.engineering || engineeringAcademicData;
   const schooling = activeContent?.academic?.schooling || schoolEducationData;
-  const showSgpa = isEditMode || activeContent?.visibility?.showSgpaScores !== false;
+  const showSgpa = activeContent?.visibility?.showSgpaScores !== false;
 
   // Compute overall CGPA dynamically from completed semesters
   const completedSemesters: SemesterScore[] = [];
@@ -144,18 +143,6 @@ export const EducationSection: React.FC = () => {
 
   const totalSgpa = completedSemesters.reduce((acc, curr) => acc + curr.sgpa, 0);
   const calculatedCgpa = completedSemesters.length > 0 ? totalSgpa / completedSemesters.length : 7.62;
-
-  const handleUpdateSemesterSgpa = (yearIndex: number, semIndex: number, newSgpa: number) => {
-    const copy = JSON.parse(JSON.stringify(engineering));
-    if (copy[yearIndex]?.semesters?.[semIndex]) {
-      copy[yearIndex].semesters[semIndex].sgpa = Number(newSgpa);
-      // recalculate year average
-      const semList = copy[yearIndex].semesters;
-      const yrAvg = semList.reduce((acc: number, s: SemesterScore) => acc + s.sgpa, 0) / semList.length;
-      copy[yearIndex].yearlyAverageSgpa = yrAvg;
-      updateAcademic({ engineering: copy });
-    }
-  };
 
   return (
     <section className="space-y-3.5 pt-3 text-[#1e1713]">
@@ -262,17 +249,7 @@ export const EducationSection: React.FC = () => {
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 shadow-2xs shrink-0">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[10px] font-mono font-bold text-emerald-900 whitespace-nowrap">
-                        <InlineEditPopover
-                          value={year.currentStatusLabel || '5th Semester Pursuing'}
-                          label="Current Status"
-                          onSave={(label) => {
-                            const copy = [...engineering];
-                            copy[yearIndex].currentStatusLabel = label;
-                            updateAcademic({ engineering: copy });
-                          }}
-                        >
-                          {year.currentStatusLabel || '5th Semester Pursuing'}
-                        </InlineEditPopover>
+                        {year.currentStatusLabel || '5th Semester Pursuing'}
                       </span>
                     </div>
                   ) : (
@@ -294,17 +271,7 @@ export const EducationSection: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-[#524538] font-sans leading-relaxed">
-                  <InlineEditPopover
-                    value={year.program}
-                    label="Program Title"
-                    onSave={(val) => {
-                      const copy = [...engineering];
-                      copy[yearIndex].program = val;
-                      updateAcademic({ engineering: copy });
-                    }}
-                  >
-                    {year.program}
-                  </InlineEditPopover>{' '}
+                  {year.program}{' '}
                   &bull;{' '}
                   <span className="text-[#704a29] font-medium">
                     {year.institution}
@@ -327,18 +294,7 @@ export const EducationSection: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-[11px] text-[#524538] font-sans leading-relaxed">
-                      <InlineEditPopover
-                        value={year.inProgressNote || ''}
-                        label="In Progress Note"
-                        type="textarea"
-                        onSave={(note) => {
-                          const copy = [...engineering];
-                          copy[yearIndex].inProgressNote = note;
-                          updateAcademic({ engineering: copy });
-                        }}
-                      >
-                        {year.inProgressNote}
-                      </InlineEditPopover>
+                      {year.inProgressNote}
                     </p>
                   </div>
 
@@ -388,14 +344,7 @@ export const EducationSection: React.FC = () => {
                             {showSgpa ? (
                               <>
                                 <span className="text-lg sm:text-xl font-black text-[#704a29]">
-                                  <InlineEditPopover
-                                    value={sem.sgpa}
-                                    label={`${sem.semesterName} SGPA`}
-                                    type="number"
-                                    onSave={(score) => handleUpdateSemesterSgpa(yearIndex, semIndex, score)}
-                                  >
-                                    {sem.sgpa.toFixed(2)}
-                                  </InlineEditPopover>
+                                  {sem.sgpa.toFixed(2)}
                                 </span>
                                 <span className="text-xs font-bold text-[#8c6239]">
                                   /{sem.maxSgpa} SGPA
@@ -481,17 +430,7 @@ export const EducationSection: React.FC = () => {
                 </div>
 
                 <h4 className="text-sm font-serif font-bold text-[#1e1713] mt-2 leading-snug">
-                  <InlineEditPopover
-                    value={item.subTitle}
-                    label="School Subtitle"
-                    onSave={(sub) => {
-                      const copy = [...schooling];
-                      copy[idx].subTitle = sub;
-                      updateAcademic({ schooling: copy });
-                    }}
-                  >
-                    {item.subTitle}
-                  </InlineEditPopover>
+                  {item.subTitle}
                 </h4>
 
                 <p className="text-[11px] text-[#524538] font-sans mt-1">
@@ -505,18 +444,7 @@ export const EducationSection: React.FC = () => {
                 </span>
                 <div className="flex items-baseline gap-0.5 font-mono">
                   <span className="text-xl sm:text-2xl font-black text-[#704a29] tracking-tight">
-                    <InlineEditPopover
-                      value={item.score}
-                      label="Board Score"
-                      type="number"
-                      onSave={(sc) => {
-                        const copy = [...schooling];
-                        copy[idx].score = Number(sc);
-                        updateAcademic({ schooling: copy });
-                      }}
-                    >
-                      {item.score.toFixed(2)}
-                    </InlineEditPopover>
+                    {item.score.toFixed(2)}
                   </span>
                   <span className="text-sm font-extrabold text-[#8c6239]">
                     {item.scale}

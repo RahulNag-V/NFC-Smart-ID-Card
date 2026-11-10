@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "rahulnagv-24cs051",
+    "site": "rahulnagv-21cs051",
     "public": "dist",
     "ignore": [
       "firebase.json",

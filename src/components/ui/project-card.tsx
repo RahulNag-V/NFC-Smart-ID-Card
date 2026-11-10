@@ -10,11 +10,8 @@ import {
   Compass,
   Radio,
   ScanLine,
-  Trash2,
 } from 'lucide-react';
 import { Project } from '../../data/projects';
-import { useSiteContent } from '../../context/SiteContentContext';
-import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 // Dedicated decorative vector banners tailored to each project's domain
 function ProjectVisualBanner({ type, badgeColor }: { type: Project['visualType']; badgeColor: string }) {
@@ -168,8 +165,6 @@ function ProjectVisualBanner({ type, badgeColor }: { type: Project['visualType']
 }
 
 export function ProjectCard({ project }: { project: Project }) {
-  const { isEditMode, updateProject, deleteProject } = useSiteContent();
-
   return (
     <motion.div
       layout
@@ -179,23 +174,6 @@ export function ProjectCard({ project }: { project: Project }) {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="group flex flex-col justify-between h-full w-full rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-[#a67c52]/60 transition-all duration-300 relative overflow-hidden"
     >
-      {/* Edit mode delete action */}
-      {isEditMode && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (window.confirm(`Delete project "${project.title}"?`)) {
-              deleteProject(project.id);
-            }
-          }}
-          className="absolute top-3 right-3 z-30 p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition shadow-2xs cursor-pointer"
-          title="Delete project"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      )}
-
       <div>
         {/* Visual Domain Banner */}
         <div className="mb-4">
@@ -213,25 +191,12 @@ export function ProjectCard({ project }: { project: Project }) {
 
         {/* Project Title */}
         <h3 className="text-lg sm:text-xl font-bold font-serif text-[#2b241e] mb-2 tracking-tight group-hover:text-[#704a29] transition-colors">
-          <InlineEditPopover
-            value={project.title}
-            label="Project Title"
-            onSave={(title) => updateProject(project.id, { title })}
-          >
-            {project.title}
-          </InlineEditPopover>
+          {project.title}
         </h3>
 
         {/* Description */}
         <p className="text-xs sm:text-sm text-[#73685c] leading-relaxed mb-4">
-          <InlineEditPopover
-            value={project.description}
-            label="Project Description"
-            type="textarea"
-            onSave={(desc) => updateProject(project.id, { description: desc })}
-          >
-            {project.description}
-          </InlineEditPopover>
+          {project.description}
         </p>
 
         {/* Technology Tags */}

@@ -4,7 +4,6 @@ import defaultPhoto from '../../assets/student-photo.png';
 import { BarcodeView } from './BarcodeView';
 import { StudentProfile, defaultStudentData } from '../../data/student';
 import { useSiteContent } from '../../context/SiteContentContext';
-import { InlineEditPopover } from '../editor/InlineEditPopover';
 
 interface IdCardFrontFaceProps {
   id?: string;
@@ -23,7 +22,7 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
   isExport = false,
   student: studentProp,
 }) => {
-  const { activeContent, updateStudent, isEditMode } = useSiteContent();
+  const { activeContent } = useSiteContent();
   const currentStudent = studentProp || activeContent.student || defaultStudentData;
   const theme = activeContent.theme;
 
@@ -188,57 +187,30 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
 
       {/* MIDDLE SECTION: Photo, Name, USN, Department */}
       <div className="flex-1 flex flex-col items-center justify-center px-3 py-1 z-10 text-center">
-        {/* 2. Student Photograph with Inline Edit option */}
+        {/* 2. Student Photograph */}
         <div className="relative w-25 h-32 sm:w-27 sm:h-35 rounded-lg overflow-hidden border-2 border-[#704a29] ring-2 ring-[#d9cdbd]/80 bg-[#f8f5ee] shadow-sm shrink-0">
           <img
             src={student.photoUrl}
             alt={student.name}
             className="w-full h-full object-cover object-top"
           />
-          {isEditMode && (
-            <InlineEditPopover
-              value={student.photoUrl}
-              label="Student Photo"
-              type="image"
-              pencilPosition="top-right"
-              onSave={(url) => updateStudent({ photoUrl: url })}
-            />
-          )}
         </div>
 
         {/* 3. Student Name */}
         <h2 className="text-[18px] sm:text-[19.5px] font-serif font-bold text-[#1e1713] tracking-tight mt-2 leading-tight whitespace-nowrap">
-          <InlineEditPopover
-            value={student.name}
-            label="Student Full Name"
-            onSave={(name) => updateStudent({ fullName: name })}
-          >
-            {student.name}
-          </InlineEditPopover>
+          {student.name}
         </h2>
 
         {/* 4. USN */}
         <div className="mt-1 px-3 py-0.5 rounded-full bg-[#fbf8f3] border border-[#d9cdbd] shadow-2xs">
           <span className="text-[11.5px] sm:text-[12.5px] font-mono font-extrabold text-[#704a29] tracking-wider">
-            <InlineEditPopover
-              value={student.usn}
-              label="Student USN"
-              onSave={(usn) => updateStudent({ usn, studentId: usn })}
-            >
-              {student.usn}
-            </InlineEditPopover>
+            {student.usn}
           </span>
         </div>
 
         {/* 5. Department */}
         <p className="text-[10.5px] sm:text-[11px] font-sans font-semibold text-[#4a3f35] mt-1 px-1 max-w-[260px] leading-snug">
-          <InlineEditPopover
-            value={student.department}
-            label="Department"
-            onSave={(dept) => updateStudent({ department: dept, branch: dept })}
-          >
-            {student.department}
-          </InlineEditPopover>
+          {student.department}
         </p>
       </div>
 
@@ -249,13 +221,7 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
             Valid:
           </span>
           <span className="font-bold text-[#1e1713]">
-            <InlineEditPopover
-              value={student.validity}
-              label="Validity Duration"
-              onSave={(validity) => updateStudent({ academicYear: validity })}
-            >
-              {student.validity}
-            </InlineEditPopover>
+            {student.validity}
           </span>
         </div>
 

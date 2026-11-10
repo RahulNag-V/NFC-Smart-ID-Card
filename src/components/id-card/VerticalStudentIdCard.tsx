@@ -3,16 +3,22 @@ import { motion } from 'framer-motion';
 import { StudentProfile, defaultStudentData } from '../../data/student';
 import { IdCardFrontFace } from './IdCardFrontFace';
 import { IdCardBackFace } from './IdCardBackFace';
-import { RotateCw, Download, Printer, LayoutGrid, Check, ShieldCheck } from 'lucide-react';
+import { RotateCw, Download, Printer, LayoutGrid, Check, ShieldCheck, Pencil } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 import { useSiteContent } from '../../context/SiteContentContext';
 
 interface VerticalStudentIdCardProps {
   student?: StudentProfile;
+  onEditProfile?: () => void;
+  isOwner?: boolean;
 }
 
-export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({ student: studentProp }) => {
+export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
+  student: studentProp,
+  onEditProfile,
+  isOwner = false,
+}) => {
   const { activeContent } = useSiteContent();
   const currentStudent = studentProp || activeContent.student || defaultStudentData;
   const [isFlipped, setIsFlipped] = useState(false);
@@ -196,6 +202,26 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({ st
           >
             <RotateCw className="w-3.5 h-3.5" />
             <span>{isFlipped ? 'Flip to Front' : 'Flip to Back'}</span>
+          </button>
+        )}
+
+        {/* Owner-Only Edit Profile Entry Point */}
+        {onEditProfile && (
+          <button
+            type="button"
+            onClick={onEditProfile}
+            id="btn-edit-profile-top"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 group"
+            title={isOwner ? "Edit Profile (Owner Active — Click to open Dashboard)" : "Edit Profile (Owner Login)"}
+          >
+            <Pencil className="w-3.5 h-3.5 text-[#704a29] group-hover:rotate-12 transition-transform" />
+            <span>Edit Profile</span>
+            {isOwner && (
+              <span className="inline-flex items-center gap-1 pl-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                <span className="text-[10px] text-[#10B981] font-mono uppercase font-bold">Owner</span>
+              </span>
+            )}
           </button>
         )}
       </div>
@@ -492,6 +518,19 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({ st
           <Printer className="w-3.5 h-3.5" />
           <span>Print / Save as PDF</span>
         </button>
+
+        {onEditProfile && (
+          <button
+            type="button"
+            onClick={onEditProfile}
+            id="btn-edit-profile-bottom"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] text-[#704a29] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer group"
+            title={isOwner ? "Open Owner Dashboard to Edit Profile" : "Owner Login to Edit Profile"}
+          >
+            <Pencil className="w-3.5 h-3.5 text-[#704a29] group-hover:rotate-12 transition-transform" />
+            <span>{isOwner ? 'Edit Profile & Settings' : 'Edit Profile'}</span>
+          </button>
+        )}
       </div>
     </div>
   );
