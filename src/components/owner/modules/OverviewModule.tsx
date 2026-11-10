@@ -15,7 +15,6 @@ import {
   Share2,
   Sliders,
   Layers,
-  QrCode,
 } from 'lucide-react';
 import { useOwnerEditor, DashboardTab } from '../../../context/OwnerEditorContext';
 
@@ -227,10 +226,10 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateTab })
               Public visitors cannot view dashboard or editing controls.
             </span>
             <button
-              onClick={() => onNavigateTab('nfc-qr')}
+              onClick={() => onNavigateTab('preview')}
               className="text-xs text-[#704a29] hover:underline flex items-center gap-1 transition cursor-pointer font-bold"
             >
-              <span>Manage QR & NFC</span>
+              <span>Live Preview Simulator</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
@@ -280,11 +279,11 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateTab })
               tag: `${draftContent.sections?.filter(s => s.visible).length || 0} Enabled`,
             },
             {
-              tab: 'nfc-qr' as DashboardTab,
-              title: 'NFC & QR Generator',
-              desc: 'Download high-res QR codes for physical printing and view NFC payload.',
-              icon: QrCode,
-              tag: 'PNG & SVG',
+              tab: 'preview' as DashboardTab,
+              title: 'Live Preview Simulator',
+              desc: 'Simulate mobile, tablet, and desktop visitor experiences in real time.',
+              icon: Smartphone,
+              tag: 'Interactive',
             },
           ].map((item) => (
             <motion.div

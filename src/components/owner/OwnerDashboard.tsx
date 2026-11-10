@@ -7,7 +7,6 @@ import {
   Briefcase,
   Share2,
   Layers,
-  QrCode,
   Smartphone,
   ShieldCheck,
   LogOut,
@@ -34,7 +33,6 @@ import { AppearanceModule } from './modules/AppearanceModule';
 import { ProfessionalModule } from './modules/ProfessionalModule';
 import { SocialLinksModule } from './modules/SocialLinksModule';
 import { SectionsModule } from './modules/SectionsModule';
-import { NfcQrModule } from './modules/NfcQrModule';
 import { LivePreviewModule } from './modules/LivePreviewModule';
 import { SecurityModule } from './modules/SecurityModule';
 import { PublicPortfolioView } from '../public/PublicPortfolioView';
@@ -80,7 +78,6 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     { id: 'professional' as DashboardTab, label: 'Professional Info', icon: Briefcase },
     { id: 'social' as DashboardTab, label: 'Social Links', icon: Share2 },
     { id: 'sections' as DashboardTab, label: 'Profile Sections', icon: Layers },
-    { id: 'nfc-qr' as DashboardTab, label: 'NFC & QR Management', icon: QrCode },
     { id: 'preview' as DashboardTab, label: 'Live Preview', icon: Smartphone },
     { id: 'security' as DashboardTab, label: 'Security & Access', icon: ShieldCheck },
   ];
@@ -321,7 +318,6 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             {activeTab === 'professional' && <ProfessionalModule />}
             {activeTab === 'social' && <SocialLinksModule />}
             {activeTab === 'sections' && <SectionsModule />}
-            {activeTab === 'nfc-qr' && <NfcQrModule />}
             {activeTab === 'preview' && <LivePreviewModule />}
             {activeTab === 'security' && <SecurityModule onLogout={handleLogoutAction} />}
           </div>

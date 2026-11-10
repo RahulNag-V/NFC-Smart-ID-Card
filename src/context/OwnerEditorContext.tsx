@@ -21,7 +21,6 @@ export type DashboardTab =
   | 'professional'
   | 'social'
   | 'sections'
-  | 'nfc-qr'
   | 'preview'
   | 'security';
 
