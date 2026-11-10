@@ -22,11 +22,17 @@ import {
   Sparkles,
   Building2,
   BookOpen,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
+  ZoomIn,
+  FileText,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { Project, ProjectCategory, FilterCategory } from '../../../data/projects';
 import { SkillItem } from '../../skills/SkillsSection';
 import { YearAcademicData, SemesterScore } from '../../education/EducationSection';
+import { CertificateItem, CertificateEntry, normalizeCertificate } from '../../../types/content';
 
 const projectCategoryOptions: ProjectCategory[] = [
   'Full-Stack Development · Event Management',
@@ -64,6 +70,7 @@ export const ProfessionalModule: React.FC = () => {
     updateAcademic,
     updateSkills,
     updateVisibility,
+    uploadMedia,
     showToast,
   } = useOwnerEditor();
 
@@ -72,6 +79,7 @@ export const ProfessionalModule: React.FC = () => {
   // Editing Project Modal / Form State
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isNewProject, setIsNewProject] = useState<boolean>(false);
+  const [isUploadingProjectImg, setIsUploadingProjectImg] = useState<boolean>(false);
 
   // New Skill Form State
   const [newSkillName, setNewSkillName] = useState('');
@@ -79,8 +87,11 @@ export const ProfessionalModule: React.FC = () => {
   const [newSkillLevel, setNewSkillLevel] = useState<SkillItem['level']>('Advanced');
   const [newSkillDesc, setNewSkillDesc] = useState('');
 
-  // New Certification State
-  const [newCertTitle, setNewCertTitle] = useState('');
+  // Certificate Management State (supporting multiple image uploads)
+  const [editingCert, setEditingCert] = useState<CertificateItem | null>(null);
+  const [isNewCert, setIsNewCert] = useState<boolean>(false);
+  const [isUploadingCertImages, setIsUploadingCertImages] = useState<boolean>(false);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
 
   const projects = draftContent.projects || [];
   const academic = draftContent.academic || { engineering: [], schooling: [], certifications: [], achievements: [] };
@@ -146,28 +157,105 @@ export const ProfessionalModule: React.FC = () => {
     showToast(`Removed skill ${name}.`, 'info');
   };
 
-  // Certifications
-  const handleAddCert = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCertTitle.trim()) return;
-
-    const currentCerts = academic.certifications || [];
-    updateAcademic({
-      ...academic,
-      certifications: [...currentCerts, newCertTitle.trim()],
-    });
-    setNewCertTitle('');
-    showToast('Certification added.', 'success');
+  const handleProjectImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingProject) return;
+    setIsUploadingProjectImg(true);
+    try {
+      const url = await uploadMedia(file, 'projects');
+      setEditingProject((prev) => (prev ? { ...prev, imageUrl: url } : null));
+    } catch (err: any) {
+      console.error('Project image upload failed:', err);
+    } finally {
+      setIsUploadingProjectImg(false);
+      if (e.target) e.target.value = '';
+    }
   };
 
-  const handleDeleteCert = (index: number) => {
-    const currentCerts = [...(academic.certifications || [])];
-    currentCerts.splice(index, 1);
-    updateAcademic({
-      ...academic,
-      certifications: currentCerts,
+  // ================= CERTIFICATIONS MANAGEMENT (MULTI-IMAGE SUPPORT) =================
+  const normalizedCertifications: CertificateItem[] = (academic.certifications || []).map((c, i) =>
+    normalizeCertificate(c, i)
+  );
+
+  const handleOpenAddCert = () => {
+    setEditingCert({
+      id: `cert-${Date.now()}`,
+      title: '',
+      issuer: '',
+      issueDate: '',
+      credentialUrl: '',
+      images: [],
     });
-    showToast('Certification deleted.', 'info');
+    setIsNewCert(true);
+  };
+
+  const handleOpenEditCert = (cert: CertificateItem) => {
+    setEditingCert({ ...cert, images: [...(cert.images || [])] });
+    setIsNewCert(false);
+  };
+
+  const handleSaveCert = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCert || !editingCert.title.trim()) {
+      showToast('Certificate title is required.', 'error');
+      return;
+    }
+
+    const currentList = [...normalizedCertifications];
+    if (isNewCert) {
+      const updated = [editingCert, ...currentList];
+      updateAcademic({ ...academic, certifications: updated });
+      showToast(`Added credential "${editingCert.title}".`, 'success');
+    } else {
+      const updated = currentList.map((c) => (c.id === editingCert.id ? editingCert : c));
+      updateAcademic({ ...academic, certifications: updated });
+      showToast(`Updated credential "${editingCert.title}".`, 'success');
+    }
+
+    setEditingCert(null);
+    setIsNewCert(false);
+  };
+
+  const handleDeleteCert = (id: string) => {
+    const updated = normalizedCertifications.filter((c) => c.id !== id);
+    updateAcademic({ ...academic, certifications: updated });
+    showToast('Credential removed.', 'info');
+  };
+
+  const handleCertImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0 || !editingCert) return;
+
+    setIsUploadingCertImages(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of files) {
+        const url = await uploadMedia(file, 'certificates');
+        newUrls.push(url);
+      }
+      setEditingCert((prev) =>
+        prev
+          ? {
+              ...prev,
+              images: [...(prev.images || []), ...newUrls],
+            }
+          : null
+      );
+      showToast(`Added ${newUrls.length} certificate image(s).`, 'success');
+    } catch (err: any) {
+      console.error('Cert image upload error:', err);
+    } finally {
+      setIsUploadingCertImages(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleRemoveCertImage = (imageIndex: number) => {
+    if (!editingCert) return;
+    const updatedImages = [...(editingCert.images || [])];
+    updatedImages.splice(imageIndex, 1);
+    setEditingCert({ ...editingCert, images: updatedImages });
+    showToast('Image removed from credential.', 'info');
   };
 
   // ================= ACADEMIC YEARS & SEMESTER SGPA MANAGERS =================
@@ -392,31 +480,51 @@ export const ProfessionalModule: React.FC = () => {
             {projects.map((proj, idx) => (
               <div
                 key={proj.id}
-                className="p-4 rounded-xl bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs"
+                className="p-4 rounded-xl bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs overflow-hidden"
               >
-                <div className="flex items-start gap-4">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs border border-[#d9cdbd]"
-                    style={{ backgroundColor: proj.badgeColor || '#704a29' }}
-                  >
-                    <Code2 className="w-6 h-6 text-white" />
-                  </div>
+                <div className="flex items-start gap-4 min-w-0 flex-1 overflow-hidden">
+                  {proj.imageUrl ? (
+                    <img
+                      src={proj.imageUrl}
+                      alt={proj.title}
+                      className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-xs border border-[#d9cdbd]"
+                    />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs border border-[#d9cdbd]"
+                      style={{
+                        backgroundColor:
+                          proj.badgeColor &&
+                          proj.badgeColor !== '#ffffff' &&
+                          proj.badgeColor !== '#fff' &&
+                          proj.badgeColor.trim() !== ''
+                            ? proj.badgeColor
+                            : '#704a29',
+                      }}
+                    >
+                      <Code2 className="w-6 h-6 text-white" />
+                    </div>
+                  )}
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-[#2b241e]">{proj.title}</h4>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                      <h4 className="text-sm font-bold text-[#2b241e] break-words break-all">
+                        {proj.title || 'Untitled Project'}
+                      </h4>
                       {proj.featured && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#f0eae1] text-[#704a29] text-[10px] font-bold border border-[#d9cdbd]">
+                        <span className="px-2 py-0.5 rounded-full bg-[#f0eae1] text-[#704a29] text-[10px] font-bold border border-[#d9cdbd] shrink-0">
                           Featured
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#73685c] line-clamp-1 mt-0.5">{proj.description}</p>
+                    <p className="text-xs text-[#73685c] line-clamp-2 mt-0.5 break-words break-all">
+                      {proj.description}
+                    </p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       {proj.technologies?.map((tech) => (
                         <span
                           key={tech}
-                          className="px-2 py-0.5 rounded-md bg-[#fbf8f3] border border-[#d9cdbd] text-[10px] text-[#73685c]"
+                          className="px-2 py-0.5 rounded-md bg-[#fbf8f3] border border-[#d9cdbd] text-[10px] text-[#73685c] max-w-full truncate"
                         >
                           {tech}
                         </span>
@@ -531,6 +639,85 @@ export const ProfessionalModule: React.FC = () => {
                     placeholder="Concise overview of engineering architecture, problem statement, and impact..."
                     className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] focus:outline-none focus:border-[#704a29] resize-none"
                   />
+                </div>
+
+                {/* Project Screenshot / Media File Upload */}
+                <div className="p-3.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs uppercase tracking-wider text-[#704a29] font-bold flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Project Screenshot / Media File</span>
+                    </label>
+                    {editingProject.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingProject({ ...editingProject, imageUrl: '' })}
+                        className="text-[11px] text-[#bc473b] hover:underline cursor-pointer"
+                      >
+                        Remove Image
+                      </button>
+                    )}
+                  </div>
+
+                  {editingProject.imageUrl ? (
+                    <div className="relative w-full h-32 rounded-lg border border-[#d9cdbd] overflow-hidden bg-white group shadow-2xs">
+                      <img
+                        src={editingProject.imageUrl}
+                        alt="Project Media Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLightboxImage({
+                            url: editingProject.imageUrl || '',
+                            title: editingProject.title || 'Project Asset',
+                          })
+                        }
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white gap-1.5 text-xs font-semibold cursor-pointer"
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                        <span>Enlarge Asset</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-4 border-2 border-dashed border-[#d9cdbd] rounded-xl flex flex-col items-center justify-center text-center bg-[#fffefb]">
+                      <Upload className="w-6 h-6 text-[#73685c] mb-1" />
+                      <p className="text-xs text-[#73685c]">Upload a preview screenshot, diagram, or UI thumbnail</p>
+                      <span className="text-[10px] text-[#9c9184] mt-0.5">JPEG, PNG, WEBP or SVG up to 5MB</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <label className="px-3.5 py-1.5 rounded-lg bg-[#704a29] text-white hover:bg-[#593a1f] text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0">
+                      {isUploadingProjectImg ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Choose Media File</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        disabled={isUploadingProjectImg}
+                        onChange={handleProjectImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <input
+                      type="url"
+                      value={editingProject.imageUrl || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, imageUrl: e.target.value })}
+                      placeholder="Or paste image URL (https://...)"
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -1039,55 +1226,346 @@ export const ProfessionalModule: React.FC = () => {
       {/* ================= CERTIFICATIONS SUB-MODULE ================= */}
       {activeSubTab === 'certifications' && (
         <div className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-6 sm:p-8 space-y-6 shadow-2xs">
-          <div className="pb-3 border-b border-[#d9cdbd]">
-            <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
-              Certifications & Professional Credentials
-            </h3>
-            <p className="text-xs text-[#73685c] mt-0.5">
-              Highlight verifiable licenses, academic honors, and course completions.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#d9cdbd] gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-[#704a29]" />
+                <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
+                  Certifications &amp; Professional Credentials ({normalizedCertifications.length})
+                </h3>
+              </div>
+              <p className="text-xs text-[#73685c] mt-0.5">
+                Highlight verifiable licenses, academic honors, course completions, and multi-image certificate credentials.
+              </p>
+            </div>
+
+            {!editingCert && (
+              <button
+                type="button"
+                onClick={handleOpenAddCert}
+                className="px-3.5 py-1.5 rounded-lg bg-[#704a29] text-white hover:bg-[#593a1f] font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 text-white" />
+                <span>Add Credential</span>
+              </button>
+            )}
           </div>
 
-          {/* Add Cert Form */}
-          <form onSubmit={handleAddCert} className="flex items-center gap-3">
-            <input
-              type="text"
-              value={newCertTitle}
-              onChange={(e) => setNewCertTitle(e.target.value)}
-              placeholder="e.g. AWS Certified Solutions Architect | Google Cloud Associate"
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
-            />
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-xs font-bold text-white cursor-pointer shrink-0 shadow-xs"
-            >
-              Add Credential
-            </button>
-          </form>
+          {/* Add / Edit Certificate Form Modal or Card */}
+          <AnimatePresence>
+            {editingCert && (
+              <motion.form
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                onSubmit={handleSaveCert}
+                className="p-5 sm:p-6 rounded-2xl bg-[#faf7f2] border-2 border-[#b89574] space-y-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between pb-3 border-b border-[#d9cdbd]">
+                  <h4 className="text-sm font-bold text-[#2b241e] flex items-center gap-2">
+                    <Award className="w-4 h-4 text-[#704a29]" />
+                    <span>{isNewCert ? 'Add New Certificate Credential' : 'Edit Certificate Credential'}</span>
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCert(null);
+                      setIsNewCert(false);
+                    }}
+                    className="text-[#73685c] hover:text-[#2b241e] cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                      Certificate / Credential Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingCert.title}
+                      onChange={(e) => setEditingCert({ ...editingCert, title: e.target.value })}
+                      required
+                      placeholder="e.g. AWS Certified Solutions Architect | VTU Accredited Degree"
+                      className="w-full px-3.5 py-2 rounded-xl bg-[#fffefb] border border-[#d9cdbd] text-sm text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                      Issuing Body / Authority
+                    </label>
+                    <input
+                      type="text"
+                      value={editingCert.issuer || ''}
+                      onChange={(e) => setEditingCert({ ...editingCert, issuer: e.target.value })}
+                      placeholder="e.g. Visvesvaraya Technological University, AWS, Google"
+                      className="w-full px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                      Issue Date / Year
+                    </label>
+                    <input
+                      type="text"
+                      value={editingCert.issueDate || ''}
+                      onChange={(e) => setEditingCert({ ...editingCert, issueDate: e.target.value })}
+                      placeholder="e.g. 2024, May 2025"
+                      className="w-full px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                      Verification / Credential URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      value={editingCert.credentialUrl || ''}
+                      onChange={(e) => setEditingCert({ ...editingCert, credentialUrl: e.target.value })}
+                      placeholder="https://www.credly.com/badges/... or https://..."
+                      className="w-full px-3 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    />
+                  </div>
+                </div>
+
+                {/* Multi-Image Certificate Upload Section */}
+                <div className="p-4 rounded-xl bg-[#fffefb] border border-[#d9cdbd] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs uppercase tracking-wider text-[#704a29] font-bold flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        <span>Certificate Images &amp; Documents ({editingCert.images?.length || 0})</span>
+                      </label>
+                      <p className="text-[11px] text-[#73685c] mt-0.5">
+                        Upload scans, diploma pages, or verification badges. You can upload multiple images at once.
+                      </p>
+                    </div>
+
+                    <label className="px-3 py-1.5 rounded-lg bg-[#704a29] text-white hover:bg-[#593a1f] text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0">
+                      {isUploadingCertImages ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>+ Upload Images</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        disabled={isUploadingCertImages}
+                        onChange={handleCertImagesUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Thumbnail Grid */}
+                  {(editingCert.images && editingCert.images.length > 0) ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                      {editingCert.images.map((imgUrl, imgIdx) => (
+                        <div
+                          key={imgIdx}
+                          className="relative group rounded-xl border border-[#d9cdbd] overflow-hidden bg-[#fbf8f3] aspect-4/3 shadow-2xs"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={`Certificate asset ${imgIdx + 1}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono font-bold backdrop-blur-xs">
+                            #{imgIdx + 1}
+                          </div>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setLightboxImage({ url: imgUrl, title: `${editingCert.title} (Image ${imgIdx + 1})` })}
+                              className="p-1.5 rounded-lg bg-white/90 text-[#2b241e] hover:bg-white cursor-pointer shadow-xs"
+                              title="Enlarge Image"
+                            >
+                              <ZoomIn className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCertImage(imgIdx)}
+                              className="p-1.5 rounded-lg bg-[#fef2f2] text-[#bc473b] hover:bg-white cursor-pointer shadow-xs"
+                              title="Delete Image"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 border-2 border-dashed border-[#d9cdbd] rounded-xl flex flex-col items-center justify-center text-center bg-[#fbf8f3]">
+                      <Upload className="w-5 h-5 text-[#73685c] mb-1" />
+                      <p className="text-xs text-[#73685c]">No certificate images attached yet.</p>
+                      <span className="text-[10px] text-[#9c9184] mt-0.5">
+                        Click "+ Upload Images" above to add scans or badge documents (multiple files allowed).
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#d9cdbd]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCert(null);
+                      setIsNewCert(false);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#f0eae1] hover:bg-[#e5ded5] text-xs text-[#73685c] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-xs font-bold text-white shadow-xs cursor-pointer"
+                  >
+                    Save Credential
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
 
           {/* Cert List */}
-          <div className="space-y-2.5">
-            {(academic.certifications || []).map((cert, idx) => (
-              <div
-                key={idx}
-                className="p-3.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] flex items-center justify-between gap-4 shadow-2xs"
-              >
-                <div className="flex items-center gap-3">
-                  <Award className="w-4 h-4 text-[#704a29] shrink-0" />
-                  <span className="text-xs font-semibold text-[#2b241e]">{cert}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteCert(idx)}
-                  className="p-1 rounded-lg text-[#73685c] hover:text-[#bc473b] transition cursor-pointer"
+          <div className="space-y-3">
+            {normalizedCertifications.map((cert) => {
+              const hasImages = cert.images && cert.images.length > 0;
+              return (
+                <div
+                  key={cert.id}
+                  className="p-4 sm:p-5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] hover:border-[#b89574] transition space-y-3 shadow-2xs"
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-xl bg-[#f0eae1] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] shrink-0 shadow-2xs">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold text-[#2b241e] break-words break-all">{cert.title}</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#73685c]">
+                          {cert.issuer && <span className="font-semibold text-[#704a29]">{cert.issuer}</span>}
+                          {cert.issuer && cert.issueDate && <span>&bull;</span>}
+                          {cert.issueDate && <span>{cert.issueDate}</span>}
+                          {cert.credentialUrl && (
+                            <>
+                              <span>&bull;</span>
+                              <a
+                                href={cert.credentialUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[#704a29] hover:underline font-semibold"
+                              >
+                                <span>Verify</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        hasImages
+                          ? 'bg-[#f0eae1] text-[#704a29] border-[#d9cdbd]'
+                          : 'bg-[#fffefb] text-[#9c9184] border-[#d9cdbd]'
+                      }`}>
+                        {hasImages ? `📷 ${cert.images.length} Image${cert.images.length > 1 ? 's' : ''}` : 'No images'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditCert(cert)}
+                        className="p-1.5 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] text-[#704a29] border border-[#d9cdbd] cursor-pointer shadow-2xs"
+                        title="Edit Credential & Manage Images"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCert(cert.id)}
+                        className="p-1.5 rounded-lg bg-[#fffefb] hover:bg-[#fef2f2] text-[#bc473b] border border-[#d9cdbd] hover:border-[#fca5a5] cursor-pointer shadow-2xs"
+                        title="Delete Credential"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Image Thumbnails Strip */}
+                  {hasImages && (
+                    <div className="pt-2 border-t border-[#d9cdbd]/60 flex items-center gap-2.5 overflow-x-auto pb-1">
+                      {cert.images.map((img, iIdx) => (
+                        <div
+                          key={iIdx}
+                          onClick={() => setLightboxImage({ url: img, title: `${cert.title} (Scan #${iIdx + 1})` })}
+                          className="relative w-16 h-12 rounded-lg border border-[#d9cdbd] overflow-hidden bg-white shrink-0 cursor-pointer hover:border-[#704a29] transition group shadow-2xs"
+                          title="Click to Enlarge"
+                        >
+                          <img src={img} alt={`Asset ${iIdx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition duration-300" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <ZoomIn className="w-3 h-3 text-white" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
+
+      {/* Global Image Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <div
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-3xl max-h-[90vh] bg-[#fffefb] rounded-2xl border border-[#d9cdbd] overflow-hidden shadow-2xl flex flex-col cursor-default"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#d9cdbd] bg-[#fbf8f3]">
+                <h4 className="text-xs font-bold text-[#2b241e] font-serif truncate max-w-[80%]">
+                  {lightboxImage.title}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setLightboxImage(null)}
+                  className="p-1 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-3 bg-neutral-900/5 flex items-center justify-center overflow-auto max-h-[80vh]">
+                <img
+                  src={lightboxImage.url}
+                  alt={lightboxImage.title}
+                  className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-sm"
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

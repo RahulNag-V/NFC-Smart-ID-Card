@@ -279,7 +279,7 @@ export async function publishProfile(
  */
 export async function uploadOwnerMediaFile(
   file: File,
-  folder: 'profile' | 'cover' | 'projects' | 'badges',
+  folder: 'profile' | 'cover' | 'projects' | 'badges' | 'certificates',
   ownerUid: string = 'owner'
 ): Promise<string> {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];

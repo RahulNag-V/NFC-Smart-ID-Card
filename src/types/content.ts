@@ -123,13 +123,40 @@ export interface SeoConfig {
   canonicalUrl: string;
 }
 
+export interface CertificateItem {
+  id: string;
+  title: string;
+  issuer?: string;
+  issueDate?: string;
+  credentialUrl?: string;
+  images: string[];
+}
+
+export type CertificateEntry = string | CertificateItem;
+
+export function normalizeCertificate(cert: CertificateEntry, index: number = 0): CertificateItem {
+  if (typeof cert === 'string') {
+    return {
+      id: `cert-${index}-${cert.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}`,
+      title: cert,
+      issuer: 'Accredited Academic & Professional Body',
+      images: [],
+    };
+  }
+  return {
+    ...cert,
+    id: cert.id || `cert-${index}`,
+    images: Array.isArray(cert.images) ? cert.images : [],
+  };
+}
+
 export interface PublishedProfileData {
   student: StudentProfile;
   projects: Project[];
   academic: {
     engineering: YearAcademicData[];
     schooling: SchoolRecord[];
-    certifications?: string[];
+    certifications?: CertificateEntry[];
     achievements?: string[];
   };
   skills: SkillItem[];

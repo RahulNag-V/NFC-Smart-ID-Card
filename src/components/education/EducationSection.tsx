@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap,
   Calendar,
@@ -7,8 +7,15 @@ import {
   CheckCircle2,
   Sparkles,
   Clock,
+  Award,
+  ExternalLink,
+  ZoomIn,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useSiteContent } from '../../context/SiteContentContext';
+import { normalizeCertificate, CertificateItem } from '../../types/content';
 
 // ================= ACADEMIC DATA REPOSITORY =================
 export interface SemesterScore {
@@ -132,6 +139,15 @@ export const EducationSection: React.FC = () => {
   const engineering = activeContent?.academic?.engineering || engineeringAcademicData;
   const schooling = activeContent?.academic?.schooling || schoolEducationData;
   const showSgpa = activeContent?.visibility?.showSgpaScores !== false;
+
+  const rawCertifications = activeContent?.academic?.certifications || [];
+  const certifications: CertificateItem[] = rawCertifications.map((c, i) => normalizeCertificate(c, i));
+
+  const [activeModal, setActiveModal] = useState<{
+    images: string[];
+    currentIndex: number;
+    title: string;
+  } | null>(null);
 
   // Compute overall CGPA dynamically from completed semesters
   const completedSemesters: SemesterScore[] = [];
@@ -462,6 +478,212 @@ export const EducationSection: React.FC = () => {
           ))}
         </div>
       </motion.div>
+
+      {/* 4. CERTIFICATIONS & PROFESSIONAL CREDENTIALS */}
+      {certifications.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.35, delay: 0.2 }}
+          className="p-4 sm:p-5 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] shadow-2xs space-y-3.5"
+        >
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#f0eae1]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#f4ece1] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] shrink-0">
+                <Award className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-[#1e1713]">
+                  Certifications &amp; Credentials
+                </h3>
+                <p className="text-xs text-[#73685c] font-sans">
+                  Accredited licenses, academic honors &amp; verified document scans
+                </p>
+              </div>
+            </div>
+
+            <span className="text-[10px] font-mono text-[#704a29] font-bold px-2.5 py-0.5 rounded-full bg-[#f4ece1] border border-[#d9cdbd] whitespace-nowrap shrink-0">
+              {certifications.length} Credentials
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {certifications.map((cert) => {
+              const hasImages = cert.images && cert.images.length > 0;
+              return (
+                <div
+                  key={cert.id}
+                  className="p-3.5 sm:p-4 rounded-xl bg-[#faf7f2]/70 border border-[#e2d8cb] hover:bg-[#faf7f2] transition-all flex flex-col justify-between shadow-2xs group"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {cert.issuer && (
+                          <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#f4ece1] text-[#704a29] border border-[#d9cdbd]">
+                            {cert.issuer}
+                          </span>
+                        )}
+                        {cert.issueDate && (
+                          <span className="text-[9.5px] font-mono text-[#73685c]">
+                            {cert.issueDate}
+                          </span>
+                        )}
+                      </div>
+
+                      {hasImages && (
+                        <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                          📷 {cert.images.length} {cert.images.length === 1 ? 'Scan' : 'Scans'}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="text-sm font-serif font-bold text-[#1e1713] mt-2 leading-snug break-words">
+                      {cert.title}
+                    </h4>
+                  </div>
+
+                  {/* Multi-Image Document Gallery Preview */}
+                  {hasImages && (
+                    <div className="mt-3 pt-2.5 border-t border-[#d9cdbd]/60">
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                        {cert.images.map((imgUrl, imgIdx) => (
+                          <div
+                            key={imgIdx}
+                            onClick={() =>
+                              setActiveModal({
+                                images: cert.images,
+                                currentIndex: imgIdx,
+                                title: `${cert.title} — Document #${imgIdx + 1}`,
+                              })
+                            }
+                            className="relative w-16 h-12 rounded-lg border border-[#d9cdbd] overflow-hidden bg-white shrink-0 cursor-pointer hover:border-[#704a29] transition group/thumb shadow-2xs"
+                            title="Click to view full certificate scan"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`${cert.title} scan ${imgIdx + 1}`}
+                              className="w-full h-full object-cover group-hover/thumb:scale-110 transition duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
+                              <ZoomIn className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* External verification URL button */}
+                  {cert.credentialUrl && (
+                    <div className="mt-2 pt-2 border-t border-[#d9cdbd]/40 flex justify-end">
+                      <a
+                        href={cert.credentialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#704a29] hover:underline"
+                      >
+                        <span>Verify Credential</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Fullscreen Certificate Lightbox Modal */}
+      <AnimatePresence>
+        {activeModal && (
+          <div
+            onClick={() => setActiveModal(null)}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl w-full max-h-[92vh] bg-[#fffefb] rounded-2xl border border-[#d9cdbd] overflow-hidden shadow-2xl flex flex-col cursor-default"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#d9cdbd] bg-[#fbf8f3]">
+                <div className="flex items-center gap-2 min-w-0 pr-4">
+                  <Award className="w-4 h-4 text-[#704a29] shrink-0" />
+                  <h4 className="text-xs sm:text-sm font-bold text-[#2b241e] font-serif truncate">
+                    {activeModal.title}
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-mono text-[#73685c] font-semibold">
+                    {activeModal.currentIndex + 1} / {activeModal.images.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal(null)}
+                    className="p-1 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Image Display */}
+              <div className="relative p-2 sm:p-4 bg-neutral-900/5 flex items-center justify-center overflow-auto max-h-[78vh]">
+                <img
+                  src={activeModal.images[activeModal.currentIndex]}
+                  alt="Full resolution certificate document"
+                  className="max-w-full max-h-[72vh] object-contain rounded-lg shadow-sm"
+                />
+
+                {/* Prev / Next controls if multiple images */}
+                {activeModal.images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveModal((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                currentIndex:
+                                  (prev.currentIndex - 1 + prev.images.length) % prev.images.length,
+                              }
+                            : null
+                        )
+                      }
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer shadow-md transition"
+                      title="Previous scan"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveModal((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                currentIndex: (prev.currentIndex + 1) % prev.images.length,
+                              }
+                            : null
+                        )
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer shadow-md transition"
+                      title="Next scan"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

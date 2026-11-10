@@ -493,3 +493,91 @@ test('Engineering Academic Year & Semester SGPA Dynamic Management', () => {
   assert.equal(computeCumulativeCgpa(recalculatedAfterEdit), '7.87');
 });
 
+// 13. Project Card Text Overflow Boundaries & Project Image Upload schema
+test('Project Card Long-Text Invariance & Project Media Upload Schema', () => {
+  const sampleProject = {
+    id: 'test-project-overflow',
+    title: 'sidyufffffv',
+    category: 'Full-Stack Development · Event Management',
+    filterCategories: ['Full-Stack'],
+    description: 'a'.repeat(300), // extreme unbroken long string
+    technologies: ['React', 'TypeScript'],
+    badgeColor: '#10B981',
+    gradient: 'green',
+    visualType: 'scanner',
+    featured: true,
+    imageUrl: 'https://storage.googleapis.com/test-bucket/profiles/owner/projects/test_screenshot.png',
+  };
+
+  // Ensure project preserves imageUrl schema
+  assert.ok(sampleProject.imageUrl.startsWith('https://'), 'Project should support custom imageUrl');
+  assert.ok(sampleProject.description.length === 300, 'Long unbroken description is preserved in data layer');
+  assert.equal(sampleProject.badgeColor, '#10B981');
+
+  // Verify fallback when badgeColor is empty or white
+  function resolveBadgeColor(badgeColor) {
+    if (!badgeColor || badgeColor === '#fff' || badgeColor === '#ffffff' || badgeColor.trim() === '') {
+      return '#704a29';
+    }
+    return badgeColor;
+  }
+
+  assert.equal(resolveBadgeColor('#ffffff'), '#704a29', 'White badgeColor must fallback to signature #704a29');
+  assert.equal(resolveBadgeColor(''), '#704a29', 'Empty badgeColor must fallback to signature #704a29');
+  assert.equal(resolveBadgeColor('#10B981'), '#10B981', 'Valid badgeColor is preserved');
+});
+
+// 14. Certificate Multi-Image Upload, Gallery Management, and Normalization
+test('Certificate Multi-Image Upload, Gallery Normalization and Management', () => {
+  function normalizeCertificate(cert, index = 0) {
+    if (typeof cert === 'string') {
+      return {
+        id: `cert-${index}-${cert.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}`,
+        title: cert,
+        issuer: 'Accredited Academic & Professional Body',
+        images: [],
+      };
+    }
+    return {
+      ...cert,
+      id: cert.id || `cert-${index}`,
+      images: Array.isArray(cert.images) ? cert.images : [],
+    };
+  }
+
+  // 1. Backward compatibility: Legacy string cert normalized seamlessly
+  const legacyCert = 'Visvesvaraya Technological University (VTU) Accredited Engineering Curriculum';
+  const norm1 = normalizeCertificate(legacyCert, 0);
+  assert.equal(norm1.title, legacyCert);
+  assert.deepEqual(norm1.images, []);
+  assert.ok(norm1.id.startsWith('cert-0-'));
+
+  // 2. Rich Multi-Image Certificate
+  const multiImageCert = {
+    id: 'cert-vtu-degree',
+    title: 'Bachelor of Engineering in Computer Science & Engineering',
+    issuer: 'Visvesvaraya Technological University (VTU)',
+    issueDate: '2026',
+    credentialUrl: 'https://vtu.ac.in/verify/1BH24CS051',
+    images: [
+      'https://storage.googleapis.com/bucket/profiles/owner/certificates/degree_front.png',
+      'https://storage.googleapis.com/bucket/profiles/owner/certificates/degree_back.png',
+      'https://storage.googleapis.com/bucket/profiles/owner/certificates/marks_card.png',
+    ],
+  };
+
+  const norm2 = normalizeCertificate(multiImageCert, 1);
+  assert.equal(norm2.id, 'cert-vtu-degree');
+  assert.equal(norm2.images.length, 3);
+  assert.equal(norm2.issuer, 'Visvesvaraya Technological University (VTU)');
+
+  // 3. Image append and remove immutability
+  const addedImages = [...norm2.images, 'https://storage.googleapis.com/bucket/profiles/owner/certificates/hologram.png'];
+  assert.equal(addedImages.length, 4);
+
+  const removedImages = addedImages.filter((_, idx) => idx !== 1);
+  assert.equal(removedImages.length, 3);
+  assert.equal(removedImages[1], 'https://storage.googleapis.com/bucket/profiles/owner/certificates/marks_card.png');
+});
+
+

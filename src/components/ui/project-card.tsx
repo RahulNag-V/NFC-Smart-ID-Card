@@ -175,27 +175,41 @@ export function ProjectCard({ project }: { project: Project }) {
       className="group flex flex-col justify-between h-full w-full rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-[#a67c52]/60 transition-all duration-300 relative overflow-hidden"
     >
       <div>
-        {/* Visual Domain Banner */}
+        {/* Visual Domain Banner or Custom Uploaded Image */}
         <div className="mb-4">
-          <ProjectVisualBanner type={project.visualType} badgeColor={project.badgeColor} />
+          {project.imageUrl ? (
+            <div className="relative w-full h-36 rounded-xl border border-[#d9cdbd] overflow-hidden bg-[#fbf8f3] group/img shadow-2xs">
+              <img
+                src={project.imageUrl}
+                alt={project.title}
+                className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-[#fffefb]/90 text-[10px] font-mono font-bold text-[#704a29] border border-[#d9cdbd] backdrop-blur-xs">
+                Asset Preview
+              </div>
+            </div>
+          ) : (
+            <ProjectVisualBanner type={project.visualType} badgeColor={project.badgeColor} />
+          )}
         </div>
 
         {/* Category Badge */}
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#fbf8f3] border border-[#d9cdbd] px-2.5 py-0.5 text-[11px] font-medium text-[#2b241e]">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#fbf8f3] border border-[#d9cdbd] px-2.5 py-0.5 text-[11px] font-medium text-[#2b241e] max-w-full">
           <span
             className="h-2 w-2 rounded-full shrink-0"
-            style={{ backgroundColor: project.badgeColor }}
+            style={{ backgroundColor: project.badgeColor || '#704a29' }}
           />
-          <span>{project.category}</span>
+          <span className="truncate">{project.category}</span>
         </div>
 
         {/* Project Title */}
-        <h3 className="text-lg sm:text-xl font-bold font-serif text-[#2b241e] mb-2 tracking-tight group-hover:text-[#704a29] transition-colors">
+        <h3 className="text-lg sm:text-xl font-bold font-serif text-[#2b241e] mb-2 tracking-tight group-hover:text-[#704a29] transition-colors break-words break-all">
           {project.title}
         </h3>
 
         {/* Description */}
-        <p className="text-xs sm:text-sm text-[#73685c] leading-relaxed mb-4">
+        <p className="text-xs sm:text-sm text-[#73685c] leading-relaxed mb-4 break-words break-all">
           {project.description}
         </p>
 

@@ -27,6 +27,7 @@ export interface Project {
   gradient: 'vintage' | 'kraft' | 'orange' | 'gray' | 'purple' | 'green';
   visualType: 'scanner' | 'apex' | 'netsentinel' | 'brain' | 'omniqr' | 'trails' | 'nfc';
   featured?: boolean;
+  imageUrl?: string;
 }
 
 export const allProjects: Project[] = [

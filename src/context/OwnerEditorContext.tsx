@@ -56,7 +56,7 @@ interface OwnerEditorContextType {
   saveDraft: () => Promise<boolean>;
   publishLive: () => Promise<boolean>;
   discardChanges: () => void;
-  uploadMedia: (file: File, folder: 'profile' | 'cover' | 'projects' | 'badges') => Promise<string>;
+  uploadMedia: (file: File, folder: 'profile' | 'cover' | 'projects' | 'badges' | 'certificates') => Promise<string>;
   profileCompletionPercentage: number;
 }
 
@@ -299,7 +299,7 @@ export const OwnerEditorProvider: React.FC<{ initialTab?: DashboardTab; children
   }, [publishedContent, showToast]);
 
   const uploadMedia = useCallback(
-    async (file: File, folder: 'profile' | 'cover' | 'projects' | 'badges'): Promise<string> => {
+    async (file: File, folder: 'profile' | 'cover' | 'projects' | 'badges' | 'certificates'): Promise<string> => {
       try {
         const url = await uploadOwnerMediaFile(file, folder, user?.uid || 'owner');
         showToast('Image uploaded successfully.', 'success');
