@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase,
@@ -27,6 +27,8 @@ import {
   Loader2,
   ZoomIn,
   FileText,
+  GripVertical,
+  Move,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { Project, ProjectCategory, FilterCategory } from '../../../data/projects';
@@ -80,6 +82,8 @@ export const ProfessionalModule: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isNewProject, setIsNewProject] = useState<boolean>(false);
   const [isUploadingProjectImg, setIsUploadingProjectImg] = useState<boolean>(false);
+  const [isProjectDragOver, setIsProjectDragOver] = useState<boolean>(false);
+  const projectFileInputRef = useRef<HTMLInputElement>(null);
 
   // New Skill Form State
   const [newSkillName, setNewSkillName] = useState('');
@@ -87,10 +91,14 @@ export const ProfessionalModule: React.FC = () => {
   const [newSkillLevel, setNewSkillLevel] = useState<SkillItem['level']>('Advanced');
   const [newSkillDesc, setNewSkillDesc] = useState('');
 
-  // Certificate Management State (supporting multiple image uploads)
+  // Certificate Management State (supporting multiple image uploads & drag-and-drop)
   const [editingCert, setEditingCert] = useState<CertificateItem | null>(null);
   const [isNewCert, setIsNewCert] = useState<boolean>(false);
   const [isUploadingCertImages, setIsUploadingCertImages] = useState<boolean>(false);
+  const [isCertDragOver, setIsCertDragOver] = useState<boolean>(false);
+  const [draggedCertImageIdx, setDraggedCertImageIdx] = useState<number | null>(null);
+  const [dragOverCertImageIdx, setDragOverCertImageIdx] = useState<number | null>(null);
+  const certFileInputRef = useRef<HTMLInputElement>(null);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
 
   const projects = draftContent.projects || [];
@@ -172,7 +180,29 @@ export const ProfessionalModule: React.FC = () => {
     }
   };
 
-  // ================= CERTIFICATIONS MANAGEMENT (MULTI-IMAGE SUPPORT) =================
+  const handleProjectDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsProjectDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !editingProject) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please drop an image file (PNG, JPG, WEBP, SVG).', 'error');
+      return;
+    }
+    setIsUploadingProjectImg(true);
+    try {
+      const url = await uploadMedia(file, 'projects');
+      setEditingProject((prev) => (prev ? { ...prev, imageUrl: url } : null));
+      showToast('Project media updated via drag & drop.', 'success');
+    } catch (err: any) {
+      console.error('Project image upload failed:', err);
+    } finally {
+      setIsUploadingProjectImg(false);
+    }
+  };
+
+  // ================= CERTIFICATIONS MANAGEMENT (MULTI-IMAGE & DRAG-AND-DROP) =================
   const normalizedCertifications: CertificateItem[] = (academic.certifications || []).map((c, i) =>
     normalizeCertificate(c, i)
   );
@@ -222,14 +252,23 @@ export const ProfessionalModule: React.FC = () => {
     showToast('Credential removed.', 'info');
   };
 
-  const handleCertImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
+  // Process multiple certificate image files (from file input or drag-and-drop)
+  const processCertificateFiles = async (files: File[]) => {
     if (files.length === 0 || !editingCert) return;
+
+    const imageFiles = files.filter(
+      (file) => file.type.startsWith('image/') || /\.(png|jpe?g|webp|svg|gif|avif)$/i.test(file.name)
+    );
+
+    if (imageFiles.length === 0) {
+      showToast('Please select or drop valid image files (PNG, JPG, WEBP, SVG).', 'error');
+      return;
+    }
 
     setIsUploadingCertImages(true);
     try {
       const newUrls: string[] = [];
-      for (const file of files) {
+      for (const file of imageFiles) {
         const url = await uploadMedia(file, 'certificates');
         newUrls.push(url);
       }
@@ -246,8 +285,104 @@ export const ProfessionalModule: React.FC = () => {
       console.error('Cert image upload error:', err);
     } finally {
       setIsUploadingCertImages(false);
-      if (e.target) e.target.value = '';
+      if (certFileInputRef.current) certFileInputRef.current.value = '';
     }
+  };
+
+  const handleCertImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    await processCertificateFiles(files);
+  };
+
+  // Certificate Drag & Drop Handlers
+  const handleCertDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files') && !isCertDragOver) {
+      setIsCertDragOver(true);
+    }
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleCertDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsCertDragOver(false);
+  };
+
+  const handleCertDropzoneDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsCertDragOver(false);
+    const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    if (files.length > 0) {
+      await processCertificateFiles(files);
+    }
+  };
+
+  // Thumbnail Drag-to-Reorder Handlers
+  const handleCertThumbDragStart = (e: React.DragEvent, index: number) => {
+    e.stopPropagation();
+    setDraggedCertImageIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleCertThumbDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedCertImageIdx === null || draggedCertImageIdx === index) return;
+    setDragOverCertImageIdx(index);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleCertThumbDragLeave = (e: React.DragEvent, index: number) => {
+    e.stopPropagation();
+    if (dragOverCertImageIdx === index) {
+      setDragOverCertImageIdx(null);
+    }
+  };
+
+  const handleCertThumbDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverCertImageIdx(null);
+
+    // If reordering existing thumbnails:
+    if (draggedCertImageIdx !== null) {
+      if (draggedCertImageIdx === targetIndex || !editingCert) {
+        setDraggedCertImageIdx(null);
+        return;
+      }
+      const updatedImages = [...(editingCert.images || [])];
+      const [moved] = updatedImages.splice(draggedCertImageIdx, 1);
+      updatedImages.splice(targetIndex, 0, moved);
+      setEditingCert({ ...editingCert, images: updatedImages });
+      setDraggedCertImageIdx(null);
+      showToast('Reordered certificate images.', 'info');
+      return;
+    }
+
+    // If dropping new external file(s) on a thumbnail:
+    const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    if (files.length > 0) {
+      await processCertificateFiles(files);
+    }
+  };
+
+  const handleCertThumbDragEnd = () => {
+    setDraggedCertImageIdx(null);
+    setDragOverCertImageIdx(null);
+  };
+
+  const handleMoveCertImage = (fromIdx: number, toIdx: number) => {
+    if (!editingCert || !editingCert.images) return;
+    if (toIdx < 0 || toIdx >= editingCert.images.length) return;
+    const updatedImages = [...editingCert.images];
+    const [moved] = updatedImages.splice(fromIdx, 1);
+    updatedImages.splice(toIdx, 0, moved);
+    setEditingCert({ ...editingCert, images: updatedImages });
   };
 
   const handleRemoveCertImage = (imageIndex: number) => {
@@ -660,12 +795,34 @@ export const ProfessionalModule: React.FC = () => {
                   </div>
 
                   {editingProject.imageUrl ? (
-                    <div className="relative w-full h-32 rounded-lg border border-[#d9cdbd] overflow-hidden bg-white group shadow-2xs">
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.dataTransfer.types.includes('Files') && !isProjectDragOver) setIsProjectDragOver(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                        setIsProjectDragOver(false);
+                      }}
+                      onDrop={handleProjectDrop}
+                      className={`relative w-full h-32 rounded-lg border overflow-hidden bg-white group shadow-2xs transition-all ${
+                        isProjectDragOver ? 'border-[#704a29] ring-4 ring-[#704a29]/20' : 'border-[#d9cdbd]'
+                      }`}
+                    >
                       <img
                         src={editingProject.imageUrl}
                         alt="Project Media Preview"
                         className="w-full h-full object-cover"
                       />
+                      {isProjectDragOver && (
+                        <div className="absolute inset-0 bg-[#704a29]/80 backdrop-blur-xs flex flex-col items-center justify-center text-white z-10">
+                          <Upload className="w-7 h-7 animate-bounce mb-1" />
+                          <p className="text-xs font-bold">Drop to replace project image</p>
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() =>
@@ -681,9 +838,34 @@ export const ProfessionalModule: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="p-4 border-2 border-dashed border-[#d9cdbd] rounded-xl flex flex-col items-center justify-center text-center bg-[#fffefb]">
-                      <Upload className="w-6 h-6 text-[#73685c] mb-1" />
-                      <p className="text-xs text-[#73685c]">Upload a preview screenshot, diagram, or UI thumbnail</p>
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.dataTransfer.types.includes('Files') && !isProjectDragOver) setIsProjectDragOver(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                        setIsProjectDragOver(false);
+                      }}
+                      onDrop={handleProjectDrop}
+                      onClick={() => projectFileInputRef.current?.click()}
+                      className={`p-4 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                        isProjectDragOver
+                          ? 'border-[#704a29] bg-[#f5ede4] ring-4 ring-[#704a29]/15 scale-[1.01]'
+                          : 'border-[#d9cdbd] bg-[#fffefb] hover:border-[#704a29] hover:bg-[#fbf8f3]'
+                      }`}
+                    >
+                      <Upload className={`w-6 h-6 mb-1 ${isProjectDragOver ? 'text-[#704a29] animate-bounce' : 'text-[#73685c]'}`} />
+                      <p className="text-xs text-[#73685c]">
+                        {isProjectDragOver ? (
+                          <span className="font-bold text-[#704a29]">Drop media file here!</span>
+                        ) : (
+                          <>Drag &amp; drop preview screenshot, or <span className="text-[#704a29] underline font-semibold">browse</span></>
+                        )}
+                      </p>
                       <span className="text-[10px] text-[#9c9184] mt-0.5">JPEG, PNG, WEBP or SVG up to 5MB</span>
                     </div>
                   )}
@@ -702,6 +884,7 @@ export const ProfessionalModule: React.FC = () => {
                         </>
                       )}
                       <input
+                        ref={projectFileInputRef}
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/svg+xml"
                         disabled={isUploadingProjectImg}
@@ -1333,8 +1516,18 @@ export const ProfessionalModule: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Multi-Image Certificate Upload Section */}
-                <div className="p-4 rounded-xl bg-[#fffefb] border border-[#d9cdbd] space-y-3">
+                {/* Multi-Image Certificate Upload Section with Drag & Drop */}
+                <div
+                  onDragOver={handleCertDragOver}
+                  onDragEnter={handleCertDragOver}
+                  onDragLeave={handleCertDragLeave}
+                  onDrop={handleCertDropzoneDrop}
+                  className={`p-4 rounded-xl bg-[#fffefb] border transition-all duration-200 space-y-3 ${
+                    isCertDragOver
+                      ? 'border-[#704a29] ring-4 ring-[#704a29]/15 bg-[#fbf6f0]'
+                      : 'border-[#d9cdbd]'
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-xs uppercase tracking-wider text-[#704a29] font-bold flex items-center gap-1.5">
@@ -1342,11 +1535,11 @@ export const ProfessionalModule: React.FC = () => {
                         <span>Certificate Images &amp; Documents ({editingCert.images?.length || 0})</span>
                       </label>
                       <p className="text-[11px] text-[#73685c] mt-0.5">
-                        Upload scans, diploma pages, or verification badges. You can upload multiple images at once.
+                        Drag and drop certificate scans, diploma pages, or verification badges (multiple files allowed).
                       </p>
                     </div>
 
-                    <label className="px-3 py-1.5 rounded-lg bg-[#704a29] text-white hover:bg-[#593a1f] text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0">
+                    <label className="px-3 py-1.5 rounded-lg bg-[#704a29] text-white hover:bg-[#593a1f] text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 transition-transform active:scale-95">
                       {isUploadingCertImages ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1359,6 +1552,7 @@ export const ProfessionalModule: React.FC = () => {
                         </>
                       )}
                       <input
+                        ref={certFileInputRef}
                         type="file"
                         multiple
                         accept="image/jpeg,image/png,image/webp,image/svg+xml"
@@ -1369,50 +1563,166 @@ export const ProfessionalModule: React.FC = () => {
                     </label>
                   </div>
 
-                  {/* Thumbnail Grid */}
+                  {/* Thumbnail Grid with Drag-to-Reorder */}
                   {(editingCert.images && editingCert.images.length > 0) ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                      {editingCert.images.map((imgUrl, imgIdx) => (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[11px] text-[#73685c] px-0.5">
+                        <span className="flex items-center gap-1 font-medium">
+                          <GripVertical className="w-3.5 h-3.5 text-[#a67c52]" />
+                          Drag and drop thumbnails to reorder
+                        </span>
+                        <span className="text-[10px] text-[#a67c52] font-semibold">
+                          #1 is credential cover
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {editingCert.images.map((imgUrl, imgIdx) => {
+                          const isBeingDragged = draggedCertImageIdx === imgIdx;
+                          const isDragTarget = dragOverCertImageIdx === imgIdx;
+
+                          return (
+                            <div
+                              key={imgIdx}
+                              draggable={!isUploadingCertImages}
+                              onDragStart={(e) => handleCertThumbDragStart(e, imgIdx)}
+                              onDragOver={(e) => handleCertThumbDragOver(e, imgIdx)}
+                              onDragLeave={(e) => handleCertThumbDragLeave(e, imgIdx)}
+                              onDrop={(e) => handleCertThumbDrop(e, imgIdx)}
+                              onDragEnd={handleCertThumbDragEnd}
+                              className={`relative group rounded-xl border overflow-hidden bg-[#fbf8f3] aspect-4/3 shadow-2xs transition-all duration-150 cursor-grab active:cursor-grabbing select-none ${
+                                isBeingDragged
+                                  ? 'opacity-30 border-2 border-dashed border-[#704a29] scale-95'
+                                  : isDragTarget
+                                  ? 'border-2 border-[#704a29] ring-2 ring-[#704a29]/30 scale-105 z-10'
+                                  : 'border-[#d9cdbd] hover:border-[#704a29] hover:shadow-xs'
+                              }`}
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Certificate asset ${imgIdx + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 pointer-events-none"
+                              />
+
+                              {/* Order Badge */}
+                              <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/65 text-white text-[9px] font-mono font-bold backdrop-blur-xs flex items-center gap-1">
+                                <span>#{imgIdx + 1}</span>
+                                {imgIdx === 0 && <span className="text-[#f5d58b] text-[8px] uppercase tracking-wider">Cover</span>}
+                              </div>
+
+                              {/* Drag Grip Handle */}
+                              <div className="absolute top-1.5 right-1.5 p-1 rounded bg-black/50 text-white/90 backdrop-blur-xs opacity-70 group-hover:opacity-100 transition">
+                                <GripVertical className="w-3 h-3" />
+                              </div>
+
+                              {/* Hover Overlay Actions */}
+                              <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5 p-2">
+                                {imgIdx > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveCertImage(imgIdx, imgIdx - 1);
+                                    }}
+                                    className="p-1.5 rounded-lg bg-white/90 text-[#2b241e] hover:bg-white cursor-pointer shadow-xs"
+                                    title="Move Left"
+                                  >
+                                    <ChevronUp className="w-3.5 h-3.5 -rotate-90" />
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLightboxImage({ url: imgUrl, title: `${editingCert.title} (Image ${imgIdx + 1})` });
+                                  }}
+                                  className="p-1.5 rounded-lg bg-white/90 text-[#2b241e] hover:bg-white cursor-pointer shadow-xs"
+                                  title="Enlarge Image"
+                                >
+                                  <ZoomIn className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveCertImage(imgIdx);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-[#fef2f2] text-[#bc473b] hover:bg-white cursor-pointer shadow-xs"
+                                  title="Delete Image"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+
+                                {editingCert.images && imgIdx < editingCert.images.length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveCertImage(imgIdx, imgIdx + 1);
+                                    }}
+                                    className="p-1.5 rounded-lg bg-white/90 text-[#2b241e] hover:bg-white cursor-pointer shadow-xs"
+                                    title="Move Right"
+                                  >
+                                    <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Add More Drop Target in Grid */}
                         <div
-                          key={imgIdx}
-                          className="relative group rounded-xl border border-[#d9cdbd] overflow-hidden bg-[#fbf8f3] aspect-4/3 shadow-2xs"
+                          onClick={() => certFileInputRef.current?.click()}
+                          className={`rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-3 text-center cursor-pointer aspect-4/3 transition-all duration-200 group ${
+                            isCertDragOver
+                              ? 'border-[#704a29] bg-[#f5ede4] ring-2 ring-[#704a29]/30 scale-[1.02]'
+                              : 'border-[#d9cdbd] bg-[#fbf8f3] hover:border-[#704a29] hover:bg-[#f6eee4]'
+                          }`}
                         >
-                          <img
-                            src={imgUrl}
-                            alt={`Certificate asset ${imgIdx + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono font-bold backdrop-blur-xs">
-                            #{imgIdx + 1}
+                          <div className="w-7 h-7 rounded-full bg-[#f0eae1] flex items-center justify-center text-[#704a29] mb-1 group-hover:scale-110 group-hover:bg-[#704a29] group-hover:text-white transition">
+                            <Plus className="w-4 h-4" />
                           </div>
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setLightboxImage({ url: imgUrl, title: `${editingCert.title} (Image ${imgIdx + 1})` })}
-                              className="p-1.5 rounded-lg bg-white/90 text-[#2b241e] hover:bg-white cursor-pointer shadow-xs"
-                              title="Enlarge Image"
-                            >
-                              <ZoomIn className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveCertImage(imgIdx)}
-                              className="p-1.5 rounded-lg bg-[#fef2f2] text-[#bc473b] hover:bg-white cursor-pointer shadow-xs"
-                              title="Delete Image"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <span className="text-[11px] font-bold text-[#704a29]">Add More</span>
+                          <span className="text-[9px] text-[#73685c] mt-0.5">Drop files or click</span>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   ) : (
-                    <div className="p-4 border-2 border-dashed border-[#d9cdbd] rounded-xl flex flex-col items-center justify-center text-center bg-[#fbf8f3]">
-                      <Upload className="w-5 h-5 text-[#73685c] mb-1" />
-                      <p className="text-xs text-[#73685c]">No certificate images attached yet.</p>
-                      <span className="text-[10px] text-[#9c9184] mt-0.5">
-                        Click "+ Upload Images" above to add scans or badge documents (multiple files allowed).
-                      </span>
+                    /* Empty State: Full Drag & Drop Zone */
+                    <div
+                      onClick={() => certFileInputRef.current?.click()}
+                      className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 group ${
+                        isCertDragOver
+                          ? 'border-[#704a29] bg-[#f5ede4] ring-4 ring-[#704a29]/15 scale-[1.01]'
+                          : 'border-[#d9cdbd] bg-[#fbf8f3] hover:border-[#704a29] hover:bg-[#f7efe6]'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
+                        isCertDragOver
+                          ? 'bg-[#704a29] text-white scale-110 shadow-sm animate-bounce'
+                          : 'bg-[#f0eae1] text-[#704a29] group-hover:scale-105 group-hover:bg-[#e7dfd5]'
+                      }`}>
+                        <Upload className="w-5 h-5" />
+                      </div>
+                      
+                      {isCertDragOver ? (
+                        <>
+                          <p className="text-xs font-bold text-[#704a29]">Drop certificate images to attach now!</p>
+                          <span className="text-[10px] text-[#704a29]/80 mt-0.5 font-medium">Release files to start uploading</span>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs font-semibold text-[#2b241e]">
+                            Drag and drop certificate scans or badge images here, or <span className="text-[#704a29] underline decoration-[#c59b27] decoration-2 underline-offset-2 font-bold">browse</span>
+                          </p>
+                          <span className="text-[10px] text-[#73685c] mt-1">
+                            Supports PNG, JPG, WEBP, SVG • Multiple files allowed
+                          </span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

@@ -805,5 +805,82 @@ test('Appearance Module Font Family Selection, Categorization & CSS Variable Cas
   assert.equal(cssVars['--font-family'], '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
 });
 
+// 17. Certificate & Media Drag-and-Drop File Processing and Thumbnail Reordering
+test('Certificate & Media Drag-and-Drop File Processing and Thumbnail Reordering', () => {
+  // 1. File validation logic: accepts images, rejects non-image files
+  function validateDroppedFiles(files) {
+    return files.filter(
+      (file) => file.type.startsWith('image/') || /\.(png|jpe?g|webp|svg|gif|avif)$/i.test(file.name)
+    );
+  }
+
+  const mockFiles = [
+    { name: 'diploma_front.png', type: 'image/png' },
+    { name: 'transcript_page2.jpg', type: 'image/jpeg' },
+    { name: 'notes.txt', type: 'text/plain' },
+    { name: 'badge.svg', type: 'image/svg+xml' },
+    { name: 'malicious.exe', type: 'application/x-msdownload' },
+  ];
+
+  const validFiles = validateDroppedFiles(mockFiles);
+  assert.equal(validFiles.length, 3, 'Must filter down to only the 3 valid image files');
+  assert.equal(validFiles[0].name, 'diploma_front.png');
+  assert.equal(validFiles[1].name, 'transcript_page2.jpg');
+  assert.equal(validFiles[2].name, 'badge.svg');
+
+  // 2. Drag & Drop append logic
+  const currentCert = {
+    id: 'cert-1',
+    title: 'Google Cloud Certified Professional',
+    images: ['https://example.com/cert-cover.png'],
+  };
+
+  const newDroppedUrls = [
+    'https://example.com/cert-page-2.png',
+    'https://example.com/badge-seal.svg',
+  ];
+
+  const updatedCert = {
+    ...currentCert,
+    images: [...(currentCert.images || []), ...newDroppedUrls],
+  };
+
+  assert.equal(updatedCert.images.length, 3);
+  assert.equal(updatedCert.images[0], 'https://example.com/cert-cover.png');
+  assert.equal(updatedCert.images[1], 'https://example.com/cert-page-2.png');
+  assert.equal(updatedCert.images[2], 'https://example.com/badge-seal.svg');
+
+  // 3. Thumbnail Drag-to-Reorder Logic
+  function reorderThumbnails(images, fromIndex, toIndex) {
+    const list = [...images];
+    const [item] = list.splice(fromIndex, 1);
+    list.splice(toIndex, 0, item);
+    return list;
+  }
+
+  // Move third image (badge seal) to first position (making it the cover)
+  const reordered = reorderThumbnails(updatedCert.images, 2, 0);
+  assert.equal(reordered[0], 'https://example.com/badge-seal.svg', 'Moved item becomes #1 (cover)');
+  assert.equal(reordered[1], 'https://example.com/cert-cover.png');
+  assert.equal(reordered[2], 'https://example.com/cert-page-2.png');
+
+  // 4. Keyboard/button move left & right fallback
+  function moveThumbnail(images, fromIdx, toIdx) {
+    if (toIdx < 0 || toIdx >= images.length) return images;
+    const list = [...images];
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+    return list;
+  }
+
+  const movedRight = moveThumbnail(reordered, 0, 1);
+  assert.equal(movedRight[1], 'https://example.com/badge-seal.svg');
+
+  // Boundary check: cannot move past bounds
+  const outOfBounds = moveThumbnail(movedRight, 0, -1);
+  assert.deepEqual(outOfBounds, movedRight);
+});
+
+
 
 
