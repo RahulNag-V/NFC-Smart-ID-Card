@@ -47,6 +47,7 @@ export interface SchoolRecord {
   scale: '%';
   board: string;
   duration: string;
+  institution?: string;
 }
 
 // 1st Year, 2nd Year & 3rd Year B.E. Academic Records
@@ -456,7 +457,13 @@ export const EducationSection: React.FC = () => {
                   {item.subTitle}
                 </h4>
 
-                <p className="text-[11px] text-[#524538] font-sans mt-1">
+                {item.institution && (
+                  <p className="text-[11.5px] font-medium text-[#704a29] mt-1">
+                    {item.institution}
+                  </p>
+                )}
+
+                <p className="text-[11px] text-[#524538] font-sans mt-0.5">
                   {item.board}
                 </p>
               </div>

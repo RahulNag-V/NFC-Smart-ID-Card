@@ -881,6 +881,137 @@ test('Certificate & Media Drag-and-Drop File Processing and Thumbnail Reordering
   assert.deepEqual(outOfBounds, movedRight);
 });
 
+// 18. Two-Semester Academic Year Limits, Duplicate Warnings, Cumulative CGPA & 10th/12th Schooling
+test('Two-Semester Academic Year Limits, Duplicate Warnings, Cumulative CGPA & 10th/12th Schooling', () => {
+  // 1. Enforce strictly max 2 semesters per year
+  function addSemester(currentSems, newSem) {
+    if (currentSems.length >= 2) {
+      throw new Error('Each academic year is strictly limited to 2 semesters.');
+    }
+    return [...currentSems, newSem];
+  }
+
+  let sems = [{ semesterNumber: 1, semesterName: '1st Semester', sgpa: 7.15, maxSgpa: 10 }];
+  sems = addSemester(sems, { semesterNumber: 2, semesterName: '2nd Semester', sgpa: 7.60, maxSgpa: 10 });
+  assert.equal(sems.length, 2, 'Year should have exactly 2 semesters');
+
+  // Attempting to add a 3rd semester must throw an error
+  assert.throws(
+    () => addSemester(sems, { semesterNumber: 3, semesterName: '3rd Semester', sgpa: 8.0, maxSgpa: 10 }),
+    /strictly limited to 2 semesters/,
+    'Must prevent adding more than 2 semesters per year'
+  );
+
+  // 2. Yearly Average SGPA after completing 2 semesters
+  function calculateYearlyAverage(semesters) {
+    const valid = semesters.filter((s) => typeof s.sgpa === 'number' && s.sgpa > 0);
+    if (valid.length === 0) return undefined;
+    return Number((valid.reduce((acc, curr) => acc + curr.sgpa, 0) / valid.length).toFixed(2));
+  }
+
+  const yearAvg = calculateYearlyAverage(sems);
+  assert.equal(yearAvg, 7.38, 'Year 1 average of 7.15 and 7.60 must equal 7.38');
+
+  // 3. Cumulative Degree CGPA calculation
+  const engineeringYears = [
+    {
+      id: 'year-1',
+      yearTitle: '1st Year B.E.',
+      semesters: [
+        { semesterNumber: 1, semesterName: '1st Semester', sgpa: 7.15 },
+        { semesterNumber: 2, semesterName: '2nd Semester', sgpa: 7.60 },
+      ],
+    },
+    {
+      id: 'year-2',
+      yearTitle: '2nd Year B.E.',
+      semesters: [
+        { semesterNumber: 3, semesterName: '3rd Semester', sgpa: 7.71 },
+        { semesterNumber: 4, semesterName: '4th Semester', sgpa: 8.00 },
+      ],
+    },
+  ];
+
+  function calculateCumulativeCgpa(years) {
+    const allSems = years.flatMap((y) => y.semesters || []).filter((s) => s.sgpa > 0);
+    const sum = allSems.reduce((acc, curr) => acc + curr.sgpa, 0);
+    return Number((sum / allSems.length).toFixed(2));
+  }
+
+  const cumulativeCgpa = calculateCumulativeCgpa(engineeringYears);
+  // (7.15 + 7.60 + 7.71 + 8.00) / 4 = 30.46 / 4 = 7.615 -> 7.62
+  assert.equal(cumulativeCgpa, 7.62, 'Cumulative CGPA across 4 completed semesters must equal 7.62');
+
+  // 4. Duplicate Semester Detection (Same Number or Same Name)
+  function detectDuplicateSemesters(semesters) {
+    if (semesters.length < 2) return false;
+    const s1 = semesters[0];
+    const s2 = semesters[1];
+    return (
+      s1.semesterNumber === s2.semesterNumber ||
+      s1.semesterName.trim().toLowerCase() === s2.semesterName.trim().toLowerCase()
+    );
+  }
+
+  const duplicateSems = [
+    { semesterNumber: 1, semesterName: '1st Semester', sgpa: 7.5 },
+    { semesterNumber: 1, semesterName: '1st Semester', sgpa: 8.0 },
+  ];
+  assert.equal(detectDuplicateSemesters(duplicateSems), true, 'Must detect duplicate semester number/name');
+  assert.equal(detectDuplicateSemesters(sems), false, 'Distinct semesters must not trigger duplicate warning');
+
+  // 5. Identical SGPA Alert
+  function detectIdenticalSgpa(semesters) {
+    if (semesters.length < 2) return false;
+    return semesters[0].sgpa > 0 && semesters[0].sgpa === semesters[1].sgpa;
+  }
+
+  const identicalScoreSems = [
+    { semesterNumber: 1, semesterName: '1st Semester', sgpa: 8.0 },
+    { semesterNumber: 2, semesterName: '2nd Semester', sgpa: 8.0 },
+  ];
+  assert.equal(detectIdenticalSgpa(identicalScoreSems), true, 'Must detect identical SGPA scores in a year');
+  assert.equal(detectIdenticalSgpa(sems), false, 'Different scores must not trigger identical SGPA alert');
+
+  // 6. 10th & 12th Grade Schooling Records Validation & Mutators
+  const initialSchooling = [
+    {
+      id: 'school-12th',
+      qualification: 'Pre-University Course (PUC / 12th Standard)',
+      subTitle: 'Physics, Chemistry, Mathematics & Computer Science (PCMC)',
+      score: 80.64,
+      scale: '%',
+      board: 'Department of Pre-University Education, Karnataka',
+      duration: '2022 – 2024',
+      institution: 'St. Joseph Pre-University College',
+    },
+    {
+      id: 'school-10th',
+      qualification: 'Secondary School Leaving Certificate (SSLC / 10th Standard)',
+      subTitle: 'General Sciences, Mathematics & Social Studies',
+      score: 80.33,
+      scale: '%',
+      board: 'Karnataka Secondary Education Examination Board (KSEEB)',
+      duration: '2020 – 2022',
+      institution: 'Holy Cross High School',
+    },
+  ];
+
+  // Verify schooling records exist
+  assert.equal(initialSchooling.length, 2);
+  assert.equal(initialSchooling[0].qualification.includes('12th'), true);
+  assert.equal(initialSchooling[1].qualification.includes('10th'), true);
+  assert.equal(initialSchooling[0].score, 80.64);
+  assert.equal(initialSchooling[1].score, 80.33);
+
+  // Edit schooling record
+  const updatedSchooling = initialSchooling.map((item) =>
+    item.id === 'school-12th' ? { ...item, score: 94.2, duration: '2022 – 2024' } : item
+  );
+  assert.equal(updatedSchooling[0].score, 94.2);
+});
+
+
 
 
 

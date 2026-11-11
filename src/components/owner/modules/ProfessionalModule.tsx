@@ -29,11 +29,14 @@ import {
   FileText,
   GripVertical,
   Move,
+  AlertTriangle,
+  CheckCircle2,
+  School,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { Project, ProjectCategory, FilterCategory } from '../../../data/projects';
 import { SkillItem } from '../../skills/SkillsSection';
-import { YearAcademicData, SemesterScore } from '../../education/EducationSection';
+import { YearAcademicData, SemesterScore, SchoolRecord, schoolEducationData } from '../../education/EducationSection';
 import { CertificateItem, CertificateEntry, normalizeCertificate } from '../../../types/content';
 
 const projectCategoryOptions: ProjectCategory[] = [
@@ -396,16 +399,24 @@ export const ProfessionalModule: React.FC = () => {
   // ================= ACADEMIC YEARS & SEMESTER SGPA MANAGERS =================
   const recalculateAcademic = (engineeringList: YearAcademicData[]): YearAcademicData[] => {
     return engineeringList.map((year) => {
-      const validSems = (year.semesters || []).filter(
+      // Enforce strictly max 2 semesters per academic year
+      const sems = (year.semesters || []).slice(0, 2);
+      const validSems = sems.filter(
         (s) => typeof s.sgpa === 'number' && s.sgpa > 0
       );
       const avg =
         validSems.length > 0
           ? Number((validSems.reduce((a, b) => a + b.sgpa, 0) / validSems.length).toFixed(2))
           : undefined;
+
+      // When both 2 semesters are completed, calculate yearly average SGPA
+      const status = validSems.length === 2 ? 'Completed' : year.status;
+
       return {
         ...year,
+        semesters: sems,
         yearlyAverageSgpa: avg,
+        status,
       };
     });
   };
@@ -422,6 +433,13 @@ export const ProfessionalModule: React.FC = () => {
     const nextYearNum = list.length + 1;
     const suffix =
       nextYearNum === 1 ? 'st' : nextYearNum === 2 ? 'nd' : nextYearNum === 3 ? 'rd' : 'th';
+    const firstSemNum = nextYearNum * 2 - 1;
+    const secondSemNum = nextYearNum * 2;
+    const firstSuffix =
+      firstSemNum === 1 ? 'st' : firstSemNum === 2 ? 'nd' : firstSemNum === 3 ? 'rd' : 'th';
+    const secondSuffix =
+      secondSemNum === 1 ? 'st' : secondSemNum === 2 ? 'nd' : secondSemNum === 3 ? 'rd' : 'th';
+
     const newYear: YearAcademicData = {
       id: `be-year-${nextYearNum}-${Date.now()}`,
       yearTitle: `${nextYearNum}${suffix} Year B.E.`,
@@ -429,33 +447,29 @@ export const ProfessionalModule: React.FC = () => {
       institution: 'Bangalore Technological Institute (BTI)',
       duration: `${2023 + nextYearNum} – ${2024 + nextYearNum}`,
       status: nextYearNum <= 2 ? 'Completed' : 'In Progress',
-      currentStatusLabel: `${nextYearNum * 2 - 1}${
-        nextYearNum * 2 - 1 === 1 ? 'st' : nextYearNum * 2 - 1 === 2 ? 'nd' : nextYearNum * 2 - 1 === 3 ? 'rd' : 'th'
-      } Semester Pursuing`,
+      currentStatusLabel: `${firstSemNum}${firstSuffix} Semester Pursuing`,
       inProgressNote:
         nextYearNum > 2
           ? 'Currently enrolled in advanced coursework and laboratory practicals under VTU.'
           : undefined,
       semesters: [
         {
-          semesterNumber: nextYearNum * 2 - 1,
-          semesterName: `${nextYearNum * 2 - 1}${
-            nextYearNum * 2 - 1 === 1
-              ? 'st'
-              : nextYearNum * 2 - 1 === 2
-              ? 'nd'
-              : nextYearNum * 2 - 1 === 3
-              ? 'rd'
-              : 'th'
-          } Semester`,
+          semesterNumber: firstSemNum,
+          semesterName: `${firstSemNum}${firstSuffix} Semester`,
           sgpa: 8.0,
+          maxSgpa: 10.0,
+        },
+        {
+          semesterNumber: secondSemNum,
+          semesterName: `${secondSemNum}${secondSuffix} Semester`,
+          sgpa: 8.2,
           maxSgpa: 10.0,
         },
       ],
     };
     const updated = [...list, newYear];
     updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
-    showToast(`Added ${newYear.yearTitle}.`, 'success');
+    showToast(`Added ${newYear.yearTitle} with 2 semester slots.`, 'success');
   };
 
   const handleDeleteYear = (yearIndex: number) => {
@@ -480,11 +494,20 @@ export const ProfessionalModule: React.FC = () => {
     const updated = [...(academic.engineering || [])];
     const year = { ...updated[yearIndex] };
     const currentSems = [...(year.semesters || [])];
-    const maxNum =
-      currentSems.length > 0
-        ? Math.max(...currentSems.map((s) => s.semesterNumber))
-        : yearIndex * 2;
-    const nextSemNum = maxNum + 1;
+
+    // Enforce strictly max 2 semesters per year
+    if (currentSems.length >= 2) {
+      showToast('Each academic year is strictly limited to 2 semesters.', 'error');
+      return;
+    }
+
+    const defaultFirstSem = yearIndex * 2 + 1;
+    const defaultSecondSem = yearIndex * 2 + 2;
+    let nextSemNum = defaultFirstSem;
+    if (currentSems.length === 1) {
+      nextSemNum = currentSems[0].semesterNumber === defaultFirstSem ? defaultSecondSem : defaultFirstSem;
+    }
+
     const suffix =
       nextSemNum === 1 ? 'st' : nextSemNum === 2 ? 'nd' : nextSemNum === 3 ? 'rd' : 'th';
 
@@ -510,6 +533,18 @@ export const ProfessionalModule: React.FC = () => {
     const year = { ...updated[yearIndex] };
     const sems = [...(year.semesters || [])];
     sems[semIndex] = { ...sems[semIndex], ...patch };
+
+    // Check for duplicate semester names or numbers if 2 semesters exist
+    if (sems.length === 2) {
+      const otherIdx = semIndex === 0 ? 1 : 0;
+      if (
+        sems[semIndex].semesterNumber === sems[otherIdx].semesterNumber ||
+        sems[semIndex].semesterName.trim().toLowerCase() === sems[otherIdx].semesterName.trim().toLowerCase()
+      ) {
+        showToast('Notice: Both semesters in this year have identical names or numbers.', 'error');
+      }
+    }
+
     year.semesters = sems;
     updated[yearIndex] = year;
     updateAcademic({ ...academic, engineering: recalculateAcademic(updated) });
@@ -527,13 +562,61 @@ export const ProfessionalModule: React.FC = () => {
     showToast(`${removedName} removed.`, 'info');
   };
 
-  // Cumulative CGPA calculation
+  // Cumulative CGPA calculation across all completed semesters
   const allCompletedSemesters = (academic.engineering || [])
     .flatMap((y) => y.semesters || [])
     .filter((s) => typeof s.sgpa === 'number' && s.sgpa > 0);
   const totalSgpa = allCompletedSemesters.reduce((acc, curr) => acc + curr.sgpa, 0);
   const calculatedCgpa =
     allCompletedSemesters.length > 0 ? (totalSgpa / allCompletedSemesters.length).toFixed(2) : '7.62';
+
+  // ================= SCHOOLING (10TH & 12TH GRADE) MANAGERS =================
+  const schoolingList: SchoolRecord[] =
+    academic.schooling && academic.schooling.length > 0
+      ? academic.schooling
+      : schoolEducationData;
+
+  const handleUpdateSchoolRecord = (idx: number, patch: Partial<SchoolRecord>) => {
+    const list = [...schoolingList];
+    list[idx] = { ...list[idx], ...patch };
+    updateAcademic({ ...academic, schooling: list });
+  };
+
+  const handleAddSchoolRecord = () => {
+    const nextQualification = schoolingList.some((s) => s.qualification.includes('12th'))
+      ? '10th Standard / Matriculation'
+      : '12th Standard / Pre-University';
+    const newRecord: SchoolRecord = {
+      id: `school-${Date.now()}`,
+      qualification: nextQualification,
+      subTitle: 'Secondary / Senior Secondary Board Curriculum',
+      score: 85.0,
+      scale: '%',
+      board: 'State Board of Education / CBSE / ICSE',
+      duration: '2022 – 2024',
+      institution: 'College / High School Name',
+    };
+    const list = [...schoolingList, newRecord];
+    updateAcademic({ ...academic, schooling: list });
+    showToast(`Added ${newRecord.qualification} record.`, 'success');
+  };
+
+  const handleDeleteSchoolRecord = (idx: number) => {
+    const list = [...schoolingList];
+    const removed = list[idx]?.qualification || 'Schooling record';
+    list.splice(idx, 1);
+    updateAcademic({ ...academic, schooling: list });
+    showToast(`Removed ${removed}.`, 'info');
+  };
+
+  const handleMoveSchoolRecord = (idx: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= schoolingList.length) return;
+    const list = [...schoolingList];
+    const [moved] = list.splice(idx, 1);
+    list.splice(targetIdx, 0, moved);
+    updateAcademic({ ...academic, schooling: list });
+  };
 
   return (
     <div className="space-y-8 max-w-4xl font-serif">
@@ -1031,9 +1114,13 @@ export const ProfessionalModule: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-mono px-3 py-1.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[#704a29] font-bold shadow-2xs">
-                Cumulative CGPA: {calculatedCgpa} / 10.0
-              </span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-[#73685c]">Cumulative CGPA:</span>
+                <span className="text-xs font-mono font-black text-[#704a29]">{calculatedCgpa} / 10.0</span>
+                <span className="text-[9.5px] font-mono text-[#8c6239] bg-[#fffefb] px-1.5 py-0.5 rounded border border-[#d9cdbd]">
+                  {allCompletedSemesters.length} sems
+                </span>
+              </div>
 
               <button
                 type="button"
@@ -1068,6 +1155,24 @@ export const ProfessionalModule: React.FC = () => {
             {(academic.engineering || []).map((yearData, yIdx) => {
               const semesters = yearData.semesters || [];
               const isCompleted = yearData.status === 'Completed';
+              const sem1 = semesters[0];
+              const sem2 = semesters[1];
+              const isYearFull = semesters.length >= 2;
+              const hasBothSemesters = semesters.length === 2 && sem1 && sem2;
+              const hasBothCompleted = hasBothSemesters && sem1.sgpa > 0 && sem2.sgpa > 0;
+
+              // Duplicate checks
+              const hasDuplicateSemesterInfo =
+                hasBothSemesters &&
+                (sem1.semesterNumber === sem2.semesterNumber ||
+                  sem1.semesterName.trim().toLowerCase() === sem2.semesterName.trim().toLowerCase());
+
+              const hasIdenticalSgpa =
+                hasBothSemesters &&
+                typeof sem1.sgpa === 'number' &&
+                typeof sem2.sgpa === 'number' &&
+                sem1.sgpa > 0 &&
+                sem1.sgpa === sem2.sgpa;
 
               return (
                 <div
@@ -1215,20 +1320,88 @@ export const ProfessionalModule: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Semesters Sub-Grid */}
+                  {/* WARNING BANNERS: Duplicate Semesters & Identical SGPA */}
+                  {hasDuplicateSemesterInfo && (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs shadow-2xs">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">Duplicate Semester Warning:</span>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          Both semesters are labeled as <strong>"{sem1.semesterName}"</strong>. Each academic year must strictly contain 2 distinct semesters (Odd and Even, e.g. {yIdx * 2 + 1}st &amp; {yIdx * 2 + 2}nd).
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasIdenticalSgpa && !hasDuplicateSemesterInfo && (
+                    <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs shadow-2xs">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">Identical SGPA Alert:</span>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          Both {sem1.semesterName} and {sem2.semesterName} have an identical score of <strong>{sem1.sgpa.toFixed(2)}</strong>. Please verify if these are intentional twin evaluations or a duplicate score.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2-Semester Completion & Yearly Average Status Ribbon */}
+                  {hasBothCompleted ? (
+                    <div className="flex flex-wrap items-center justify-between p-2.5 rounded-xl bg-[#faf7f2] border border-[#e2d8cb] text-xs">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#16a34a] shrink-0" />
+                        <span className="font-bold text-[#2b241e]">Both Semesters Completed</span>
+                        <span className="text-[#73685c] hidden sm:inline">
+                          ({sem1.semesterName}: <strong className="font-mono text-[#704a29]">{sem1.sgpa.toFixed(2)}</strong> &bull; {sem2.semesterName}: <strong className="font-mono text-[#704a29]">{sem2.sgpa.toFixed(2)}</strong>)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <span className="text-[10px] text-[#73685c] uppercase font-bold">Yearly Average:</span>
+                        <span className="text-xs font-black text-[#704a29] bg-[#fffefb] px-2 py-0.5 rounded border border-[#d9cdbd]">
+                          {yearData.yearlyAverageSgpa ? yearData.yearlyAverageSgpa.toFixed(2) : ((sem1.sgpa + sem2.sgpa) / 2).toFixed(2)} / 10.0
+                        </span>
+                      </div>
+                    </div>
+                  ) : semesters.length === 1 ? (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        <span>1 of 2 Semesters Evaluated ({sem1.semesterName}: {sem1.sgpa.toFixed(2)}) &bull; 2nd semester pending</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded border border-amber-300">
+                        Year Incomplete
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {/* Semesters Sub-Grid (Strictly Max 2 Semesters per Year) */}
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className="text-[11px] uppercase tracking-wider text-[#73685c] font-bold">
-                        Evaluated Semesters ({semesters.length})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleAddSemester(yIdx)}
-                        className="px-2.5 py-1 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-xs text-[#704a29] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add Semester</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] uppercase tracking-wider text-[#73685c] font-bold">
+                          Academic Semesters ({semesters.length} / 2 max)
+                        </span>
+                        {isYearFull && (
+                          <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#f2f8f2] text-[#166534] border border-[#86efac]">
+                            Year Full (2 Semesters)
+                          </span>
+                        )}
+                      </div>
+
+                      {!isYearFull ? (
+                        <button
+                          type="button"
+                          onClick={() => handleAddSemester(yIdx)}
+                          className="px-2.5 py-1 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-xs text-[#704a29] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add Semester ({2 - semesters.length} remaining)</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-[#73685c] italic">
+                          Strict limit: 2 semesters per academic year
+                        </span>
+                      )}
                     </div>
 
                     {semesters.length === 0 ? (
@@ -1242,28 +1415,33 @@ export const ProfessionalModule: React.FC = () => {
                           className="px-3 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 cursor-pointer transition"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Add Semester Evaluation</span>
+                          <span>Add 1st Semester Evaluation</span>
                         </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {semesters.map((sem, sIdx) => (
                           <div
                             key={sem.semesterNumber || `sem-${sIdx}`}
-                            className="p-3 rounded-xl bg-[#fffefb] border border-[#d9cdbd] space-y-2 shadow-2xs relative group"
+                            className="p-3.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] space-y-2.5 shadow-2xs relative group hover:border-[#b89574] transition"
                           >
                             <div className="flex items-center justify-between gap-1">
-                              <input
-                                type="text"
-                                value={sem.semesterName || `Sem ${sem.semesterNumber}`}
-                                onChange={(e) =>
-                                  handleUpdateSemester(yIdx, sIdx, {
-                                    semesterName: e.target.value,
-                                  })
-                                }
-                                className="px-1.5 py-0.5 rounded bg-transparent border border-transparent hover:border-[#d9cdbd] focus:border-[#704a29] text-xs font-bold text-[#2b241e] focus:outline-none w-28"
-                                placeholder="Semester Name"
-                              />
+                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                <span className="text-[10px] font-mono font-bold text-[#704a29] bg-[#f0eae1] px-1.5 py-0.5 rounded border border-[#d9cdbd]">
+                                  #{sIdx + 1}
+                                </span>
+                                <input
+                                  type="text"
+                                  value={sem.semesterName || `Sem ${sem.semesterNumber}`}
+                                  onChange={(e) =>
+                                    handleUpdateSemester(yIdx, sIdx, {
+                                      semesterName: e.target.value,
+                                    })
+                                  }
+                                  className="px-1.5 py-0.5 rounded bg-transparent border border-transparent hover:border-[#d9cdbd] focus:border-[#704a29] text-xs font-bold text-[#2b241e] focus:outline-none flex-1 min-w-0"
+                                  placeholder="Semester Name"
+                                />
+                              </div>
 
                               <button
                                 type="button"
@@ -1277,7 +1455,7 @@ export const ProfessionalModule: React.FC = () => {
 
                             <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#f0eae1]">
                               <span className="text-[10px] text-[#73685c] uppercase font-bold">
-                                SGPA:
+                                Semester SGPA:
                               </span>
                               <div className="flex items-center gap-1">
                                 <input
@@ -1320,6 +1498,184 @@ export const ProfessionalModule: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+
+          {/* ================= 10TH & 12TH GRADE SCHOOLING SECTION ================= */}
+          <div className="pt-6 border-t border-[#d9cdbd] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#d9cdbd]/70 gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-[#704a29]" />
+                  <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
+                    10th &amp; 12th Grade Schooling Records ({schoolingList.length})
+                  </h3>
+                </div>
+                <p className="text-xs text-[#73685c] mt-0.5">
+                  Manage your Higher Secondary (12th / PUC) and Secondary (10th / SSLC) board exam results and certificates.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddSchoolRecord}
+                className="px-3.5 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition active:scale-95 shrink-0 self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add School Record</span>
+              </button>
+            </div>
+
+            {/* Schooling Cards List */}
+            <div className="space-y-4">
+              {schoolingList.map((schoolItem, sIdx) => (
+                <div
+                  key={schoolItem.id || `school-${sIdx}`}
+                  className="p-5 rounded-2xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-4 shadow-2xs hover:border-[#b89574] transition"
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-[#d9cdbd]/60 gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#704a29]" />
+                      <span className="text-xs font-mono font-bold text-[#704a29] bg-[#f0eae1] px-2.5 py-0.5 rounded border border-[#d9cdbd]">
+                        {schoolItem.qualification.includes('12')
+                          ? '12th Standard / Pre-University'
+                          : schoolItem.qualification.includes('10')
+                          ? '10th Standard / Secondary'
+                          : schoolItem.qualification}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSchoolRecord(sIdx, 'up')}
+                        disabled={sIdx === 0}
+                        className="p-1 rounded bg-[#fffefb] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] disabled:opacity-30 cursor-pointer shadow-2xs"
+                        title="Move Up"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSchoolRecord(sIdx, 'down')}
+                        disabled={sIdx === schoolingList.length - 1}
+                        className="p-1 rounded bg-[#fffefb] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] disabled:opacity-30 cursor-pointer shadow-2xs"
+                        title="Move Down"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSchoolRecord(sIdx)}
+                        className="p-1 rounded bg-[#fffefb] hover:bg-[#fbf0ef] border border-[#d9cdbd] hover:border-[#f5c6c2] text-[#bc473b] cursor-pointer shadow-2xs ml-1"
+                        title="Delete Record"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Qualification Title
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolItem.qualification}
+                        onChange={(e) => handleUpdateSchoolRecord(sIdx, { qualification: e.target.value })}
+                        placeholder="e.g. 12th Standard / Pre-University Course (PUC II)"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] font-semibold focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Academic Duration / Passing Years
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolItem.duration}
+                        onChange={(e) => handleUpdateSchoolRecord(sIdx, { duration: e.target.value })}
+                        placeholder="e.g. 2022 – 2024"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Stream / Specialization / Subjects
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolItem.subTitle}
+                        onChange={(e) => handleUpdateSchoolRecord(sIdx, { subTitle: e.target.value })}
+                        placeholder="e.g. Physics, Chemistry, Mathematics & Computer Science (PCMC)"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        Board of Examination Authority
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolItem.board}
+                        onChange={(e) => handleUpdateSchoolRecord(sIdx, { board: e.target.value })}
+                        placeholder="e.g. Department of Pre-University Education, Karnataka"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] uppercase tracking-wider text-[#73685c] font-bold mb-1">
+                        School / Junior College Institution (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolItem.institution || ''}
+                        onChange={(e) => handleUpdateSchoolRecord(sIdx, { institution: e.target.value })}
+                        placeholder="e.g. Pre-University College / Secondary High School"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Score Callout & Edit */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-wider text-[#73685c] font-bold">
+                        Final Board Score / Percentage:
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={schoolItem.score}
+                          onChange={(e) =>
+                            handleUpdateSchoolRecord(sIdx, { score: parseFloat(e.target.value) || 0 })
+                          }
+                          className="w-20 px-2 py-1 rounded bg-[#fbf8f3] border border-[#d9cdbd] text-sm font-mono font-bold text-[#704a29] text-right focus:outline-none focus:border-[#704a29]"
+                        />
+                        <span className="text-xs font-bold text-[#8c6239] font-mono">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-baseline gap-1 font-mono">
+                      <span className="text-xl font-black text-[#704a29]">
+                        {Number(schoolItem.score).toFixed(2)}
+                      </span>
+                      <span className="text-sm font-bold text-[#8c6239]">%</span>
+                      <span className="ml-2.5 text-[10px] font-sans font-semibold text-[#166534] bg-[#f2f8f2] px-2 py-0.5 rounded border border-[#86efac]">
+                        {schoolItem.score >= 85 ? 'Distinction' : schoolItem.score >= 60 ? 'First Class' : 'Pass'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
