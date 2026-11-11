@@ -580,4 +580,70 @@ test('Certificate Multi-Image Upload, Gallery Normalization and Management', () 
   assert.equal(removedImages[1], 'https://storage.googleapis.com/bucket/profiles/owner/certificates/marks_card.png');
 });
 
+// 15. Social Channel Configuration, Edit Mutators & Reordering Logic
+test('Social Channel Configuration, Edit Mutators & Reordering Logic', () => {
+  const initialChannels = [
+    {
+      id: 'whatsapp',
+      name: 'WhatsApp',
+      handle: '+91 9844616699',
+      actionText: 'Direct Message on WhatsApp',
+      url: 'https://wa.me/919844616699',
+      brandColor: '#25D366',
+      visible: true,
+    },
+    {
+      id: 'instagram',
+      name: 'Instagram',
+      handle: '@__rahul_nag__',
+      actionText: 'Redirect to Instagram Profile',
+      url: 'https://www.instagram.com/__rahul_nag__',
+      brandColor: '#E1306C',
+      visible: true,
+    },
+    {
+      id: 'linkedin',
+      name: 'LinkedIn',
+      handle: 'linkedin.com/in/rahulnagv',
+      actionText: 'Connect on LinkedIn',
+      url: 'https://www.linkedin.com/in/rahulnagv',
+      brandColor: '#0A66C2',
+      visible: true,
+    },
+  ];
+
+  // 1. Edit channel properties
+  const edited = initialChannels.map((c) =>
+    c.id === 'whatsapp'
+      ? {
+          ...c,
+          handle: '+91 98446 16699 (Business)',
+          actionText: 'Chat on WhatsApp Business',
+          brandColor: '#128C7E',
+        }
+      : c
+  );
+
+  assert.equal(edited[0].handle, '+91 98446 16699 (Business)');
+  assert.equal(edited[0].actionText, 'Chat on WhatsApp Business');
+  assert.equal(edited[0].brandColor, '#128C7E');
+
+  // 2. Reorder channel (move Instagram up to index 0)
+  function reorder(list, fromIdx, toIdx) {
+    const copy = [...list];
+    const [item] = copy.splice(fromIdx, 1);
+    copy.splice(toIdx, 0, item);
+    return copy;
+  }
+
+  const reordered = reorder(initialChannels, 1, 0);
+  assert.equal(reordered[0].id, 'instagram');
+  assert.equal(reordered[1].id, 'whatsapp');
+  assert.equal(reordered[2].id, 'linkedin');
+
+  // 3. Toggle visibility
+  const toggled = initialChannels.map((c) => (c.id === 'instagram' ? { ...c, visible: !c.visible } : c));
+  assert.equal(toggled[1].visible, false);
+});
+
 
