@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Palette,
   Type,
@@ -11,6 +11,10 @@ import {
   Paintbrush,
   Sun,
   Moon,
+  Search,
+  SlidersHorizontal,
+  BookOpen,
+  RefreshCw,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { ThemePresetName, ThemeConfig } from '../../../types/content';
@@ -296,36 +300,357 @@ const curatedPresets: PresetDefinition[] = [
   },
 ];
 
+export interface FontFamilyDefinition {
+  id: string;
+  name: string;
+  category: 'Serif' | 'Sans' | 'Mono' | 'Display';
+  headingFont: string;
+  bodyFont: string;
+  genericType: 'serif' | 'sans' | 'mono';
+  sampleHeading: string;
+  sampleBody: string;
+  badge: string;
+  description: string;
+}
+
+export const curatedFontFamilies: FontFamilyDefinition[] = [
+  {
+    id: 'times-academic',
+    name: 'Times New Roman & Tinos',
+    category: 'Serif',
+    headingFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+    bodyFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Scholastic Academic Standard',
+    badge: 'Default Academic',
+    description: 'Official academic serif with authentic parchment texture and heritage dignity.',
+  },
+  {
+    id: 'cinzel-tinos',
+    name: 'Cinzel & Tinos',
+    category: 'Serif',
+    headingFont: "'Cinzel', 'Times New Roman', serif",
+    bodyFont: "'Tinos', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'AG',
+    sampleBody: 'Classical Inscriptional Roman',
+    badge: 'Regal Roman',
+    description: 'Monumental Roman capitals paired with graceful literary serif body text.',
+  },
+  {
+    id: 'playfair-lora',
+    name: 'Playfair Display & Lora',
+    category: 'Serif',
+    headingFont: "'Playfair Display', Georgia, serif",
+    bodyFont: "'Lora', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'High-Contrast Luxury Editorial',
+    badge: 'Editorial Luxury',
+    description: 'Late 18th-century European Enlightenment serif with delicate, sharp hairlines.',
+  },
+  {
+    id: 'cormorant-garamond',
+    name: 'Cormorant Garamond',
+    category: 'Serif',
+    headingFont: "'Cormorant Garamond', Garamond, serif",
+    bodyFont: "'Cormorant Garamond', Garamond, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Refined French Renaissance',
+    badge: 'Heritage Garamond',
+    description: 'Masterfully balanced bookmaker serif with historic humanist cadence.',
+  },
+  {
+    id: 'eb-garamond-merriweather',
+    name: 'EB Garamond & Merriweather',
+    category: 'Serif',
+    headingFont: "'EB Garamond', Garamond, serif",
+    bodyFont: "'Merriweather', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Historic Humanist Literary',
+    badge: 'Humanist Classic',
+    description: 'Claude Garamont 1592 archetype paired with a robust digital reading serif.',
+  },
+  {
+    id: 'bodoni-moda',
+    name: 'Bodoni Moda',
+    category: 'Serif',
+    headingFont: "'Bodoni Moda', 'Didot', serif",
+    bodyFont: "'Tinos', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Dramatic Italian Modernity',
+    badge: 'Italian Haute',
+    description: 'Radical vertical stress and hair-thin serifs by Gianbattista Bodoni (Parma, 1798).',
+  },
+  {
+    id: 'merriweather',
+    name: 'Merriweather',
+    category: 'Serif',
+    headingFont: "'Merriweather', Georgia, serif",
+    bodyFont: "'Merriweather', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Sturdy High-Legibility Serif',
+    badge: 'Academic Text',
+    description: 'Designed specifically for effortless screen absorption and long reading stamina.',
+  },
+  {
+    id: 'lora',
+    name: 'Lora',
+    category: 'Serif',
+    headingFont: "'Lora', Georgia, serif",
+    bodyFont: "'Lora', Georgia, serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Calligraphic Brushed Serif',
+    badge: 'Contemporary Serif',
+    description: 'A contemporary serif with brushed roots and subtle artistic curves.',
+  },
+  {
+    id: 'plus-jakarta',
+    name: 'Plus Jakarta Sans',
+    category: 'Sans',
+    headingFont: "'Plus Jakarta Sans', -apple-system, sans-serif",
+    bodyFont: "'Plus Jakarta Sans', -apple-system, sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Clean Architectural Tech',
+    badge: 'Modern Tech',
+    description: 'Geometric neo-grotesque with clean open counters and modern tech authority.',
+  },
+  {
+    id: 'inter',
+    name: 'Inter',
+    category: 'Sans',
+    headingFont: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    bodyFont: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'World Standard Interface Sans',
+    badge: 'Universal UI',
+    description: 'Tall x-height crafted by Rasmus Andersson for razor-sharp digital readability.',
+  },
+  {
+    id: 'poppins',
+    name: 'Poppins',
+    category: 'Sans',
+    headingFont: "'Poppins', sans-serif",
+    bodyFont: "'Poppins', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Pure Geometric Round Sans',
+    badge: 'Geometric Round',
+    description: 'Friendly geometric sans based on circles and rational modernist curves.',
+  },
+  {
+    id: 'montserrat',
+    name: 'Montserrat',
+    category: 'Sans',
+    headingFont: "'Montserrat', sans-serif",
+    bodyFont: "'Montserrat', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Urban Architectural Sans',
+    badge: 'Urban Architecture',
+    description: 'Historic Buenos Aires neighborhood signage aesthetic; bold and sturdy.',
+  },
+  {
+    id: 'outfit',
+    name: 'Outfit',
+    category: 'Sans',
+    headingFont: "'Outfit', sans-serif",
+    bodyFont: "'Outfit', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Airy Contemporary Digital',
+    badge: 'Digital Clean',
+    description: 'Airy, futuristic proportions designed by Brand New Media for modern brands.',
+  },
+  {
+    id: 'space-grotesk',
+    name: 'Space Grotesk',
+    category: 'Sans',
+    headingFont: "'Space Grotesk', sans-serif",
+    bodyFont: "'Space Grotesk', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Brutalist High-Tech Grotesque',
+    badge: 'Cyber Tech',
+    description: 'Adapted from Space Mono; quirky tech angles with strong engineering presence.',
+  },
+  {
+    id: 'dm-sans',
+    name: 'DM Sans',
+    category: 'Sans',
+    headingFont: "'DM Sans', sans-serif",
+    bodyFont: "'DM Sans', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Low-Contrast Modernist Sans',
+    badge: 'High Precision',
+    description: 'Commissioned by Google from Colophon Foundry for high-density information layouts.',
+  },
+  {
+    id: 'roboto',
+    name: 'Roboto',
+    category: 'Sans',
+    headingFont: "'Roboto', sans-serif",
+    bodyFont: "'Roboto', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Dual-Nature Geometric Sans',
+    badge: 'Modern Classic',
+    description: 'Rigid geometric skeletons paired with friendly, relaxed natural curves.',
+  },
+  {
+    id: 'jetbrains-mono',
+    name: 'JetBrains Mono',
+    category: 'Mono',
+    headingFont: "'JetBrains Mono', monospace",
+    bodyFont: "'JetBrains Mono', monospace",
+    genericType: 'mono',
+    sampleHeading: '01',
+    sampleBody: 'Premier Developer Monospace',
+    badge: 'Developer Choice',
+    description: 'Engineered specifically for source code clarity, character distinction, and speed.',
+  },
+  {
+    id: 'fira-code',
+    name: 'Fira Code',
+    category: 'Mono',
+    headingFont: "'Fira Code', monospace",
+    bodyFont: "'Fira Code', monospace",
+    genericType: 'mono',
+    sampleHeading: '=>',
+    sampleBody: 'Technical Programming Ligatures',
+    badge: 'Programming Ligatures',
+    description: 'Mozilla-inspired developer font with beautiful terminal coding aesthetics.',
+  },
+  {
+    id: 'space-mono',
+    name: 'Space Mono',
+    category: 'Mono',
+    headingFont: "'Space Mono', monospace",
+    bodyFont: "'Space Mono', monospace",
+    genericType: 'mono',
+    sampleHeading: '_>',
+    sampleBody: 'Retro Cyberpunk Terminal',
+    badge: 'Retro Terminal',
+    description: '1960s space-exploration typewriter aesthetics combined with 80s arcade consoles.',
+  },
+  {
+    id: 'courier-prime',
+    name: 'Courier Prime',
+    category: 'Mono',
+    headingFont: "'Courier Prime', monospace",
+    bodyFont: "'Courier Prime', monospace",
+    genericType: 'mono',
+    sampleHeading: '¶',
+    sampleBody: 'Academic Mechanical Typewriter',
+    badge: 'Vintage Mechanical',
+    description: 'The definitive Hollywood typewriter font with heavier, inked strike weights.',
+  },
+  {
+    id: 'oswald-jakarta',
+    name: 'Oswald & Plus Jakarta',
+    category: 'Display',
+    headingFont: "'Oswald', sans-serif",
+    bodyFont: "'Plus Jakarta Sans', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'AG',
+    sampleBody: 'Impact Condensed Headlines',
+    badge: 'Condensed Impact',
+    description: 'Classic Gothic rework with strong vertical impact for striking banner cards.',
+  },
+  {
+    id: 'syne-inter',
+    name: 'Syne & Inter',
+    category: 'Display',
+    headingFont: "'Syne', sans-serif",
+    bodyFont: "'Inter', sans-serif",
+    genericType: 'sans',
+    sampleHeading: 'Ag',
+    sampleBody: 'Avant-Garde Art Direction',
+    badge: 'Creative Vanguard',
+    description: 'Daring French design studio display typeface with distinctive flair.',
+  },
+];
+
 export const AppearanceModule: React.FC = () => {
   const { draftContent, updateAppearance, showToast } = useOwnerEditor();
   const theme = draftContent.theme;
+
+  const [fontCategoryFilter, setFontCategoryFilter] = useState<'All' | 'Serif' | 'Sans' | 'Mono' | 'Display'>('All');
+  const [fontSearch, setFontSearch] = useState('');
+
+  const currentHeading = theme.typography?.headingFont || "'Times New Roman', Times, 'Tinos', Georgia, serif";
+  const currentBody = theme.typography?.bodyFont || "'Times New Roman', Times, 'Tinos', Georgia, serif";
+
+  const activeFontFamily =
+    curatedFontFamilies.find(
+      (f) =>
+        f.headingFont.toLowerCase().replace(/['"\s]/g, '') === currentHeading.toLowerCase().replace(/['"\s]/g, '') ||
+        f.name.toLowerCase() === (theme.typography?.fontFamily || '').toLowerCase()
+    ) || curatedFontFamilies[0];
 
   const handleSelectPreset = (preset: PresetDefinition) => {
     updateAppearance(preset.config);
     showToast(`Applied ${preset.name} theme aesthetic.`, 'success');
   };
 
-  const handleFontFamilyChange = (family: 'serif' | 'sans' | 'mono') => {
-    let headingFont = '"Cinzel", Georgia, serif';
-    let bodyFont = '"Tinos", Georgia, serif';
-
-    if (family === 'sans') {
-      headingFont = '"Plus Jakarta Sans", "Inter", sans-serif';
-      bodyFont = '"Inter", sans-serif';
-    } else if (family === 'mono') {
-      headingFont = '"JetBrains Mono", monospace';
-      bodyFont = '"JetBrains Mono", monospace';
-    }
-
+  const handleSelectFontFamily = (font: FontFamilyDefinition) => {
     updateAppearance({
       typography: {
         ...theme.typography,
-        fontFamily: family,
-        headingFont,
-        bodyFont,
+        fontFamily: font.genericType,
+        headingFont: font.headingFont,
+        bodyFont: font.bodyFont,
       },
     });
+
+    try {
+      const root = document.documentElement;
+      root.style.setProperty('--font-heading', font.headingFont);
+      root.style.setProperty('--font-body', font.bodyFont);
+      root.style.setProperty('--font-family', font.headingFont);
+    } catch { }
+
+    showToast(`Applied "${font.name}" font family.`, 'success');
   };
+
+  const handleFontSizeScaleChange = (scale: 'compact' | 'normal' | 'relaxed') => {
+    updateAppearance({
+      typography: {
+        ...theme.typography,
+        fontSizeScale: scale,
+      },
+    });
+    showToast(`Set font scale to ${scale}.`, 'info');
+  };
+
+  const handleLetterSpacingChange = (spacing: 'tight' | 'normal' | 'wide') => {
+    updateAppearance({
+      typography: {
+        ...theme.typography,
+        letterSpacing: spacing,
+      },
+    });
+    showToast(`Set letter spacing to ${spacing}.`, 'info');
+  };
+
+  const filteredFontFamilies = curatedFontFamilies.filter((f) => {
+    const matchesCategory = fontCategoryFilter === 'All' || f.category === fontCategoryFilter;
+    const matchesSearch =
+      fontSearch.trim() === '' ||
+      f.name.toLowerCase().includes(fontSearch.toLowerCase()) ||
+      f.badge.toLowerCase().includes(fontSearch.toLowerCase()) ||
+      f.description.toLowerCase().includes(fontSearch.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleRadiusChange = (radius: 'none' | 'small' | 'medium' | 'large' | 'full') => {
     updateAppearance({
@@ -429,63 +754,258 @@ export const AppearanceModule: React.FC = () => {
 
       {/* Typography & Font Architecture */}
       <div className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-6 sm:p-8 space-y-6 shadow-2xs">
-        <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold pb-3 border-b border-[#d9cdbd] flex items-center gap-2">
-          <Type className="w-4 h-4 text-[#704a29]" />
-          Typography Architecture
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#d9cdbd] gap-2">
+          <div className="flex items-center gap-2">
+            <Type className="w-4 h-4 text-[#704a29]" />
+            <h3 className="text-xs uppercase tracking-wider text-[#704a29] font-bold">
+              Typography Architecture &amp; Font Families ({curatedFontFamilies.length} Available)
+            </h3>
+          </div>
+          <span className="text-xs text-[#73685c]">
+            Active Font: <span className="text-[#704a29] font-bold">{activeFontFamily.name}</span>
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            {
-              family: 'serif' as const,
-              label: 'Classical Serif',
-              sub: 'Cinzel & Tinos',
-              sample: 'Ag',
-              desc: 'Academic dignity, regal, and traditional.',
-            },
-            {
-              family: 'sans' as const,
-              label: 'Modern Sans',
-              sub: 'Jakarta & Inter',
-              sample: 'Ag',
-              desc: 'Crisp, contemporary, and tech-forward.',
-            },
-            {
-              family: 'mono' as const,
-              label: 'Precision Mono',
-              sub: 'JetBrains Mono',
-              sample: 'Ag',
-              desc: 'Engineering precision and code aesthetic.',
-            },
-          ].map((item) => {
-            const isSelected = theme.typography.fontFamily === item.family;
+        {/* Live Interactive Font Specimen Box */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#fcf8f2] via-[#faf5ed] to-[#f5eee2] border-2 border-[#b89574] shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#d9cdbd]/60">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#704a29] px-2.5 py-0.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd]">
+                {activeFontFamily.category}
+              </span>
+              <span className="text-xs font-bold text-[#2b241e]">
+                {activeFontFamily.name}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-[#73685c]">
+              Live Specimen &bull; Cascades to entire public ID profile
+            </span>
+          </div>
+
+          <div
+            style={{ fontFamily: activeFontFamily.headingFont }}
+            className="text-lg sm:text-2xl font-bold text-[#1e1713] tracking-tight transition-all"
+          >
+            Digital Student Identity &bull; Rahul Nag V
+          </div>
+
+          <div
+            style={{ fontFamily: activeFontFamily.bodyFont }}
+            className="text-xs sm:text-sm text-[#524538] leading-relaxed transition-all"
+          >
+            Department of Computer Science &amp; Engineering &bull; Bangalore Technological Institute (BTI).
+            Accredited by Visvesvaraya Technological University (VTU) &bull; USN: 1BH24CS051.
+          </div>
+
+          <div
+            style={{ fontFamily: activeFontFamily.bodyFont }}
+            className="pt-2 border-t border-[#d9cdbd]/40 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#73685c]"
+          >
+            <span>The quick brown fox jumps over the lazy dog</span>
+            <span className="font-mono">0123456789 &bull; SGPA 8.00 / 10.0</span>
+          </div>
+        </div>
+
+        {/* Filter Pills & Search Input */}
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#f0eae1] border border-[#d9cdbd] overflow-x-auto">
+              {[
+                { id: 'All', label: `All (${curatedFontFamilies.length})` },
+                { id: 'Serif', label: `Serif (${curatedFontFamilies.filter((f) => f.category === 'Serif').length})` },
+                { id: 'Sans', label: `Sans-Serif (${curatedFontFamilies.filter((f) => f.category === 'Sans').length})` },
+                { id: 'Mono', label: `Monospace (${curatedFontFamilies.filter((f) => f.category === 'Mono').length})` },
+                { id: 'Display', label: `Display (${curatedFontFamilies.filter((f) => f.category === 'Display').length})` },
+              ].map((tab) => {
+                const isSelected = fontCategoryFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setFontCategoryFilter(tab.id as any)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#704a29] text-white shadow-xs'
+                        : 'text-[#73685c] hover:text-[#2b241e] hover:bg-white/50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search Input */}
+            <div className="relative min-w-[220px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#73685c]" />
+              <input
+                type="text"
+                value={fontSearch}
+                onChange={(e) => setFontSearch(e.target.value)}
+                placeholder="Search font family..."
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+              />
+              {fontSearch && (
+                <button
+                  type="button"
+                  onClick={() => setFontSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#73685c] hover:text-[#2b241e] text-xs cursor-pointer"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Available Font Families Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+          {filteredFontFamilies.map((font) => {
+            const isSelected =
+              activeFontFamily.id === font.id ||
+              (theme.typography?.headingFont || '').toLowerCase().replace(/['"\s]/g, '') ===
+                font.headingFont.toLowerCase().replace(/['"\s]/g, '');
+
             return (
-              <button
-                key={item.family}
-                type="button"
-                onClick={() => handleFontFamilyChange(item.family)}
-                className={`p-4 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer shadow-2xs ${
+              <motion.div
+                key={font.id}
+                whileHover={{ y: -2 }}
+                onClick={() => handleSelectFontFamily(font)}
+                className={`p-4 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer relative shadow-2xs ${
                   isSelected
-                    ? 'bg-[#f0eae1]/50 border-[#704a29] ring-2 ring-[#704a29]/20'
-                    : 'bg-[#fffefb] border-[#d9cdbd] hover:border-[#704a29]'
+                    ? 'bg-[#f0eae1]/60 border-[#704a29] ring-2 ring-[#704a29]/25 shadow-xs'
+                    : 'bg-[#fffefb] border-[#d9cdbd] hover:border-[#704a29] hover:bg-[#faf7f2]/50'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-bold text-[#704a29]">
-                      {item.sample}
-                    </span>
-                    {isSelected && <Check className="w-4 h-4 text-[#704a29]" />}
+                {/* Active Indicator Badge */}
+                {isSelected && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#704a29] text-white text-[9.5px] font-bold shadow-2xs">
+                    <Check className="w-3 h-3 text-white" />
+                    <span>Applied</span>
                   </div>
-                  <h4 className="text-sm font-bold text-[#2b241e]">{item.label}</h4>
-                  <p className="text-[11px] text-[#73685c]">{item.sub}</p>
+                )}
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      style={{ fontFamily: font.headingFont }}
+                      className="text-2xl font-black text-[#704a29] leading-none"
+                    >
+                      {font.sampleHeading}
+                    </span>
+                    <span className="text-[9.5px] font-mono px-2 py-0.5 rounded-md bg-[#f0eae1] text-[#704a29] border border-[#d9cdbd] font-semibold">
+                      {font.badge}
+                    </span>
+                  </div>
+
+                  <h4 className="text-sm font-bold text-[#2b241e] leading-snug">
+                    {font.name}
+                  </h4>
+
+                  {/* Sample rendered in that actual font */}
+                  <div
+                    style={{ fontFamily: font.headingFont }}
+                    className="text-xs font-semibold text-[#704a29] mt-1.5 leading-snug truncate"
+                  >
+                    {font.sampleBody}
+                  </div>
+
+                  <p className="text-[11px] text-[#73685c] mt-2 leading-relaxed line-clamp-2">
+                    {font.description}
+                  </p>
                 </div>
-                <p className="text-[11px] text-[#73685c] mt-3 leading-normal">
-                  {item.desc}
-                </p>
-              </button>
+
+                <div className="mt-3 pt-2.5 border-t border-[#d9cdbd]/60 flex items-center justify-between text-[10px] text-[#73685c]">
+                  <span className="font-mono">{font.category}</span>
+                  <span className={isSelected ? 'text-[#704a29] font-bold' : 'text-[#73685c] group-hover:text-[#2b241e]'}>
+                    {isSelected ? 'Currently Active' : 'Tap to Select'}
+                  </span>
+                </div>
+              </motion.div>
             );
           })}
+        </div>
+
+        {filteredFontFamilies.length === 0 && (
+          <div className="p-8 text-center bg-[#fbf8f3] rounded-xl border border-dashed border-[#d9cdbd]">
+            <p className="text-xs text-[#73685c]">No font families found matching &ldquo;{fontSearch}&rdquo;.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setFontSearch('');
+                setFontCategoryFilter('All');
+              }}
+              className="mt-2 text-xs text-[#704a29] font-bold underline cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+        {/* Fine-Tuning Controls: Font Scale & Letter Spacing */}
+        <div className="pt-4 border-t border-[#d9cdbd] grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Scale */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
+              Font Scale / Text Density
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'compact', label: 'Compact', desc: '90%' },
+                { id: 'normal', label: 'Normal', desc: '100%' },
+                { id: 'relaxed', label: 'Relaxed', desc: '110%' },
+              ].map((s) => {
+                const isSelected = (theme.typography?.fontSizeScale || 'normal') === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleFontSizeScaleChange(s.id as any)}
+                    className={`py-2 px-2 rounded-xl border text-center transition cursor-pointer text-xs ${
+                      isSelected
+                        ? 'bg-[#f0eae1] border-[#704a29] text-[#704a29] font-bold ring-1 ring-[#704a29]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c] hover:border-[#704a29]'
+                    }`}
+                  >
+                    <div className="font-semibold">{s.label}</div>
+                    <div className="text-[10px] opacity-75">{s.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Letter Spacing */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
+              Character Kerning / Letter Spacing
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'tight', label: 'Tight', desc: '-0.025em' },
+                { id: 'normal', label: 'Standard', desc: '0em' },
+                { id: 'wide', label: 'Spaced', desc: '+0.05em' },
+              ].map((sp) => {
+                const isSelected = (theme.typography?.letterSpacing || 'normal') === sp.id;
+                return (
+                  <button
+                    key={sp.id}
+                    type="button"
+                    onClick={() => handleLetterSpacingChange(sp.id as any)}
+                    className={`py-2 px-2 rounded-xl border text-center transition cursor-pointer text-xs ${
+                      isSelected
+                        ? 'bg-[#f0eae1] border-[#704a29] text-[#704a29] font-bold ring-1 ring-[#704a29]'
+                        : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c] hover:border-[#704a29]'
+                    }`}
+                  >
+                    <div className="font-semibold">{sp.label}</div>
+                    <div className="text-[10px] opacity-75">{sp.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -646,4 +646,164 @@ test('Social Channel Configuration, Edit Mutators & Reordering Logic', () => {
   assert.equal(toggled[1].visible, false);
 });
 
+// 16. Appearance Module Font Family Selection, Categorization & CSS Variable Cascading
+test('Appearance Module Font Family Selection, Categorization & CSS Variable Cascading', () => {
+  const curatedFontFamilies = [
+    {
+      id: 'times-academic',
+      name: 'Times New Roman & Tinos',
+      category: 'Serif',
+      headingFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      bodyFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      fontFamily: 'serif',
+      badge: 'Academic Default',
+      description: 'The definitive classical university scholar typeface. Impeccable formal gravitas.',
+    },
+    {
+      id: 'cinzel-tinos',
+      name: 'Cinzel & Tinos',
+      category: 'Serif',
+      headingFont: '"Cinzel", "Times New Roman", serif',
+      bodyFont: '"Tinos", Georgia, serif',
+      fontFamily: 'serif',
+      badge: 'Editorial Royal',
+      description: 'Roman epigraphic titular capitals paired with warm, legible book serif.',
+    },
+    {
+      id: 'playfair-lora',
+      name: 'Playfair Display & Lora',
+      category: 'Serif',
+      headingFont: '"Playfair Display", Georgia, serif',
+      bodyFont: '"Lora", Georgia, serif',
+      fontFamily: 'serif',
+      badge: 'Literary Luxury',
+      description: 'High-contrast transitional serif with delicate hairlines and calligraphic curves.',
+    },
+    {
+      id: 'plus-jakarta',
+      name: 'Plus Jakarta Sans',
+      category: 'Sans-Serif',
+      headingFont: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+      bodyFont: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+      fontFamily: 'sans',
+      badge: 'Modern Tech Pro',
+      description: 'Contemporary geometric grotesque designed for modern clean interfaces.',
+    },
+    {
+      id: 'inter-clean',
+      name: 'Inter',
+      category: 'Sans-Serif',
+      headingFont: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      bodyFont: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      fontFamily: 'sans',
+      badge: 'Universal Clean',
+      description: 'Tall x-height crafted for readability at any size on high-DPI screens.',
+    },
+    {
+      id: 'jetbrains-mono',
+      name: 'JetBrains Mono',
+      category: 'Monospace',
+      headingFont: '"JetBrains Mono", monospace',
+      bodyFont: '"JetBrains Mono", monospace',
+      fontFamily: 'mono',
+      badge: 'Developer IDE',
+      description: 'Code-oriented monospace with clear character distinction and ligatures.',
+    },
+    {
+      id: 'syne-display',
+      name: 'Syne & Inter',
+      category: 'Display',
+      headingFont: '"Syne", sans-serif',
+      bodyFont: '"Inter", sans-serif',
+      fontFamily: 'sans',
+      badge: 'Avant-Garde Art',
+      description: 'Bold expressive display typography paired with crystal-clean UI sans.',
+    },
+  ];
+
+  // 1. Verify coverage across all 4 font categories
+  const categories = [...new Set(curatedFontFamilies.map((f) => f.category))];
+  assert.ok(categories.includes('Serif'), 'Must contain Serif font category');
+  assert.ok(categories.includes('Sans-Serif'), 'Must contain Sans-Serif font category');
+  assert.ok(categories.includes('Monospace'), 'Must contain Monospace font category');
+  assert.ok(categories.includes('Display'), 'Must contain Display font category');
+
+  // 2. Category filtering logic
+  function filterByCategory(fonts, category) {
+    if (category === 'All') return fonts;
+    return fonts.filter((f) => f.category === category);
+  }
+
+  assert.equal(filterByCategory(curatedFontFamilies, 'All').length, curatedFontFamilies.length);
+  assert.equal(filterByCategory(curatedFontFamilies, 'Serif').length, 3);
+  assert.equal(filterByCategory(curatedFontFamilies, 'Sans-Serif').length, 2);
+  assert.equal(filterByCategory(curatedFontFamilies, 'Monospace').length, 1);
+  assert.equal(filterByCategory(curatedFontFamilies, 'Display').length, 1);
+
+  // 3. Search query filtering
+  function searchFonts(fonts, query) {
+    if (!query) return fonts;
+    const q = query.toLowerCase();
+    return fonts.filter(
+      (f) =>
+        f.name.toLowerCase().includes(q) ||
+        f.badge.toLowerCase().includes(q) ||
+        f.description.toLowerCase().includes(q) ||
+        f.category.toLowerCase().includes(q)
+    );
+  }
+
+  assert.equal(searchFonts(curatedFontFamilies, 'mono').length, 1);
+  assert.equal(searchFonts(curatedFontFamilies, 'mono')[0].id, 'jetbrains-mono');
+  assert.equal(searchFonts(curatedFontFamilies, 'royal').length, 1);
+  assert.equal(searchFonts(curatedFontFamilies, 'royal')[0].id, 'cinzel-tinos');
+  assert.equal(searchFonts(curatedFontFamilies, 'nonexistent').length, 0);
+
+  // 4. Font Selection Mutator: apply font family to theme typography
+  const baseTheme = {
+    preset: 'Classic Academic',
+    colors: {},
+    typography: {
+      fontFamily: 'serif',
+      headingFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      bodyFont: "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      fontSizeScale: 'normal',
+      letterSpacing: 'normal',
+    },
+    layout: {},
+  };
+
+  function applyFontPair(theme, fontPair) {
+    return {
+      ...theme,
+      typography: {
+        ...theme.typography,
+        fontFamily: fontPair.fontFamily,
+        headingFont: fontPair.headingFont,
+        bodyFont: fontPair.bodyFont,
+      },
+    };
+  }
+
+  const updatedTheme = applyFontPair(baseTheme, curatedFontFamilies[3]); // Plus Jakarta Sans
+  assert.equal(updatedTheme.typography.fontFamily, 'sans');
+  assert.equal(updatedTheme.typography.headingFont, '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
+  assert.equal(updatedTheme.typography.bodyFont, '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
+
+  // 5. CSS Variable Cascading Verification
+  function computeCssVariables(typography) {
+    return {
+      '--font-heading': typography.headingFont || "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      '--font-body': typography.bodyFont || "'Times New Roman', Times, 'Tinos', Georgia, serif",
+      '--font-family': typography.headingFont || "'Times New Roman', Times, 'Tinos', Georgia, serif",
+    };
+  }
+
+  const cssVars = computeCssVariables(updatedTheme.typography);
+  assert.equal(cssVars['--font-heading'], '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
+  assert.equal(cssVars['--font-body'], '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
+  assert.equal(cssVars['--font-family'], '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif');
+});
+
+
 

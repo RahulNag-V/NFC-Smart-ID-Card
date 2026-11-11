@@ -33,22 +33,35 @@
     --ring: #a67c52;
 
     --radius: 0.25rem;
+
+    --font-heading: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    --font-body: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    --font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    --font-mono: 'JetBrains Mono', 'Courier Prime', monospace;
   }
 
   *, ::before, ::after {
-    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    font-family: var(--font-body, var(--font-family, 'Times New Roman', Times, 'Tinos', Georgia, serif));
   }
 
   html, body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif;
+    font-family: var(--font-body, var(--font-family, 'Times New Roman', Times, 'Tinos', Georgia, serif));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label, div, b, strong, em, i, svg text, .font-serif, .font-sans, .font-mono, code, pre, kbd {
-    font-family: 'Times New Roman', Times, 'Tinos', Georgia, serif !important;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, var(--font-family, 'Times New Roman', Times, 'Tinos', Georgia, serif)) !important;
+  }
+
+  p, span, a, button, input, textarea, select, label, div, b, strong, em, i, svg text {
+    font-family: var(--font-body, var(--font-family, 'Times New Roman', Times, 'Tinos', Georgia, serif));
+  }
+
+  code, pre, kbd, .font-mono {
+    font-family: var(--font-mono, 'JetBrains Mono', 'Courier New', monospace) !important;
   }
 }
 

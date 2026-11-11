@@ -133,6 +133,25 @@ export const OwnerEditorProvider: React.FC<{ initialTab?: DashboardTab; children
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // Dynamically reflect active draft theme typography & tokens
+  useEffect(() => {
+    try {
+      const activeTheme = draftContent?.theme;
+      if (!activeTheme) return;
+      const root = document.documentElement;
+      const typography = activeTheme.typography;
+      if (typography) {
+        if (typography.headingFont) {
+          root.style.setProperty('--font-heading', typography.headingFont);
+          root.style.setProperty('--font-family', typography.headingFont);
+        }
+        if (typography.bodyFont) {
+          root.style.setProperty('--font-body', typography.bodyFont);
+        }
+      }
+    } catch { }
+  }, [draftContent?.theme?.typography]);
+
   // Mark dirty whenever draft changes
   const checkDirtyState = useCallback((newDraft: PublishedProfileData) => {
     const draftStr = JSON.stringify(newDraft);

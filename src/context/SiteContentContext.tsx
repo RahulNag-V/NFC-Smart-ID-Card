@@ -65,8 +65,13 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Typography Fonts
       if (typography) {
-        if (typography.headingFont) root.style.setProperty('--font-heading', typography.headingFont);
-        if (typography.bodyFont) root.style.setProperty('--font-body', typography.bodyFont);
+        if (typography.headingFont) {
+          root.style.setProperty('--font-heading', typography.headingFont);
+          root.style.setProperty('--font-family', typography.headingFont);
+        }
+        if (typography.bodyFont) {
+          root.style.setProperty('--font-body', typography.bodyFont);
+        }
       }
     } catch (e) {
       console.warn('Theme style application notice:', e);
