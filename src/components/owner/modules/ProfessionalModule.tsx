@@ -986,7 +986,7 @@ export const ProfessionalModule: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
                       GitHub Repository
@@ -996,7 +996,7 @@ export const ProfessionalModule: React.FC = () => {
                       value={editingProject.githubUrl || ''}
                       onChange={(e) => setEditingProject({ ...editingProject, githubUrl: e.target.value })}
                       placeholder="https://github.com/..."
-                      className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
                     />
                   </div>
                   <div>
@@ -1008,7 +1008,7 @@ export const ProfessionalModule: React.FC = () => {
                       value={editingProject.liveUrl || ''}
                       onChange={(e) => setEditingProject({ ...editingProject, liveUrl: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                      className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
                     />
                   </div>
                 </div>
@@ -1027,11 +1027,11 @@ export const ProfessionalModule: React.FC = () => {
                       })
                     }
                     placeholder="React, TypeScript, Firebase, Tailwind"
-                    className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                    className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
                       Badge Color

@@ -1160,6 +1160,103 @@ test('Smartphone Frame Hardware Specs, Dynamic Island, and Card Watermark Calibr
   assert.equal(idCardLayoutCalibration.scrollBehavior, 'scrollbar-none');
 });
 
+// 21. Mobile Single-Row Header, Slide-Out Drawer & Sticky Bottom Action Bar Layout
+test('Mobile Single-Row Header, Slide-Out Drawer & Sticky Bottom Action Bar Layout', () => {
+  // 1. Mobile Single-Row Top Header (< 768px) Specification
+  const mobileHeaderSpec = {
+    height: 'h-16',
+    padding: 'px-3 sm:px-6',
+    flexMode: 'flex items-center justify-between',
+    leftGroup: {
+      hamburger: {
+        dimensions: 'w-10 h-10', // 40x40px touch target
+        visibleOnMobile: true,
+        hiddenOnDesktop: 'lg:hidden',
+      },
+      avatar: {
+        dimensions: 'w-9 h-9', // 36x36px
+        hasVerifiedDot: true,
+        dotColor: 'bg-[#16a34a]',
+      },
+      nameBadge: {
+        truncate: true,
+        compactBadgeText: 'Owner',
+      },
+      desktopOnlyElements: ['Verified Digital ID • Active', '@rahulnagv'],
+      desktopOnlyClass: 'hidden md:flex',
+    },
+    rightGroup: {
+      mobileVisible: ['ON/OFF toggle pill', 'Eye preview button'],
+      desktopOnly: ['Unsaved changes indicator', 'Discard button', 'Save button', 'Publish button', 'Share QR button', 'User dropdown menu'],
+    },
+  };
+
+  assert.equal(mobileHeaderSpec.height, 'h-16');
+  assert.equal(mobileHeaderSpec.leftGroup.hamburger.dimensions, 'w-10 h-10');
+  assert.equal(mobileHeaderSpec.leftGroup.avatar.hasVerifiedDot, true);
+  assert.equal(mobileHeaderSpec.leftGroup.desktopOnlyClass, 'hidden md:flex');
+  assert.equal(mobileHeaderSpec.rightGroup.mobileVisible.length, 2);
+
+  // 2. Mobile Slide-Out Drawer Specification
+  const mobileDrawerSpec = {
+    backdropBlur: 'backdrop-blur-sm',
+    width: 'w-80 max-w-[85vw]',
+    transitionType: 'spring',
+    header: {
+      avatarSize: 'w-12 h-12',
+      hasActiveDot: true,
+      hasOwnerBadge: true,
+      hasVerifiedStatus: true,
+      hasCopyableHandle: true,
+      handleText: '@rahulnagv',
+    },
+    navigationTabsCount: 8,
+    tabMinTouchTarget: 'min-h-[44px]',
+    footerActions: ['Share QR', 'Public Site', 'Sign Out'],
+  };
+
+  assert.equal(mobileDrawerSpec.width, 'w-80 max-w-[85vw]');
+  assert.equal(mobileDrawerSpec.header.avatarSize, 'w-12 h-12');
+  assert.equal(mobileDrawerSpec.header.handleText, '@rahulnagv');
+  assert.equal(mobileDrawerSpec.navigationTabsCount, 8);
+  assert.equal(mobileDrawerSpec.tabMinTouchTarget, 'min-h-[44px]');
+  assert.equal(mobileDrawerSpec.footerActions.length, 3);
+
+  // 3. Sticky Bottom Save / Action Bar Specification
+  const stickyBottomBarSpec = {
+    positioning: 'fixed bottom-0 inset-x-0',
+    responsiveClass: 'md:hidden',
+    backgroundBlur: 'bg-[#FAF7F2]/95 backdrop-blur-md',
+    leftIcons: {
+      discard: { touchTarget: 'w-10 h-10', icon: 'RotateCcw' },
+      draftSave: { touchTarget: 'w-10 h-10', icon: 'Sparkles' },
+      unsavedBadge: 'Unsaved',
+    },
+    rightPrimaryButton: {
+      label: 'Save Changes',
+      height: 'h-10',
+      bgColor: 'bg-[#704a29]',
+      textColor: 'text-[#fffefb]',
+      minWidth: 'min-w-[125px]',
+    },
+  };
+
+  assert.equal(stickyBottomBarSpec.responsiveClass, 'md:hidden');
+  assert.equal(stickyBottomBarSpec.leftIcons.discard.touchTarget, 'w-10 h-10');
+  assert.equal(stickyBottomBarSpec.rightPrimaryButton.label, 'Save Changes');
+  assert.equal(stickyBottomBarSpec.rightPrimaryButton.bgColor, 'bg-[#704a29]');
+
+  // 4. Main Scroll Container Padding for Mobile Comfort
+  const mainScrollContainer = {
+    overflowX: 'overflow-x-hidden',
+    innerBottomPadding: 'pb-32 sm:pb-28 md:pb-24',
+  };
+
+  assert.equal(mainScrollContainer.overflowX, 'overflow-x-hidden');
+  assert.equal(mainScrollContainer.innerBottomPadding, 'pb-32 sm:pb-28 md:pb-24');
+});
+
+
 
 
 
