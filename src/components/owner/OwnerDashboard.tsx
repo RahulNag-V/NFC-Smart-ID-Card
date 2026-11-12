@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
-  Columns,
   Shield,
   QrCode,
   Eye,
@@ -263,7 +262,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
         </div>
 
         {/* Right Side: Quick Actions & Profile */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Draft Staged indicator and actions when changes exist */}
           {isDirty && (
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -350,19 +349,6 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           >
             <QrCode className="w-3.5 h-3.5 text-white" />
             <span className="hidden sm:inline">Share QR</span>
-          </button>
-
-          {/* Optional Split Screen Live Preview Button (Desktop only) */}
-          <button
-            onClick={() => setSplitPreviewOpen(!splitPreviewOpen)}
-            className={`hidden 2xl:flex items-center gap-1.5 p-2 rounded-lg border text-xs transition cursor-pointer shadow-2xs ${
-              splitPreviewOpen
-                ? 'bg-[#704a29] text-white border-[#704a29] font-semibold'
-                : 'bg-[#fffefb] border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e]'
-            }`}
-            title="Toggle Split Screen Live Preview"
-          >
-            <Columns className="w-3.5 h-3.5" />
           </button>
 
           {/* d) Compact User Avatar/Initials Dropdown Pill ("RN") on far right */}

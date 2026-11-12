@@ -1048,7 +1048,8 @@ test('Redesigned Header Bar, Verified Status Badge, Public Mode Toggle, and User
     { id: 'user-profile-menu', type: 'avatar-pill', initials: 'RN', email: 'rahulnagv.dev@gmail.com' },
   ];
 
-  assert.equal(quickActions.length, 4);
+  assert.equal(quickActions.length, 4, 'Exactly 4 clean right-side actions remain');
+  assert.equal(quickActions.some((a) => a.id === 'split-screen-toggle'), false, 'Split screen toggle icon must be removed from top navbar');
   assert.equal(quickActions.find((a) => a.id === 'preview-id')?.label, 'Preview ID');
   assert.equal(quickActions.find((a) => a.id === 'share-qr')?.color, '#704a29');
   assert.equal(quickActions.find((a) => a.id === 'user-profile-menu')?.initials, 'RN');

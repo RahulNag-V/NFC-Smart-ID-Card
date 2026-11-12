@@ -97,3 +97,4 @@ export const SmartphoneFrame: React.FC<SmartphoneFrameProps> = ({
 };
 
 export default SmartphoneFrame;
+
