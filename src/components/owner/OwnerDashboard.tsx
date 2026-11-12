@@ -21,7 +21,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
-  Shield,
+  User,
   QrCode,
   Eye,
   Copy,
@@ -87,7 +87,15 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [copiedHandle, setCopiedHandle] = useState(false);
   const [copiedQrLink, setCopiedQrLink] = useState(false);
+  const [headerPhotoError, setHeaderPhotoError] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const studentPhoto = draftContent.student?.photoUrl;
+  const studentName = draftContent.student?.fullName?.trim() || '';
+
+  useEffect(() => {
+    setHeaderPhotoError(false);
+  }, [studentPhoto]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -205,7 +213,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
       {/* ================= FIXED TOP HEADER BAR ================= */}
       <header className="h-16 shrink-0 bg-[#fffefb]/95 backdrop-blur-md border-b border-[#d9cdbd] px-4 sm:px-6 flex items-center justify-between z-40">
-        {/* Left Side: Brand & Status */}
+        {/* Left Side: Student Personal Identity & Status */}
         <div className="flex items-center gap-3">
           {/* Mobile Menu Toggle */}
           <button
@@ -216,10 +224,19 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Logo with Verified Dot Badge */}
+          {/* Student Profile Photo / Avatar with Verified Dot Badge */}
           <div className="relative shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-[#704a29] text-white flex items-center justify-center shadow-xs">
-              <Shield className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-[#704a29] text-[#fffefb] flex items-center justify-center shadow-xs overflow-hidden border border-[#d9cdbd]/60">
+              {studentPhoto && !headerPhotoError ? (
+                <img
+                  src={studentPhoto}
+                  alt={studentName || 'Student Avatar'}
+                  className="w-full h-full object-cover"
+                  onError={() => setHeaderPhotoError(true)}
+                />
+              ) : (
+                <User className="w-5 h-5 text-[#f0eae1]" />
+              )}
             </div>
             {/* Green active/verified dot badge on bottom-right corner */}
             <span
@@ -228,13 +245,15 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             />
           </div>
 
-          {/* Brand Title & Status Line */}
+          {/* Student Dynamic Name & Status Line */}
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold tracking-wider text-[#704a29] uppercase font-serif">
-                ANANTA SPARSHA
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[10px] text-[#73685c] font-sans font-medium tracking-normal">
+              {studentName ? (
+                <span className="text-xs font-bold tracking-wider text-[#704a29] uppercase font-serif truncate max-w-[180px] sm:max-w-xs">
+                  {studentName}
+                </span>
+              ) : null}
+              <span className="px-2 py-0.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[10px] text-[#73685c] font-sans font-medium tracking-normal shrink-0">
                 Owner Console
               </span>
             </div>

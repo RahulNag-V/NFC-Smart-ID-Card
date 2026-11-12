@@ -1013,22 +1013,25 @@ test('Two-Semester Academic Year Limits, Duplicate Warnings, Cumulative CGPA & 1
 
 // 19. Redesigned Top Header Bar & Quick Actions Validation
 test('Redesigned Header Bar, Verified Status Badge, Public Mode Toggle, and User Profile Menu', () => {
-  // 1. Brand & Verified Dot Badge
-  const headerBrandConfig = {
-    title: 'ANANTA SPARSHA',
-    titleTracking: 'tracking-wider',
-    badge: 'Owner Console',
+  // 1. Personal Student Identity & Verified Dot Badge
+  const headerIdentityConfig = {
+    getStudentTitle: (name) => (name?.trim() ? name.trim() : null),
+    avatarFrame: 'rounded-lg bg-[#704a29]',
+    fallbackIcon: 'User',
     statusDot: 'bg-[#16a34a]', // Verified Green
+    badge: 'Owner Console',
     statusText: 'Verified Digital ID • Active',
     shortenedHandle: '@rahulnagv',
   };
 
-  assert.equal(headerBrandConfig.title, 'ANANTA SPARSHA');
-  assert.equal(headerBrandConfig.titleTracking, 'tracking-wider');
-  assert.equal(headerBrandConfig.badge, 'Owner Console');
-  assert.equal(headerBrandConfig.statusDot, 'bg-[#16a34a]');
-  assert.equal(headerBrandConfig.statusText, 'Verified Digital ID • Active');
-  assert.equal(headerBrandConfig.shortenedHandle, '@rahulnagv');
+  assert.equal(headerIdentityConfig.getStudentTitle('Rahul Nag V'), 'Rahul Nag V');
+  assert.equal(headerIdentityConfig.getStudentTitle(''), null, 'Empty name must not render ANANTA SPARSHA');
+  assert.equal(headerIdentityConfig.getStudentTitle(null), null);
+  assert.equal(headerIdentityConfig.fallbackIcon, 'User');
+  assert.equal(headerIdentityConfig.badge, 'Owner Console');
+  assert.equal(headerIdentityConfig.statusDot, 'bg-[#16a34a]');
+  assert.equal(headerIdentityConfig.statusText, 'Verified Digital ID • Active');
+  assert.equal(headerIdentityConfig.shortenedHandle, '@rahulnagv');
 
   // 2. Public Mode Toggle Logic
   let isPublicMode = true;
