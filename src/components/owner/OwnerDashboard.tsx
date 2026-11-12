@@ -45,6 +45,7 @@ import { SecurityModule } from './modules/SecurityModule';
 import { PublicPortfolioView } from '../public/PublicPortfolioView';
 import { QrCodeView } from '../id-card/QrCodeView';
 import { VerticalStudentIdCard } from '../id-card/VerticalStudentIdCard';
+import { SmartphoneFrame } from './SmartphoneFrame';
 
 interface OwnerDashboardProps {
   onNavigatePublic: () => void;
@@ -531,10 +532,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="w-[390px] mx-auto min-h-[760px] rounded-[36px] border-8 border-[#2b241e] bg-background shadow-xl relative scrollbar-none overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+              <SmartphoneFrame>
                 <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
-              </div>
+              </SmartphoneFrame>
             </div>
           </aside>
         )}

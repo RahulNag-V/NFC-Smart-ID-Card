@@ -164,32 +164,34 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col items-center pb-24 sm:pb-28">
+    <div className="w-full flex flex-col items-center px-4 pb-24 sm:pb-28">
       {/* Top View Mode & Quick Flip Controls */}
-      <div className="mb-3.5 flex flex-wrap items-center justify-center gap-2 print:hidden">
-        <div className="flex items-center gap-1 p-1 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-xs font-medium shadow-2xs">
+      <div className="mb-3.5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-2 max-w-full print:hidden">
+        <div className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[11px] font-medium shadow-2xs">
           <button
             type="button"
             onClick={() => setViewMode('flip')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${viewMode === 'flip'
-              ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
-              : 'text-[#73685c] hover:text-[#2b241e]'
-              }`}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+              viewMode === 'flip'
+                ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
+                : 'text-[#73685c] hover:text-[#2b241e]'
+            }`}
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <RotateCw className="w-3 h-3" />
             <span>Interactive 3D Flip</span>
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode('side-by-side')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${viewMode === 'side-by-side'
-              ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
-              : 'text-[#73685c] hover:text-[#2b241e]'
-              }`}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+              viewMode === 'side-by-side'
+                ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
+                : 'text-[#73685c] hover:text-[#2b241e]'
+            }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Side-by-Side (Print Preview)</span>
+            <LayoutGrid className="w-3 h-3" />
+            <span>Side-by-Side</span>
           </button>
         </div>
 
@@ -197,10 +199,10 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
           <button
             type="button"
             onClick={handleFlip}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
             title="Click to flip card"
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <RotateCw className="w-3 h-3" />
             <span>{isFlipped ? 'Flip to Front' : 'Flip to Back'}</span>
           </button>
         )}
@@ -211,15 +213,15 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
             type="button"
             onClick={onEditProfile}
             id="btn-edit-profile-top"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 group"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 group"
             title={isOwner ? "Edit Profile (Owner Active — Click to open Dashboard)" : "Edit Profile (Owner Login)"}
           >
-            <Pencil className="w-3.5 h-3.5 text-[#704a29] group-hover:rotate-12 transition-transform" />
+            <Pencil className="w-3 h-3 text-[#704a29] group-hover:rotate-12 transition-transform" />
             <span>Edit Profile</span>
             {isOwner && (
-              <span className="inline-flex items-center gap-1 pl-0.5">
+              <span className="inline-flex items-center gap-0.5 pl-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                <span className="text-[10px] text-[#10B981] font-mono uppercase font-bold">Owner</span>
+                <span className="text-[9.5px] text-[#10B981] font-mono uppercase font-bold">Owner</span>
               </span>
             )}
           </button>
@@ -231,9 +233,9 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
         <div className="w-full flex flex-col items-center print:hidden relative py-1">
           {/* Card & Flanking Page Watermarks Container */}
           <div className="relative w-full max-w-[255px] sm:max-w-[275px] flex items-center justify-center">
-            {/* Left Vertical Page Watermark: CSE (Uncut edges, compact 58% of ID card height) */}
+            {/* Left Vertical Page Watermark: CSE (Cleanly tucked behind ID card, opacity-10, no bezel collision) */}
             <div
-              className="absolute right-full top-1/2 -translate-y-1/2 h-[58%] flex items-center justify-center -mr-2 sm:-mr-3 md:-mr-3.5 pointer-events-none select-none z-0"
+              className="absolute right-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] flex items-center justify-center pointer-events-none select-none -z-10"
               aria-hidden="true"
             >
               <svg
@@ -248,13 +250,13 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
                   dominantBaseline="central"
                   transform="rotate(-90 85 180)"
                   fill="#855b33"
-                  fillOpacity="0.45"
+                  fillOpacity="0.10"
                   style={{
                     fontFamily:
                       '"Times New Roman", Times, "Tinos", Georgia, serif',
                     fontWeight: 900,
-                    fontSize: '140px',
-                    letterSpacing: '-4px',
+                    fontSize: '125px',
+                    letterSpacing: '-3px',
                   }}
                 >
                   CSE
@@ -336,9 +338,9 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
               </motion.div>
             </div>
 
-            {/* Right Vertical Page Watermark: STUDENT (Uncut edges, compact 58% of ID card height) */}
+            {/* Right Vertical Page Watermark: STUDENT (Cleanly tucked behind ID card, opacity-10, no bezel collision) */}
             <div
-              className="absolute left-full top-1/2 -translate-y-1/2 h-[58%] flex items-center justify-center -ml-2 sm:-ml-3 md:-ml-3.5 pointer-events-none select-none z-0"
+              className="absolute left-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] flex items-center justify-center pointer-events-none select-none -z-10"
               aria-hidden="true"
             >
               <svg
@@ -353,12 +355,12 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
                     textAnchor="middle"
                     dominantBaseline="central"
                     fill="#855b33"
-                    fillOpacity="0.45"
+                    fillOpacity="0.10"
                     style={{
                       fontFamily:
                         '"Times New Roman", Times, "Tinos", Georgia, serif',
                       fontWeight: 900,
-                      fontSize: '64px',
+                      fontSize: '56px',
                       letterSpacing: '-2px',
                     }}
                   >
@@ -380,10 +382,10 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
         <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-6 py-2 print:hidden relative">
           {/* Left Vertical Watermark: CSE */}
           <div
-            className="hidden lg:flex absolute right-[calc(100%-0.6rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none z-0"
+            className="hidden lg:flex absolute right-[calc(100%-1rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none -z-10"
             aria-hidden="true"
           >
-            <svg viewBox="0 0 170 360" className="w-auto h-[250px] block overflow-visible" style={{ overflow: 'visible' }}>
+            <svg viewBox="0 0 170 360" className="w-auto h-[230px] block overflow-visible" style={{ overflow: 'visible' }}>
               <text
                 x="85"
                 y="180"
@@ -391,13 +393,13 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
                 dominantBaseline="central"
                 transform="rotate(-90 85 180)"
                 fill="#855b33"
-                fillOpacity="0.45"
+                fillOpacity="0.10"
                 style={{
                   fontFamily:
                     '"Times New Roman", Times, "Tinos", Georgia, serif',
                   fontWeight: 900,
-                  fontSize: '140px',
-                  letterSpacing: '-4px',
+                  fontSize: '125px',
+                  letterSpacing: '-3px',
                 }}
               >
                 CSE
@@ -429,10 +431,10 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
 
           {/* Right Vertical Watermark: STUDENT */}
           <div
-            className="hidden lg:flex absolute left-[calc(100%-0.6rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none z-0"
+            className="hidden lg:flex absolute left-[calc(100%-1rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none -z-10"
             aria-hidden="true"
           >
-            <svg viewBox="0 0 130 360" className="w-auto h-[250px] block overflow-visible" style={{ overflow: 'visible' }}>
+            <svg viewBox="0 0 130 360" className="w-auto h-[230px] block overflow-visible" style={{ overflow: 'visible' }}>
               <g transform="translate(65, 180) rotate(-90) scale(1, 1.15)">
                 <text
                   x="0"
@@ -440,12 +442,12 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
                   textAnchor="middle"
                   dominantBaseline="central"
                   fill="#855b33"
-                  fillOpacity="0.45"
+                  fillOpacity="0.10"
                   style={{
                     fontFamily:
                       '"Times New Roman", Times, "Tinos", Georgia, serif',
                     fontWeight: 900,
-                    fontSize: '64px',
+                    fontSize: '56px',
                     letterSpacing: '-2px',
                   }}
                 >

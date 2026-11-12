@@ -89,7 +89,13 @@ const filterOptions: { label: string; value: FilterCategory }[] = [
   { label: 'Web Apps', value: 'Web Apps' },
 ];
 
-function PageWatermark({ text }: { text: 'HOME' | 'WORKS' | 'CONTACT' }) {
+function PageWatermark({
+  text,
+  isLivePreview = false,
+}: {
+  text: 'HOME' | 'WORKS' | 'CONTACT';
+  isLivePreview?: boolean;
+}) {
   const configs = {
     HOME: { viewBox: '0 2 295 76', y: 72, size: 98, spacing: '-4px' },
     WORKS: { viewBox: '0 2 365 76', y: 72, size: 96, spacing: '-4px' },
@@ -100,7 +106,9 @@ function PageWatermark({ text }: { text: 'HOME' | 'WORKS' | 'CONTACT' }) {
 
   return (
     <div
-      className="-mx-4 w-[calc(100%+2rem)] px-1 overflow-hidden select-none pointer-events-none mt-1 mb-4"
+      className={`-mx-4 w-[calc(100%+2rem)] px-1 overflow-hidden select-none pointer-events-none ${
+        isLivePreview ? 'mt-3 mb-3 max-w-[92%] mx-auto' : 'mt-1 mb-4'
+      }`}
       aria-hidden="true"
     >
       <svg
@@ -113,11 +121,11 @@ function PageWatermark({ text }: { text: 'HOME' | 'WORKS' | 'CONTACT' }) {
           y={y}
           textAnchor="middle"
           fill="#a67c52"
-          fillOpacity="0.22"
+          fillOpacity={isLivePreview ? '0.18' : '0.22'}
           style={{
             fontFamily: '"Times New Roman", Times, "Tinos", Georgia, serif',
             fontWeight: 900,
-            fontSize: `${size}px`,
+            fontSize: `${isLivePreview ? Math.round(size * 0.9) : size}px`,
             letterSpacing: spacing,
           }}
         >
@@ -366,9 +374,9 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
 
       <div className="w-full">
         <div
-          className={`w-full mx-auto px-4 pt-5 sm:pt-7 transition-all duration-300 ${
-            activePage === 'works' ? 'max-w-6xl' : 'max-w-md'
-          }`}
+          className={`w-full mx-auto px-4 transition-all duration-300 ${
+            isLivePreview ? 'pt-2.5 sm:pt-3 max-w-sm' : 'pt-5 sm:pt-7 max-w-md'
+          } ${activePage === 'works' ? 'max-w-6xl' : ''}`}
         >
           {/* Dynamic Page Views */}
           <AnimatePresence mode="wait">
@@ -385,7 +393,13 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                 {activeSections.map((section) => {
                   switch (section.type) {
                     case 'watermark':
-                      return <PageWatermark key={section.id} text="HOME" />;
+                      return (
+                        <PageWatermark
+                          key={section.id}
+                          text="HOME"
+                          isLivePreview={isLivePreview}
+                        />
+                      );
 
                     case 'id-card':
                       return (

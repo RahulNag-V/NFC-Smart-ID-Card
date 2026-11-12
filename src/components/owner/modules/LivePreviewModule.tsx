@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { PublicPortfolioView } from '../../public/PublicPortfolioView';
+import { SmartphoneFrame } from '../SmartphoneFrame';
 
 export const LivePreviewModule: React.FC = () => {
   const {
@@ -103,13 +104,9 @@ export const LivePreviewModule: React.FC = () => {
       {/* Preview Viewport Frame */}
       <div className="w-full flex justify-center py-4 overflow-hidden">
         {previewDevice === 'mobile' && (
-          <div className="w-[390px] min-h-[780px] max-h-[880px] overflow-y-auto rounded-[42px] border-[10px] border-[#2b241e] bg-background shadow-xl relative scrollbar-none">
-            {/* Dynamic Island / Notch */}
-            <div className="sticky top-0 z-50 flex justify-center pt-2 pb-1 bg-transparent pointer-events-none">
-              <div className="w-24 h-5 bg-[#2b241e] rounded-full" />
-            </div>
+          <SmartphoneFrame frameHeightClass="h-[780px] sm:h-[820px]">
             <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
-          </div>
+          </SmartphoneFrame>
         )}
 
         {previewDevice === 'tablet' && (

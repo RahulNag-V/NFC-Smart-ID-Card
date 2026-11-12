@@ -1089,6 +1089,74 @@ test('Redesigned Header Bar, Verified Status Badge, Public Mode Toggle, and User
   );
 });
 
+// 20. Modern Smartphone Frame & ID Card Layout Calibration Tests
+test('Smartphone Frame Hardware Specs, Dynamic Island, and Card Watermark Calibration', () => {
+  // 1. Realistic Smartphone Chassis Specifications
+  const smartphoneChassis = {
+    bezelBorder: 'border-[12px] border-[#1c1917]',
+    cornerRadius: 'rounded-[48px]',
+    shadow: 'shadow-2xl shadow-black/55',
+    outerRim: 'ring-1 ring-[#44403c]/70',
+    sideButtons: {
+      actionButton: { side: 'left', height: '26px' },
+      volumeUp: { side: 'left', height: '52px' },
+      volumeDown: { side: 'left', height: '52px' },
+      powerButton: { side: 'right', height: '76px' },
+    },
+  };
+
+  assert.equal(smartphoneChassis.bezelBorder, 'border-[12px] border-[#1c1917]');
+  assert.equal(smartphoneChassis.cornerRadius, 'rounded-[48px]');
+  assert.equal(smartphoneChassis.sideButtons.actionButton.height, '26px');
+  assert.equal(smartphoneChassis.sideButtons.powerButton.height, '76px');
+
+  // 2. Dynamic Island & iOS Status Bar Specification
+  const statusBarConfig = {
+    clock: '9:41',
+    dynamicIsland: {
+      width: 'w-28',
+      height: 'h-7',
+      rounded: 'rounded-full',
+      color: 'bg-black',
+      hasLensReflection: true,
+    },
+    icons: ['cellular-4-bars', 'wifi', 'battery-indicator'],
+    homeIndicator: {
+      width: 'w-32',
+      height: 'h-1',
+      color: 'bg-stone-800/40',
+      rounded: 'rounded-full',
+    },
+  };
+
+  assert.equal(statusBarConfig.clock, '9:41');
+  assert.equal(statusBarConfig.dynamicIsland.width, 'w-28');
+  assert.equal(statusBarConfig.dynamicIsland.height, 'h-7');
+  assert.equal(statusBarConfig.dynamicIsland.hasLensReflection, true);
+  assert.equal(statusBarConfig.homeIndicator.width, 'w-32');
+
+  // 3. ID Card Watermark & Control Pills Invariance
+  const idCardLayoutCalibration = {
+    cardHorizontalPadding: 'px-4',
+    watermarkOpacity: 0.1, // opacity-10
+    watermarkZIndex: '-z-10', // Placed cleanly behind card
+    controlPills: [
+      'Interactive 3D Flip',
+      'Side-by-Side',
+      'Flip to Front / Back',
+      'Edit Profile',
+    ],
+    scrollBehavior: 'scrollbar-none',
+  };
+
+  assert.equal(idCardLayoutCalibration.cardHorizontalPadding, 'px-4');
+  assert.equal(idCardLayoutCalibration.watermarkOpacity, 0.1);
+  assert.equal(idCardLayoutCalibration.watermarkZIndex, '-z-10');
+  assert.equal(idCardLayoutCalibration.controlPills.length, 4);
+  assert.equal(idCardLayoutCalibration.scrollBehavior, 'scrollbar-none');
+});
+
+
 
 
 

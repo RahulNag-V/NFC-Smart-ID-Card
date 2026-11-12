@@ -65,6 +65,18 @@
   }
 }
 
+/* Custom utility for clean mobile app & phone preview scrollbars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 @media print {
   body {
     background: #ffffff !important;
