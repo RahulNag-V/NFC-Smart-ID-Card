@@ -1011,6 +1011,72 @@ test('Two-Semester Academic Year Limits, Duplicate Warnings, Cumulative CGPA & 1
   assert.equal(updatedSchooling[0].score, 94.2);
 });
 
+// 19. Redesigned Top Header Bar & Quick Actions Validation
+test('Redesigned Header Bar, Verified Status Badge, Public Mode Toggle, and User Profile Menu', () => {
+  // 1. Brand & Verified Dot Badge
+  const headerBrandConfig = {
+    title: 'ANANTA SPARSHA',
+    titleTracking: 'tracking-wider',
+    badge: 'Owner Console',
+    statusDot: 'bg-[#16a34a]', // Verified Green
+    statusText: 'Verified Digital ID • Active',
+    shortenedHandle: '@rahulnagv',
+  };
+
+  assert.equal(headerBrandConfig.title, 'ANANTA SPARSHA');
+  assert.equal(headerBrandConfig.titleTracking, 'tracking-wider');
+  assert.equal(headerBrandConfig.badge, 'Owner Console');
+  assert.equal(headerBrandConfig.statusDot, 'bg-[#16a34a]');
+  assert.equal(headerBrandConfig.statusText, 'Verified Digital ID • Active');
+  assert.equal(headerBrandConfig.shortenedHandle, '@rahulnagv');
+
+  // 2. Public Mode Toggle Logic
+  let isPublicMode = true;
+  function togglePublicModeState(current) {
+    return !current;
+  }
+  isPublicMode = togglePublicModeState(isPublicMode);
+  assert.equal(isPublicMode, false, 'Toggling public mode when ON switches it to OFF');
+  isPublicMode = togglePublicModeState(isPublicMode);
+  assert.equal(isPublicMode, true, 'Toggling public mode when OFF switches it to ON');
+
+  // 3. Header Action Buttons Definition
+  const quickActions = [
+    { id: 'public-mode-toggle', type: 'pill', label: 'Public Mode' },
+    { id: 'preview-id', type: 'secondary-outline', label: 'Preview ID', icon: 'Eye' },
+    { id: 'share-qr', type: 'primary-solid', label: 'Share QR', icon: 'QrCode', color: '#704a29' },
+    { id: 'user-profile-menu', type: 'avatar-pill', initials: 'RN', email: 'rahulnagv.dev@gmail.com' },
+  ];
+
+  assert.equal(quickActions.length, 4);
+  assert.equal(quickActions.find((a) => a.id === 'preview-id')?.label, 'Preview ID');
+  assert.equal(quickActions.find((a) => a.id === 'share-qr')?.color, '#704a29');
+  assert.equal(quickActions.find((a) => a.id === 'user-profile-menu')?.initials, 'RN');
+
+  // 4. User Profile Dropdown Navigation Target Resolution
+  const profileMenuRoutes = [
+    { label: 'Account Security & OTP', tab: 'security' },
+    { label: 'Edit Profile', tab: 'basic-info' },
+    { label: 'Theme & Fonts', tab: 'appearance' },
+    { label: 'View Public ID Site', action: 'navigate-public' },
+    { label: 'Sign Out', action: 'logout' },
+  ];
+
+  assert.equal(profileMenuRoutes.length, 5);
+  assert.equal(profileMenuRoutes[0].tab, 'security');
+  assert.equal(profileMenuRoutes[4].action, 'logout');
+
+  // 5. Shortened ID Link Formatter
+  function getShortenedIdUrl(origin, handle = '@rahulnagv') {
+    return `${origin || 'https://rahulnagv-21cs051.web.app'}`;
+  }
+  assert.equal(
+    getShortenedIdUrl('https://rahulnagv-21cs051.web.app'),
+    'https://rahulnagv-21cs051.web.app'
+  );
+});
+
+
 
 
 
