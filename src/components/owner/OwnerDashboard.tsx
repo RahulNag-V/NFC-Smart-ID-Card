@@ -391,7 +391,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-64 bg-[#fffefb] border border-[#d9cdbd] rounded-2xl shadow-xl z-50 p-3 space-y-3 font-sans"
+                  className="absolute right-0 mt-2 w-64 bg-[#fffefb] border border-[#d9cdbd] rounded-2xl shadow-xl z-50 p-3 space-y-2 font-sans"
                 >
                   {/* Account Summary Header */}
                   <div className="flex items-center gap-3 pb-3 border-b border-[#d9cdbd]/60">
@@ -414,80 +414,18 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* Quick Action Navigation Links */}
-                  <div className="space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('security');
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#2b241e] hover:bg-[#f0eae1] transition flex items-center justify-between cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#704a29]" />
-                        Account Security & OTP
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-[#a89d91]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('basic-info');
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#2b241e] hover:bg-[#f0eae1] transition flex items-center justify-between cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <UserCheck className="w-3.5 h-3.5 text-[#704a29]" />
-                        Edit Profile
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-[#a89d91]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('appearance');
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#2b241e] hover:bg-[#f0eae1] transition flex items-center justify-between cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Palette className="w-3.5 h-3.5 text-[#704a29]" />
-                        Theme & Fonts
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-[#a89d91]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onNavigatePublic();
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#2b241e] hover:bg-[#f0eae1] transition flex items-center justify-between cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <ExternalLink className="w-3.5 h-3.5 text-[#704a29]" />
-                        View Public ID Site
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-[#a89d91]" />
-                    </button>
-                  </div>
-
-                  {/* Sign Out Action */}
-                  <div className="pt-2 border-t border-[#d9cdbd]/60">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        handleLogoutAction();
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#bc473b] hover:bg-[#fef2f2] transition flex items-center gap-2 cursor-pointer font-medium"
-                    >
-                      <LogOut className="w-3.5 h-3.5 text-[#bc473b]" />
-                      Sign Out
-                    </button>
-                  </div>
+                  {/* Sign Out Action directly below header divider */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      handleLogoutAction();
+                    }}
+                    className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-[#bc473b] hover:bg-[#fef2f2] transition flex items-center gap-2.5 cursor-pointer font-medium"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-[#bc473b]" />
+                    <span>Sign Out</span>
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -537,11 +475,11 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           </div>
 
           {/* Sidebar Footer Controls */}
-          <div className="p-4 border-t border-[#d9cdbd] space-y-2 shrink-0 bg-[#fffefb]">
+          <div className="hidden lg:block p-3 border-t border-[#d9cdbd] shrink-0 bg-[#fffefb]">
             {/* Collapse / Expand Button (Desktop Only) */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex w-full items-center justify-center p-2 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer"
+              className="w-full flex items-center justify-center p-2 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer"
               title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {sidebarCollapsed ? (
@@ -552,16 +490,6 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                   <span>Collapse Menu</span>
                 </div>
               )}
-            </button>
-
-            {/* Logout Action Button */}
-            <button
-              onClick={handleLogoutAction}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs text-[#bc473b] hover:bg-[#fef2f2] transition cursor-pointer font-medium"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-              {(!sidebarCollapsed || mobileMenuOpen) && <span>Sign Out</span>}
             </button>
           </div>
         </aside>

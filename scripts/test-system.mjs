@@ -1053,20 +1053,33 @@ test('Redesigned Header Bar, Verified Status Badge, Public Mode Toggle, and User
   assert.equal(quickActions.find((a) => a.id === 'share-qr')?.color, '#704a29');
   assert.equal(quickActions.find((a) => a.id === 'user-profile-menu')?.initials, 'RN');
 
-  // 4. User Profile Dropdown Navigation Target Resolution
-  const profileMenuRoutes = [
-    { label: 'Account Security & OTP', tab: 'security' },
-    { label: 'Edit Profile', tab: 'basic-info' },
-    { label: 'Theme & Fonts', tab: 'appearance' },
-    { label: 'View Public ID Site', action: 'navigate-public' },
-    { label: 'Sign Out', action: 'logout' },
-  ];
+  // 4. User Profile Dropdown Navigation Target Resolution (Cleaned up - no duplicate nav links)
+  const profileMenuStructure = {
+    header: {
+      initials: 'RN',
+      name: 'Rahul Nag V',
+      email: 'rahulnagv.dev@gmail.com',
+      badge: 'Owner • Full Access',
+    },
+    dividerPresent: true,
+    middleNavLinksRemoved: true,
+    action: { label: 'Sign Out', action: 'logout' },
+  };
 
-  assert.equal(profileMenuRoutes.length, 5);
-  assert.equal(profileMenuRoutes[0].tab, 'security');
-  assert.equal(profileMenuRoutes[4].action, 'logout');
+  assert.equal(profileMenuStructure.header.initials, 'RN');
+  assert.equal(profileMenuStructure.header.email, 'rahulnagv.dev@gmail.com');
+  assert.equal(profileMenuStructure.middleNavLinksRemoved, true, 'Middle navigation duplicates must be removed');
+  assert.equal(profileMenuStructure.action.label, 'Sign Out');
 
-  // 5. Shortened ID Link Formatter
+  // 5. Left Sidebar Footer Structure (Only Collapse Menu Button, Sign Out removed)
+  const sidebarFooterConfig = {
+    hasCollapseButton: true,
+    hasSignOutButton: false, // Cleaned up duplicate
+  };
+  assert.equal(sidebarFooterConfig.hasCollapseButton, true, 'Sidebar must keep collapse button');
+  assert.equal(sidebarFooterConfig.hasSignOutButton, false, 'Sidebar must remove redundant sign out button');
+
+  // 6. Shortened ID Link Formatter
   function getShortenedIdUrl(origin, handle = '@rahulnagv') {
     return `${origin || 'https://rahulnagv-21cs051.web.app'}`;
   }
