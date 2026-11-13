@@ -840,7 +840,7 @@ export const ProfessionalModule: React.FC = () => {
 
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                      <h4 className="text-sm font-bold text-[#2b241e] break-words break-all">
+                      <h4 className="text-sm font-bold text-[#2b241e] break-words">
                         {proj.title || 'Untitled Project'}
                       </h4>
                       {proj.featured && (
@@ -849,7 +849,7 @@ export const ProfessionalModule: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#73685c] line-clamp-2 mt-0.5 break-words break-all">
+                    <p className="text-xs text-[#73685c] line-clamp-2 mt-0.5 break-words">
                       {proj.description}
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -2234,7 +2234,7 @@ export const ProfessionalModule: React.FC = () => {
                         <Award className="w-5 h-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-bold text-[#2b241e] break-words break-all">{cert.title}</h4>
+                        <h4 className="text-sm font-bold text-[#2b241e] break-words">{cert.title}</h4>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#73685c]">
                           {cert.issuer && <span className="font-semibold text-[#704a29]">{cert.issuer}</span>}
                           {cert.issuer && cert.issueDate && <span>&bull;</span>}

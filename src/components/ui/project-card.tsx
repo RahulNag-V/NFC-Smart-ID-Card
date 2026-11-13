@@ -206,12 +206,12 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
 
         {/* Project Title */}
-        <h3 className="text-lg sm:text-xl font-bold font-serif text-[#2b241e] mb-2 tracking-tight group-hover:text-[#704a29] transition-colors break-words break-all">
+        <h3 className="text-lg sm:text-xl font-bold font-serif text-[#2b241e] mb-2 tracking-tight group-hover:text-[#704a29] transition-colors break-words">
           {project.title}
         </h3>
 
         {/* Description */}
-        <p className="text-xs sm:text-sm text-[#73685c] leading-relaxed mb-4 break-words break-all">
+        <p className="text-xs sm:text-sm text-[#73685c] leading-relaxed mb-4 break-words">
           {project.description}
         </p>
 

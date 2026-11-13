@@ -376,8 +376,12 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
       <div className="w-full">
         <div
           className={`w-full mx-auto px-4 transition-all duration-300 ${
-            isLivePreview ? 'pt-2.5 sm:pt-3 max-w-sm' : 'pt-5 sm:pt-7 max-w-md'
-          } ${activePage === 'works' ? 'max-w-6xl' : ''}`}
+            isLivePreview
+              ? 'pt-2.5 sm:pt-3 max-w-sm'
+              : activePage === 'works'
+              ? 'pt-5 sm:pt-7 max-w-6xl'
+              : 'pt-5 sm:pt-7 max-w-md'
+          }`}
         >
           {/* Dynamic Page Views */}
           <AnimatePresence mode="wait">
@@ -729,7 +733,11 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                 {/* Project Grid */}
                 <motion.div
                   layout
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                  className={`grid gap-5 ${
+                    isLivePreview
+                      ? 'grid-cols-1'
+                      : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  }`}
                 >
                   <AnimatePresence>
                     {filteredProjects.map((project) => (
