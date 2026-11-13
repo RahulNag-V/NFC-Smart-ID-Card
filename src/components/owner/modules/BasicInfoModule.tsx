@@ -238,7 +238,7 @@ export const BasicInfoModule: React.FC = () => {
               type="text"
               value={student.fullName || ''}
               onChange={(e) => updateBasicInfo({ fullName: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20"
+              className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 scroll-mt-24 transition-colors"
               placeholder="e.g. Rahul N A"
             />
           </div>
@@ -252,7 +252,7 @@ export const BasicInfoModule: React.FC = () => {
               type="text"
               value={student.usn || ''}
               onChange={(e) => updateBasicInfo({ usn: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20"
+              className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 scroll-mt-24 transition-colors"
               placeholder="e.g. 1BT24CS051"
             />
           </div>
@@ -266,7 +266,7 @@ export const BasicInfoModule: React.FC = () => {
               type="text"
               value={student.department || ''}
               onChange={(e) => updateBasicInfo({ department: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20"
+              className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 scroll-mt-24 transition-colors"
               placeholder="e.g. Computer Science & Engineering"
             />
           </div>
@@ -287,7 +287,7 @@ export const BasicInfoModule: React.FC = () => {
                   },
                 })
               }
-              className="w-full px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20"
+              className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 scroll-mt-24 transition-colors"
               placeholder="e.g. Bangalore Technological Institute"
             />
           </div>
@@ -302,7 +302,7 @@ export const BasicInfoModule: React.FC = () => {
             type="text"
             value={student.headline || ''}
             onChange={(e) => updateBasicInfo({ headline: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20"
+            className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 scroll-mt-24 transition-colors"
             placeholder="e.g. Computer Science Scholar | Full-Stack Architect & AI Systems Researcher"
           />
           <p className="text-[11px] text-[#73685c] mt-1.5">
@@ -325,7 +325,7 @@ export const BasicInfoModule: React.FC = () => {
             value={student.biography || ''}
             onChange={(e) => updateBasicInfo({ biography: e.target.value })}
             maxLength={500}
-            className="w-full px-4 py-3 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 resize-none leading-relaxed"
+            className="w-full px-4 py-3 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-sm text-[#2b241e] placeholder-[#a89d91] focus:outline-none focus:border-[#704a29] focus:ring-1 focus:ring-[#704a29]/20 resize-none leading-relaxed scroll-mt-24 transition-colors"
             placeholder="Write a concise overview of your engineering passions, technical domain expertise, and career aspirations..."
           />
         </div>

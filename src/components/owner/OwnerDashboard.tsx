@@ -89,6 +89,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const [copiedHandle, setCopiedHandle] = useState(false);
   const [copiedQrLink, setCopiedQrLink] = useState(false);
   const [headerPhotoError, setHeaderPhotoError] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+  const mainScrollRef = useRef<HTMLElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const studentPhoto = draftContent.student?.photoUrl;
@@ -98,6 +101,46 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   useEffect(() => {
     setHeaderPhotoError(false);
   }, [studentPhoto]);
+
+  // Smart Scroll-Aware Top Navbar (Auto-Hide on Scroll Down / Reveal on Scroll Up)
+  useEffect(() => {
+    const mainEl = mainScrollRef.current;
+    const handleScroll = () => {
+      const currentScrollY = mainEl ? mainEl.scrollTop : window.scrollY;
+      const diff = currentScrollY - lastScrollYRef.current;
+
+      // Always keep header visible when mobile navigation drawer is open
+      if (mobileMenuOpen) {
+        setIsHeaderVisible(true);
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
+
+      if (currentScrollY <= 60) {
+        setIsHeaderVisible(true);
+      } else if (diff > 6) {
+        // Scrolling down past 60px: slide navbar out of view to maximize mobile canvas
+        setIsHeaderVisible(false);
+      } else if (diff < -6) {
+        // Scrolling up even slightly: smoothly glide navbar back into view
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    if (mainEl) {
+      mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      if (mainEl) {
+        mainEl.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [mobileMenuOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -185,36 +228,43 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#fbf8f3] text-[#2b241e] flex flex-col font-serif antialiased selection:bg-[#704a29]/20">
-      {/* Toast Notification Container */}
+      {/* Toast Notification Container - Sleek floating notification positioned above mobile sticky bottom bar */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
             onClick={dismissToast}
-            className="fixed top-5 right-5 z-50 max-w-md cursor-pointer"
+            className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 md:top-5 md:right-5 md:bottom-auto z-50 max-w-md mx-auto sm:mx-0 cursor-pointer shadow-xl rounded-2xl"
           >
             <div
-              className={`p-4 rounded-xl shadow-lg backdrop-blur-md border flex items-start gap-3 ${
+              className={`p-3.5 sm:p-4 rounded-2xl shadow-xl backdrop-blur-md border flex items-center gap-3 active:scale-[0.98] transition-transform ${
                 toast.type === 'success'
-                  ? 'bg-[#f2f8f2] border-[#86efac] text-[#14532d]'
+                  ? 'bg-[#f2f8f2]/95 border-[#86efac] text-[#14532d]'
                   : toast.type === 'error'
-                  ? 'bg-[#fef2f2] border-[#fca5a5] text-[#991b1b]'
-                  : 'bg-[#fffefb] border-[#d9cdbd] text-[#2b241e]'
+                  ? 'bg-[#fef2f2]/95 border-[#fca5a5] text-[#991b1b]'
+                  : 'bg-[#fffefb]/95 border-[#d9cdbd] text-[#2b241e]'
               }`}
             >
-              {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-[#16a34a] shrink-0 mt-0.5" />}
-              {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-[#dc2626] shrink-0 mt-0.5" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-[#704a29] shrink-0 mt-0.5" />}
-              <div className="text-xs leading-relaxed">{toast.message}</div>
+              {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-[#16a34a] shrink-0" />}
+              {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-[#dc2626] shrink-0" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-[#704a29] shrink-0" />}
+              <div className="text-xs font-sans font-medium leading-relaxed">{toast.message}</div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ================= FIXED TOP HEADER BAR ================= */}
-      <header className="h-16 shrink-0 bg-[#fffefb]/95 backdrop-blur-md border-b border-[#d9cdbd] px-3 sm:px-6 flex items-center justify-between z-40">
+      {/* ================= SMART SCROLL-AWARE TOP HEADER BAR ================= */}
+      <header
+        className={`sticky top-0 z-40 h-16 shrink-0 transition-all duration-300 ease-in-out ${
+          isHeaderVisible || mobileMenuOpen
+            ? 'translate-y-0 bg-[#FAF7F2]/90 backdrop-blur-md shadow-sm border-b border-[#d9cdbd]'
+            : '-translate-y-full -mb-16 pointer-events-none opacity-0 border-b border-transparent'
+        } px-3 sm:px-6 flex items-center justify-between`}
+      >
         {/* Left Side: Hamburger Menu + Student Personal Identity & Status */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {/* Mobile Menu Toggle Button (40x40px Touch Target) */}
@@ -713,16 +763,30 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
         </aside>
 
         {/* ================= PRIMARY CONTENT AREA (ONLY THIS REGION SCROLLS) ================= */}
-        <main className="flex-1 h-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 md:p-8 bg-[#fbf8f3]">
-          <div className="max-w-5xl mx-auto pb-32 sm:pb-28 md:pb-24">
-            {activeTab === 'overview' && <OverviewModule onNavigateTab={setActiveTab} />}
-            {activeTab === 'basic-info' && <BasicInfoModule />}
-            {activeTab === 'appearance' && <AppearanceModule />}
-            {activeTab === 'professional' && <ProfessionalModule />}
-            {activeTab === 'social' && <SocialLinksModule />}
-            {activeTab === 'sections' && <SectionsModule />}
-            {activeTab === 'preview' && <LivePreviewModule />}
-            {activeTab === 'security' && <SecurityModule onLogout={handleLogoutAction} />}
+        <main
+          ref={mainScrollRef}
+          className="flex-1 h-full overflow-y-auto overflow-x-hidden max-w-full p-3.5 sm:p-6 md:p-8 bg-[#fbf8f3]"
+        >
+          <div className="max-w-5xl mx-auto w-full overflow-x-hidden pb-32 sm:pb-28 md:pb-24">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                className="w-full"
+              >
+                {activeTab === 'overview' && <OverviewModule onNavigateTab={setActiveTab} />}
+                {activeTab === 'basic-info' && <BasicInfoModule />}
+                {activeTab === 'appearance' && <AppearanceModule />}
+                {activeTab === 'professional' && <ProfessionalModule />}
+                {activeTab === 'social' && <SocialLinksModule />}
+                {activeTab === 'sections' && <SectionsModule />}
+                {activeTab === 'preview' && <LivePreviewModule />}
+                {activeTab === 'security' && <SecurityModule onLogout={handleLogoutAction} />}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
 
@@ -953,17 +1017,17 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
       {/* ================= MOBILE STICKY BOTTOM SAVE & ACTION BAR ================= */}
       <aside
-        className="md:hidden fixed bottom-0 inset-x-0 bg-[#FAF7F2]/95 backdrop-blur-md border-t border-[#d9cdbd] px-4 py-2.5 flex items-center justify-between z-40 shadow-lg"
+        className="md:hidden fixed bottom-0 inset-x-0 bg-[#FAF7F2]/95 backdrop-blur-md border-t border-[#d9cdbd] px-4 py-2 flex items-center justify-between z-40 shadow-lg"
         aria-label="Mobile Save and Action Controls"
       >
         {/* Left Side: Secondary Quick Icons (Discard/Undo & Save Draft + Unsaved indicator) */}
         <div className="flex items-center gap-2">
-          {/* Discard / Undo button */}
+          {/* Discard / Undo button (44x44px touch target) */}
           <button
             type="button"
             onClick={discardChanges}
             disabled={!isDirty || isSaving || isPublishing}
-            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+            className={`w-11 h-11 min-h-[44px] rounded-xl border flex items-center justify-center transition-all active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30 ${
               isDirty && !isSaving && !isPublishing
                 ? 'bg-[#fffefb] hover:bg-[#f0eae1] text-[#73685c] hover:text-[#2b241e] border-[#d9cdbd] shadow-2xs'
                 : 'bg-[#f5efe6]/50 text-[#b3a89b] border-[#e2d8cb] cursor-not-allowed opacity-50'
@@ -974,12 +1038,12 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Quick Draft Save / Stash button */}
+          {/* Quick Draft Save / Stash button (44x44px touch target) */}
           <button
             type="button"
             onClick={() => saveDraft()}
             disabled={!isDirty || isSaving || isPublishing}
-            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+            className={`w-11 h-11 min-h-[44px] rounded-xl border flex items-center justify-center transition-all active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30 ${
               isSaving
                 ? 'bg-[#fef9c3] border-[#fde047] text-[#854d0e]'
                 : isDirty
@@ -998,19 +1062,19 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
           {/* Unsaved Changes indicator */}
           {isDirty && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#fef9c3] border border-[#fde047] text-[10px] text-[#854d0e] font-sans font-medium">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fef9c3] border border-[#fde047] text-[10px] text-[#854d0e] font-sans font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-[#d97706] animate-pulse" />
               <span>Unsaved</span>
             </div>
           )}
         </div>
 
-        {/* Right Side: Prominent Full-Height Save Changes Button */}
+        {/* Right Side: Prominent Full-Height Save Changes Button (44px height) */}
         <button
           type="button"
           onClick={() => publishLive()}
           disabled={isPublishing || isSaving}
-          className="h-10 px-5 rounded-xl bg-[#704a29] hover:bg-[#593a1f] active:scale-[0.98] text-[#fffefb] font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer transition font-sans min-w-[125px] justify-center disabled:opacity-50"
+          className="h-11 min-h-[44px] px-5 rounded-xl bg-[#704a29] hover:bg-[#593a1f] active:scale-[0.98] text-[#fffefb] font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all font-sans min-w-[130px] justify-center disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30"
         >
           {isPublishing ? (
             <>

@@ -272,7 +272,7 @@ export const SocialLinksModule: React.FC = () => {
                   value={channel.handle}
                   onChange={(e) => handleUpdateChannel(channel.id, { handle: e.target.value })}
                   placeholder="@handle or profile"
-                  className="w-full px-3 py-1.5 rounded-lg bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] focus-visible:ring-2 focus-visible:ring-amber-900/30 transition-colors duration-200 scroll-mt-24"
                 />
               </div>
 
@@ -285,7 +285,7 @@ export const SocialLinksModule: React.FC = () => {
                   value={channel.url}
                   onChange={(e) => handleUpdateChannel(channel.id, { url: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] focus-visible:ring-2 focus-visible:ring-amber-900/30 transition-colors duration-200 scroll-mt-24"
                 />
               </div>
             </div>

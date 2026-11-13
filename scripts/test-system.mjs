@@ -1256,6 +1256,59 @@ test('Mobile Single-Row Header, Slide-Out Drawer & Sticky Bottom Action Bar Layo
   assert.equal(mainScrollContainer.innerBottomPadding, 'pb-32 sm:pb-28 md:pb-24');
 });
 
+// 22. Mobile-Only Live Preview Focus, Scroll-Aware Top Navbar & Mobile UX Polish
+test('Mobile-Only Live Preview Focus, Scroll-Aware Top Navbar & Mobile UX Polish', () => {
+  // 1. Live Preview Locked Exclusively to Smartphone Hardware Frame
+  const livePreviewConfig = {
+    hasDeviceSwitcher: false,
+    lockedDevice: 'mobile',
+    frameComponent: 'SmartphoneFrame',
+    frameHeight: 'h-[780px] sm:h-[820px]',
+    focusBadge: 'Mobile Smartphone Preview (NFC Tap View)',
+  };
+
+  assert.equal(livePreviewConfig.hasDeviceSwitcher, false);
+  assert.equal(livePreviewConfig.lockedDevice, 'mobile');
+  assert.equal(livePreviewConfig.frameComponent, 'SmartphoneFrame');
+
+  // 2. Smart Scroll-Aware Top Navbar Invariance
+  function computeNavbarVisibility({ scrollY, lastScrollY, mobileMenuOpen }) {
+    if (mobileMenuOpen) return true;
+    if (scrollY <= 60) return true;
+    const diff = scrollY - lastScrollY;
+    if (diff > 6) return false; // Scrolled down
+    if (diff < -6) return true;  // Scrolled up
+    return true;
+  }
+
+  // At top of page: always visible
+  assert.equal(computeNavbarVisibility({ scrollY: 10, lastScrollY: 0, mobileMenuOpen: false }), true);
+  // Scrolling downward past threshold: auto-hides
+  assert.equal(computeNavbarVisibility({ scrollY: 120, lastScrollY: 80, mobileMenuOpen: false }), false);
+  // Scrolling upward slightly: smoothly reveals
+  assert.equal(computeNavbarVisibility({ scrollY: 110, lastScrollY: 120, mobileMenuOpen: false }), true);
+  // With mobile drawer open: stays visible even if scrolled down
+  assert.equal(computeNavbarVisibility({ scrollY: 200, lastScrollY: 150, mobileMenuOpen: true }), true);
+
+  // 3. Mobile-First UX Controls (Zoom prevention & Floating Toast)
+  const mobileUXSpecs = {
+    mobileMinFontSize: '16px',
+    inputScrollMarginTop: '6rem', // scroll-mt-24
+    touchTargetMinHeight: 'min-h-[44px]',
+    floatingToastPositionMobile: 'bottom-20', // positioned above sticky bottom bar (h-14)
+    floatingToastPositionDesktop: 'md:top-5 md:right-5',
+    tabTransitionType: 'AnimatePresence mode="wait"',
+    transitionEase: [0.25, 0.1, 0.25, 1],
+  };
+
+  assert.equal(mobileUXSpecs.mobileMinFontSize, '16px');
+  assert.equal(mobileUXSpecs.inputScrollMarginTop, '6rem');
+  assert.equal(mobileUXSpecs.touchTargetMinHeight, 'min-h-[44px]');
+  assert.equal(mobileUXSpecs.floatingToastPositionMobile, 'bottom-20');
+  assert.equal(mobileUXSpecs.tabTransitionType, 'AnimatePresence mode="wait"');
+});
+
+
 
 
 

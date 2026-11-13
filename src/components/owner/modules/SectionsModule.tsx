@@ -120,7 +120,7 @@ export const SectionsModule: React.FC = () => {
               <button
                 type="button"
                 onClick={() => toggleSection(section.id)}
-                className={`px-3 py-1.5 rounded-xl border text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs ${
+                className={`min-h-[44px] px-3.5 py-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30 ${
                   section.visible
                     ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534] font-bold'
                     : 'bg-[#f0eae1] border-[#d9cdbd] text-[#73685c]'
@@ -134,7 +134,7 @@ export const SectionsModule: React.FC = () => {
                 type="button"
                 onClick={() => moveSection(idx, 'up')}
                 disabled={idx === 0}
-                className="p-1.5 rounded-lg bg-[#f0eae1] hover:bg-[#e5ded5] text-[#2b241e] border border-[#d9cdbd] disabled:opacity-20 cursor-pointer shadow-2xs"
+                className="w-11 h-11 min-h-[44px] rounded-xl bg-[#f0eae1] hover:bg-[#e5ded5] text-[#2b241e] border border-[#d9cdbd] disabled:opacity-20 cursor-pointer shadow-2xs flex items-center justify-center transition-all duration-200 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30"
                 title="Move Up"
               >
                 <ChevronUp className="w-4 h-4" />
@@ -143,7 +143,7 @@ export const SectionsModule: React.FC = () => {
                 type="button"
                 onClick={() => moveSection(idx, 'down')}
                 disabled={idx === sections.length - 1}
-                className="p-1.5 rounded-lg bg-[#f0eae1] hover:bg-[#e5ded5] text-[#2b241e] border border-[#d9cdbd] disabled:opacity-20 cursor-pointer shadow-2xs"
+                className="w-11 h-11 min-h-[44px] rounded-xl bg-[#f0eae1] hover:bg-[#e5ded5] text-[#2b241e] border border-[#d9cdbd] disabled:opacity-20 cursor-pointer shadow-2xs flex items-center justify-center transition-all duration-200 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30"
                 title="Move Down"
               >
                 <ChevronDown className="w-4 h-4" />
@@ -153,7 +153,7 @@ export const SectionsModule: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleDeleteSection(section.id)}
-                  className="p-1.5 rounded-lg bg-[#fef2f2] hover:bg-[#fee2e2] text-[#bc473b] border border-[#fca5a5] cursor-pointer shadow-2xs"
+                  className="w-11 h-11 min-h-[44px] rounded-xl bg-[#fef2f2] hover:bg-[#fee2e2] text-[#bc473b] border border-[#fca5a5] cursor-pointer shadow-2xs flex items-center justify-center transition-all duration-200 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30"
                   title="Delete Custom Section"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -165,88 +165,99 @@ export const SectionsModule: React.FC = () => {
       </div>
 
       {/* Add Custom Section Trigger / Form */}
-      {!isAddingCustom ? (
-        <button
-          type="button"
-          onClick={() => setIsAddingCustom(true)}
-          className="w-full py-3.5 rounded-2xl bg-[#fffefb] border border-dashed border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] hover:bg-[#f0eae1] transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Custom Profile Section</span>
-        </button>
-      ) : (
-        <form
-          onSubmit={handleAddCustomSection}
-          className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-6 space-y-4 shadow-md"
-        >
-          <div className="flex items-center justify-between pb-2 border-b border-[#d9cdbd]">
-            <h3 className="text-sm font-bold text-[#2b241e]">Create Custom Profile Section</h3>
-            <button
-              type="button"
-              onClick={() => setIsAddingCustom(false)}
-              className="text-[#73685c] hover:text-[#2b241e] cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+      <AnimatePresence mode="wait">
+        {!isAddingCustom ? (
+          <motion.button
+            key="add-btn"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            type="button"
+            onClick={() => setIsAddingCustom(true)}
+            className="w-full min-h-[44px] py-3.5 rounded-2xl bg-[#fffefb] border border-dashed border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] hover:bg-[#f0eae1] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-900/30"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Custom Profile Section</span>
+          </motion.button>
+        ) : (
+          <motion.form
+            key="custom-form"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            onSubmit={handleAddCustomSection}
+            className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-5 sm:p-6 space-y-4 shadow-md"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#d9cdbd]">
+              <h3 className="text-sm font-bold text-[#2b241e]">Create Custom Profile Section</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddingCustom(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
-              Section Heading
-            </label>
-            <input
-              type="text"
-              value={customHeading}
-              onChange={(e) => setCustomHeading(e.target.value)}
-              placeholder="e.g. Research Publications or Leadership & Volunteering"
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
-            />
-          </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
+                Section Heading
+              </label>
+              <input
+                type="text"
+                value={customHeading}
+                onChange={(e) => setCustomHeading(e.target.value)}
+                placeholder="e.g. Research Publications or Leadership & Volunteering"
+                required
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] focus-visible:ring-2 focus-visible:ring-amber-900/30 transition-colors duration-200 scroll-mt-24"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
-              Badge / Subtitle (Optional)
-            </label>
-            <input
-              type="text"
-              value={customBadge}
-              onChange={(e) => setCustomBadge(e.target.value)}
-              placeholder="e.g. IEEE / ACM / Campus Ambassador"
-              className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29]"
-            />
-          </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
+                Badge / Subtitle (Optional)
+              </label>
+              <input
+                type="text"
+                value={customBadge}
+                onChange={(e) => setCustomBadge(e.target.value)}
+                placeholder="e.g. IEEE / ACM / Campus Ambassador"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] focus-visible:ring-2 focus-visible:ring-amber-900/30 transition-colors duration-200 scroll-mt-24"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
-              Section Body Content
-            </label>
-            <textarea
-              rows={3}
-              value={customBody}
-              onChange={(e) => setCustomBody(e.target.value)}
-              placeholder="Detailed description or content..."
-              className="w-full px-3.5 py-2 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] resize-none"
-            />
-          </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[#73685c] font-bold mb-1.5">
+                Section Body Content
+              </label>
+              <textarea
+                rows={3}
+                value={customBody}
+                onChange={(e) => setCustomBody(e.target.value)}
+                placeholder="Detailed description or content..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd] text-base md:text-xs text-[#2b241e] focus:outline-none focus:border-[#704a29] focus-visible:ring-2 focus-visible:ring-amber-900/30 transition-colors duration-200 resize-none scroll-mt-24"
+              />
+            </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsAddingCustom(false)}
-              className="px-4 py-2 rounded-xl bg-[#f0eae1] text-xs text-[#73685c] hover:bg-[#e5ded5] cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-xs font-bold text-white shadow-xs cursor-pointer"
-            >
-              Create Section
-            </button>
-          </div>
-        </form>
-      )}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAddingCustom(false)}
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#f0eae1] text-xs text-[#73685c] hover:bg-[#e5ded5] transition cursor-pointer active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="min-h-[44px] px-5 py-2 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-xs font-bold text-white shadow-xs transition cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-900/30"
+              >
+                Create Section
+              </button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

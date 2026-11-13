@@ -1,13 +1,7 @@
 import React from 'react';
 import {
   Smartphone,
-  Tablet,
-  Monitor,
   Sparkles,
-  ExternalLink,
-  RotateCw,
-  Eye,
-  CheckCircle2,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { PublicPortfolioView } from '../../public/PublicPortfolioView';
@@ -16,8 +10,6 @@ import { SmartphoneFrame } from '../SmartphoneFrame';
 export const LivePreviewModule: React.FC = () => {
   const {
     draftContent,
-    previewDevice,
-    setPreviewDevice,
     isDirty,
     publishLive,
     isPublishing,
@@ -41,51 +33,14 @@ export const LivePreviewModule: React.FC = () => {
             )}
           </div>
           <p className="text-xs text-[#73685c] mt-0.5">
-            Real-time interactive preview of what visitors and NFC tap recipients see.
+            Real-time interactive preview of what visitors and NFC tap recipients see on their mobile phones.
           </p>
         </div>
 
-        {/* Device Viewport Selector */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#f0eae1] border border-[#d9cdbd]">
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('mobile')}
-            className={`p-2 rounded-lg text-xs flex items-center gap-1.5 transition cursor-pointer ${
-              previewDevice === 'mobile'
-                ? 'bg-[#704a29] text-white font-bold shadow-xs'
-                : 'text-[#73685c] hover:text-[#2b241e]'
-            }`}
-            title="Mobile iPhone Frame (390px)"
-          >
-            <Smartphone className="w-4 h-4" />
-            <span className="hidden sm:inline">Mobile (390px)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('tablet')}
-            className={`p-2 rounded-lg text-xs flex items-center gap-1.5 transition cursor-pointer ${
-              previewDevice === 'tablet'
-                ? 'bg-[#704a29] text-white font-bold shadow-xs'
-                : 'text-[#73685c] hover:text-[#2b241e]'
-            }`}
-            title="Tablet View (768px)"
-          >
-            <Tablet className="w-4 h-4" />
-            <span className="hidden sm:inline">Tablet (768px)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('desktop')}
-            className={`p-2 rounded-lg text-xs flex items-center gap-1.5 transition cursor-pointer ${
-              previewDevice === 'desktop'
-                ? 'bg-[#704a29] text-white font-bold shadow-xs'
-                : 'text-[#73685c] hover:text-[#2b241e]'
-            }`}
-            title="Full Width Responsive"
-          >
-            <Monitor className="w-4 h-4" />
-            <span className="hidden sm:inline">Desktop</span>
-          </button>
+        {/* Locked Mobile Mockup Badge (NFC Scan Focus) */}
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#f0eae1] border border-[#d9cdbd] text-xs font-sans text-[#704a29]">
+          <Smartphone className="w-4 h-4 text-[#704a29]" />
+          <span className="font-semibold">Mobile Smartphone Preview (NFC Tap View)</span>
         </div>
 
         {/* Quick Publish Action */}
@@ -93,7 +48,7 @@ export const LivePreviewModule: React.FC = () => {
           <button
             onClick={() => publishLive()}
             disabled={isPublishing}
-            className="px-4 py-2 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50 min-h-[44px] active:scale-[0.98] transition-all"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{isPublishing ? 'Publishing...' : 'Publish These Changes'}</span>
@@ -101,25 +56,11 @@ export const LivePreviewModule: React.FC = () => {
         )}
       </div>
 
-      {/* Preview Viewport Frame */}
+      {/* Preview Viewport Frame - Exclusively Locked to Realistic Smartphone Mockup */}
       <div className="w-full flex justify-center py-4 overflow-hidden">
-        {previewDevice === 'mobile' && (
-          <SmartphoneFrame frameHeightClass="h-[780px] sm:h-[820px]">
-            <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
-          </SmartphoneFrame>
-        )}
-
-        {previewDevice === 'tablet' && (
-          <div className="w-[768px] min-h-[850px] max-h-[920px] overflow-y-auto rounded-3xl border-8 border-[#2b241e] bg-background shadow-xl relative scrollbar-none">
-            <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
-          </div>
-        )}
-
-        {previewDevice === 'desktop' && (
-          <div className="w-full min-h-[850px] rounded-2xl border border-[#d9cdbd] bg-background shadow-xl relative overflow-hidden">
-            <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
-          </div>
-        )}
+        <SmartphoneFrame frameHeightClass="h-[780px] sm:h-[820px]">
+          <PublicPortfolioView contentOverride={draftContent} isLivePreview={true} />
+        </SmartphoneFrame>
       </div>
     </div>
   );

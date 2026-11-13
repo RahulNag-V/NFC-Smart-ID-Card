@@ -65,6 +65,23 @@
   }
 }
 
+/* Mobile-First UX: Prevent iOS Safari Auto-Zoom by enforcing 16px font-size minimum on mobile */
+@media screen and (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Ensure focused fields have generous scroll top margin (scroll-mt-24) so they stay clearly visible */
+input,
+textarea,
+select {
+  scroll-margin-top: 6rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* Custom utility for clean mobile app & phone preview scrollbars */
 .scrollbar-none::-webkit-scrollbar {
   display: none !important;
