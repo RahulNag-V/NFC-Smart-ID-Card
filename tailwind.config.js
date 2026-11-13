@@ -55,9 +55,10 @@ export default {
         }
       },
       fontFamily: {
-        serif: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
-        sans: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
-        mono: ['"Times New Roman"', 'Times', 'Tinos', 'Georgia', 'serif'],
+        display: ['"Instrument Serif"', '"Playfair Display"', 'Georgia', 'serif'],
+        serif: ['"Instrument Serif"', '"Playfair Display"', '"Times New Roman"', 'Georgia', 'serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Courier Prime"', 'monospace'],
       },
       borderRadius: {
         DEFAULT: "0.25rem",

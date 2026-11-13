@@ -778,3 +778,4 @@ npm test
 - **Secondary / NFC Gateway Target:** [https://rahulnagv-24cs051.web.app](https://rahulnagv-24cs051.web.app)
 - **GitHub Version Control:** [https://github.com/RahulNag-V/NFC-Smart-ID-Card.git](https://github.com/RahulNag-V/NFC-Smart-ID-Card.git) (`main` branch)
 - **Continuous Deployment:** Builds verified with `tsc -b && vite build` (zero errors).
+

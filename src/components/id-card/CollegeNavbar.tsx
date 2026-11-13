@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CollegeEmblem } from './CollegeEmblem';
-import { FolderGit2, Mail, Menu, X } from 'lucide-react';
+import { FolderGit2, Mail, Menu, X, Lock } from 'lucide-react';
 import { defaultStudentData } from '../../data/student';
 
 interface CollegeNavbarProps {
@@ -13,24 +13,43 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
   onSelectTab,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Discreet Owner Entry: Triple-click on college emblem routes immediately to owner login
+  const handleEmblemClick = () => {
+    clickCountRef.current += 1;
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+    if (clickCountRef.current >= 3) {
+      clickCountRef.current = 0;
+      window.location.href = '/owner/login';
+      return;
+    }
+
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 600);
+
+    onSelectTab('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#fffefb]/95 backdrop-blur-md border-b border-[#d9cdbd] text-[#2b241e] print:hidden shadow-xs">
+    <header className="sticky top-0 z-40 w-full bg-[#FAF9F6]/95 backdrop-blur-md border-b border-[#E8E4DC] text-[#1E1813] print:hidden shadow-xs">
       <div className="max-w-6xl mx-auto px-4 h-16 sm:h-18 flex items-center justify-between gap-3">
-        {/* College Brand & Seal */}
+        {/* College Brand & Seal with Triple-Click Owner Portal Entry */}
         <button
           type="button"
-          onClick={() => {
-            onSelectTab('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onClick={handleEmblemClick}
           className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none"
+          title="Bangalore Technological Institute"
         >
           <div className="shrink-0 drop-shadow-xs group-hover:scale-105 transition-transform">
             <CollegeEmblem size={38} className="sm:w-[44px] sm:h-[44px]" />
           </div>
           <div className="min-w-0">
-            <span className="block text-[11px] sm:text-[13px] font-serif font-bold uppercase tracking-tight text-[#2b241e] group-hover:text-[#704a29] transition-colors leading-tight truncate">
+            <span className="block text-[11px] sm:text-[13px] font-serif font-bold uppercase tracking-tight text-[#1E1813] group-hover:text-[#704a29] transition-colors leading-tight truncate">
               Bangalore Technological Institute
             </span>
             <span className="block text-[8px] sm:text-[9.5px] font-mono font-bold text-[#704a29] tracking-wider truncate">
@@ -128,10 +147,10 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
           </button>
         </nav>
 
-        {/* Student Quick Pill (Desktop) */}
-        <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#d9cdbd]">
+        {/* Student Quick Pill (Desktop) + Discreet Owner Link */}
+        <div className="hidden lg:flex items-center gap-2.5 pl-3 border-l border-[#E8E4DC]">
           <div className="text-right">
-            <span className="block text-xs font-bold text-[#2b241e] leading-tight">
+            <span className="block text-xs font-bold text-[#1E1813] leading-tight">
               {defaultStudentData.fullName}
             </span>
             <span className="block text-[10px] font-mono font-bold text-[#704a29]">
@@ -145,6 +164,14 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
               .slice(0, 2)
               .join('')}
           </div>
+          <a
+            href="/owner/login"
+            aria-label="Owner Portal"
+            className="p-1 rounded-md text-stone-400 hover:text-[#704a29] hover:bg-[#F3F1EC] transition-colors"
+            title="Owner Portal"
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </a>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -225,6 +252,17 @@ export const CollegeNavbar: React.FC<CollegeNavbarProps> = ({
           >
             Direct Inquiries &bull; Contact
           </button>
+          <div className="pt-2 border-t border-[#E8E4DC]">
+            <a
+              href="/owner/login"
+              aria-label="Owner Portal"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-stone-400 hover:text-[#704a29] hover:bg-[#F3F1EC] transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Owner Portal &bull; Sign In</span>
+            </a>
+          </div>
         </div>
       )}
     </header>

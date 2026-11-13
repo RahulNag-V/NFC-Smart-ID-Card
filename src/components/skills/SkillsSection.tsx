@@ -253,11 +253,11 @@ export const SkillsSection: React.FC = () => {
       {/* Section Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-[#f4ece1] border border-[#d9cdbd] flex items-center justify-center text-[#704a29]">
+          <div className="w-6 h-6 rounded-md bg-[#F3F1EC] border border-[#E8E4DC] flex items-center justify-center text-[#704a29]">
             <Cpu className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h2 className="text-xs font-bold font-serif text-[#2b241e] uppercase tracking-wider">
+            <h2 className="text-xs font-bold font-serif text-[#1E1813] uppercase tracking-wider">
               Technical Competencies &bull; Skills
             </h2>
             <p className="text-[10px] text-[#73685c] font-sans">
@@ -266,7 +266,7 @@ export const SkillsSection: React.FC = () => {
           </div>
         </div>
 
-        <span className="text-[10px] font-mono text-[#704a29] font-bold px-2.5 py-0.5 rounded-full bg-[#f4ece1] border border-[#d9cdbd] whitespace-nowrap shrink-0">
+        <span className="text-[10px] font-mono text-[#704a29] font-bold px-2.5 py-0.5 rounded-full bg-[#F3F1EC] border border-[#E8E4DC] whitespace-nowrap shrink-0">
           {hasMoreSkills && !isExpanded
             ? `Top 10 of ${filteredSkills.length}`
             : `${filteredSkills.length} Skills`}
@@ -287,7 +287,7 @@ export const SkillsSection: React.FC = () => {
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 shrink-0 cursor-pointer ${
                 isActive
                   ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
-                  : 'bg-[#fffefb] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] hover:border-[#a67c52]'
+                  : 'bg-white border border-[#E8E4DC] text-[#73685c] hover:text-[#1E1813] hover:border-[#704a29]/40'
               }`}
             >
               {cat}
@@ -325,19 +325,19 @@ export const SkillsSection: React.FC = () => {
                 transition: { duration: 0.18, ease: 'easeOut' },
               }}
               whileTap={{ scale: 0.98 }}
-              className="group p-3 rounded-xl bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] transition-colors relative cursor-pointer overflow-hidden shadow-2xs select-none"
+              className="group p-3 rounded-xl bg-white border border-[#E8E4DC] hover:border-[#704a29]/60 transition-colors relative cursor-pointer overflow-hidden shadow-2xs select-none"
             >
               {/* Category Icon and Skill Name */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#fbf8f3] border border-[#d9cdbd] flex items-center justify-center shrink-0 group-hover:bg-[#f4ece1] transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-[#FAF9F6] border border-[#E8E4DC] flex items-center justify-center shrink-0 group-hover:bg-[#F3F1EC] transition-colors">
                     {getCategoryIcon(skill.category)}
                   </div>
                   <div>
-                    <h3 className="text-xs sm:text-[13px] font-bold font-serif text-[#2b241e] group-hover:text-[#704a29] transition-colors leading-tight">
+                    <h3 className="text-xs sm:text-[13px] font-bold font-serif text-[#1E1813] group-hover:text-[#704a29] transition-colors leading-tight">
                       {skill.name}
                     </h3>
-                    <span className="text-[9px] font-mono text-[#8c6239] uppercase font-semibold">
+                    <span className="text-[9px] font-mono text-[#8C7E72] uppercase font-semibold">
                       {skill.category}
                     </span>
                   </div>
@@ -350,7 +350,7 @@ export const SkillsSection: React.FC = () => {
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                       : skill.level === 'Specialized'
                       ? 'bg-purple-50 text-purple-800 border-purple-200'
-                      : 'bg-[#fbf8f3] text-[#704a29] border-[#d9cdbd]'
+                      : 'bg-[#FAF9F6] text-[#704a29] border-[#E8E4DC]'
                   }`}
                 >
                   {skill.level}
@@ -392,7 +392,7 @@ export const SkillsSection: React.FC = () => {
             onClick={() => setIsExpanded((prev) => !prev)}
             aria-expanded={isExpanded}
             aria-controls="skills-grid"
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#fffefb] hover:bg-[#f4ece1] text-[#704a29] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-serif font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#704a29]/30"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white hover:bg-[#F3F1EC] text-[#704a29] border border-[#E8E4DC] hover:border-[#704a29] text-xs font-serif font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#704a29]/30"
           >
             <span>
               {isExpanded ? 'See Less' : `See More (${filteredSkills.length - 10} More Skills)`}

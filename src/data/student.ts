@@ -54,7 +54,7 @@ export interface StudentProfile {
 export const defaultStudentData: StudentProfile = {
   fullName: 'Rahul Nag V',
   headline: 'Full-Stack Software Engineer & AI Researcher',
-  biography: 'Computer Science and Engineering undergraduate at Bangalore Technological Institute. Specializing in deep learning medical imaging (3D UNETR), full-stack cloud architectures, and tactile contactless NFC hardware systems.',
+  biography: 'Computer Science & Engineering undergraduate at Bangalore Technological Institute, specializing in 3D medical image segmentation (UNETR), distributed cloud architectures, and contactless NFC identity systems.',
   location: 'Bengaluru, Karnataka, India',
   websiteUrl: 'https://rahulnagv-21cs051.web.app',
   coverUrl: '',
@@ -77,7 +77,7 @@ export const defaultStudentData: StudentProfile = {
   currentAddress: 'Campus Residence, Phase-2, Outer Ring Road, Bengaluru, Karnataka - 560064',
   permanentAddress: 'No. 1127, Masidikere, B. Kanaboor, Narasimharajapura, Chikkamagaluru, Karnataka - 577112, India',
   issueDate: '01 Oct 2024',
-  validThru: '31 Sep 2028',
+  validThru: '30 Sep 2028',
   college: {
     name: 'BANGALORE TECHNOLOGICAL INSTITUTE',
     code: 'BTI-051',
@@ -95,8 +95,8 @@ export const defaultStudentData: StudentProfile = {
   verification: {
     status: 'VERIFIED & ACTIVE',
     verifiedBy: 'Office of the Registrar & Academic Council',
-    verificationCode: 'VRF-21CS051-99A7',
-    hash: '0x7e8b91c1...21cs051',
+    verificationCode: 'VRF-24CS051-99A7',
+    hash: '0x7e8b91c1...24cs051',
     verificationUrl: 'https://rahulnagv-21cs051.web.app/#verify',
     lastVerified: 'Academic Year Validated',
   },

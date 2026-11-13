@@ -360,11 +360,16 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
               )}
             </div>
 
-            {/* Subtle clean hint below the card */}
-            <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs text-[#73685c] font-sans select-none">
-              <RotateCw className="w-3 h-3 text-[#704a29]" />
-              <span>Tap or click card to flip</span>
-            </div>
+            {/* Tactile Flip Indicator Pill */}
+            <button
+              type="button"
+              onClick={handleFlip}
+              className="mt-3.5 px-3.5 py-1.5 rounded-full bg-[#FAF9F6] hover:bg-stone-100 border border-stone-300/80 hover:border-[#704a29]/50 shadow-2xs hover:shadow-xs flex items-center justify-center gap-2 text-xs font-medium text-[#704a29] transition-all cursor-pointer active:scale-95 select-none"
+              title="Tap or flip for Registrar & QR"
+            >
+              <RotateCw className="w-3.5 h-3.5 text-[#704a29]" />
+              <span className="font-sans font-semibold tracking-wide">Tap or flip for Registrar &amp; QR</span>
+            </button>
           </div>
         </div>
       )}

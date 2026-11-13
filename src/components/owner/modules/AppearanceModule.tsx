@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { ThemePresetName, ThemeConfig } from '../../../types/content';
+import { loadThemeFonts, loadFontFamily } from '../../../lib/fontLoader';
 
 interface PresetDefinition {
   name: ThemePresetName;
@@ -65,8 +66,8 @@ const curatedPresets: PresetDefinition[] = [
       },
       typography: {
         fontFamily: 'serif',
-        headingFont: '"Cinzel", "Times New Roman", serif',
-        bodyFont: '"Tinos", Georgia, serif',
+        headingFont: '"Instrument Serif", "Playfair Display", Georgia, serif',
+        bodyFont: '"Plus Jakarta Sans", Inter, sans-serif',
         fontSizeScale: 'normal',
         letterSpacing: 'normal',
       },
@@ -314,6 +315,18 @@ export interface FontFamilyDefinition {
 }
 
 export const curatedFontFamilies: FontFamilyDefinition[] = [
+  {
+    id: 'instrument-jakarta',
+    name: 'Instrument Serif & Plus Jakarta',
+    category: 'Display',
+    headingFont: "'Instrument Serif', 'Playfair Display', Georgia, serif",
+    bodyFont: "'Plus Jakarta Sans', Inter, -apple-system, sans-serif",
+    genericType: 'serif',
+    sampleHeading: 'Ag',
+    sampleBody: 'Modern Swiss Editorial Architecture',
+    badge: 'Editorial Standard',
+    description: 'Distinctive high-contrast editorial serif paired with crisp geometric tech interface sans.',
+  },
   {
     id: 'times-academic',
     name: 'Times New Roman & Tinos',
@@ -598,11 +611,14 @@ export const AppearanceModule: React.FC = () => {
     ) || curatedFontFamilies[0];
 
   const handleSelectPreset = (preset: PresetDefinition) => {
+    loadThemeFonts(preset.config);
     updateAppearance(preset.config);
     showToast(`Applied ${preset.name} theme aesthetic.`, 'success');
   };
 
   const handleSelectFontFamily = (font: FontFamilyDefinition) => {
+    loadFontFamily(font.headingFont);
+    loadFontFamily(font.bodyFont);
     updateAppearance({
       typography: {
         ...theme.typography,

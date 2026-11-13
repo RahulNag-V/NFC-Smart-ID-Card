@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PublishedProfileData } from '../types/content';
 import { defaultInitialContent } from '../data/initialContent';
 import { fetchPublishedProfile } from '../lib/firebase';
+import { loadThemeFonts } from '../lib/fontLoader';
 
 interface SiteContentContextType {
   publishedContent: PublishedProfileData;
@@ -27,6 +28,8 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const activeTheme = publishedContent?.theme || defaultInitialContent.theme;
       if (!activeTheme) return;
+
+      loadThemeFonts(activeTheme);
 
       const root = document.documentElement;
       const colors = activeTheme.colors || defaultInitialContent.theme.colors;

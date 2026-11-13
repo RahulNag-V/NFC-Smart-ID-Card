@@ -27,6 +27,7 @@ import {
   Loader2,
   Shield,
   Pencil,
+  Lock,
 } from 'lucide-react';
 
 // Custom Brand Glyphs
@@ -107,7 +108,7 @@ function PageWatermark({
   return (
     <div
       className={`-mx-4 w-[calc(100%+2rem)] px-1 overflow-hidden select-none pointer-events-none ${
-        isLivePreview ? 'mt-3 mb-3 max-w-[92%] mx-auto' : 'mt-1 mb-4'
+        isLivePreview ? 'mt-2 mb-2 max-w-[92%] mx-auto' : 'mt-1 mb-2'
       }`}
       aria-hidden="true"
     >
@@ -120,10 +121,10 @@ function PageWatermark({
           x="50%"
           y={y}
           textAnchor="middle"
-          fill="#a67c52"
-          fillOpacity={isLivePreview ? '0.18' : '0.22'}
+          fill="#704a29"
+          fillOpacity={isLivePreview ? '0.02' : '0.025'}
           style={{
-            fontFamily: '"Times New Roman", Times, "Tinos", Georgia, serif',
+            fontFamily: '"Instrument Serif", "Playfair Display", Georgia, serif',
             fontWeight: 900,
             fontSize: `${isLivePreview ? Math.round(size * 0.9) : size}px`,
             letterSpacing: spacing,
@@ -433,8 +434,8 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                             {section.title || 'Core Disciplines'}
                           </h2>
 
-                          <div className="grid grid-cols-1 gap-3">
-                            <div className="p-4 rounded-xl bg-card border border-border flex items-start gap-3 shadow-2xs">
+                          <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden shadow-2xs">
+                            <div className="p-4 flex items-start gap-3.5 hover:bg-muted/40 transition-colors">
                               <div className="p-2 rounded-lg bg-background border border-border text-[#a67c52] shrink-0">
                                 <Nfc className="w-4 h-4" />
                               </div>
@@ -448,7 +449,7 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                               </div>
                             </div>
 
-                            <div className="p-4 rounded-xl bg-card border border-border flex items-start gap-3 shadow-2xs">
+                            <div className="p-4 flex items-start gap-3.5 hover:bg-muted/40 transition-colors">
                               <div className="p-2 rounded-lg bg-background border border-border text-[#704a29] shrink-0">
                                 <Layers className="w-4 h-4" />
                               </div>
@@ -462,7 +463,7 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                               </div>
                             </div>
 
-                            <div className="p-4 rounded-xl bg-card border border-border flex items-start gap-3 shadow-2xs">
+                            <div className="p-4 flex items-start gap-3.5 hover:bg-muted/40 transition-colors">
                               <div className="p-2 rounded-lg bg-background border border-border text-[#10B981] shrink-0">
                                 <Zap className="w-4 h-4" />
                               </div>
@@ -1050,6 +1051,26 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Discreet Editorial Footer */}
+      {!isLivePreview && (
+        <footer className="w-full max-w-md mx-auto pt-8 pb-16 px-4 flex items-center justify-between text-[11px] font-mono text-[#8C7E72] border-t border-[#E8E4DC]/80 mt-12 select-none">
+          <div className="flex items-center gap-1.5">
+            <span>&copy; {new Date().getFullYear()} Rahul Nag V</span>
+            <span>&bull;</span>
+            <span>BTI CSE</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleEditProfile}
+            aria-label="Owner Portal"
+            className="p-1.5 rounded-md text-stone-400 hover:text-[#704a29] hover:bg-stone-200/50 transition-colors cursor-pointer"
+            title="Owner Portal"
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </button>
+        </footer>
+      )}
 
       {/* Floating Menu */}
       <FloatingMenu

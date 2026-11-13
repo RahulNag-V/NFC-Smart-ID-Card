@@ -1,12 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { OwnerEditorProvider } from './context/OwnerEditorContext';
 import { PublicPortfolioView } from './components/public/PublicPortfolioView';
-import { OwnerLogin } from './components/owner/OwnerLogin';
-import { OwnerDashboard } from './components/owner/OwnerDashboard';
-import { NotFoundPage } from './components/common/NotFoundPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+
+// Code-split admin and secondary routes to optimize public payload
+const OwnerLogin = lazy(() =>
+  import('./components/owner/OwnerLogin').then((m) => ({ default: m.OwnerLogin }))
+);
+const OwnerDashboard = lazy(() =>
+  import('./components/owner/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard }))
+);
+const NotFoundPage = lazy(() =>
+  import('./components/common/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
+);
+
+function RouteLoadingFallback() {
+  return (
+    <div className="h-screen w-screen bg-[#FAF9F6] text-[#2b241e] flex flex-col items-center justify-center font-serif">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-[#704a29]/30 border-t-[#704a29] rounded-full animate-spin" />
+        <span className="text-xs font-mono text-[#73685c] tracking-widest uppercase">
+          Ananta Sparsha &bull; Loading...
+        </span>
+      </div>
+    </div>
+  );
+}
 
 type AppRoute = 'public' | 'owner-login' | 'owner-dashboard' | 'owner-security' | 'not-found';
 
@@ -137,10 +158,12 @@ function AppRouter() {
   // Route 1: Owner Login
   if (currentRoute === 'owner-login') {
     return (
-      <OwnerLogin
-        onLoginSuccess={() => navigateTo('owner-dashboard')}
-        onNavigatePublic={() => navigateTo('public')}
-      />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <OwnerLogin
+          onLoginSuccess={() => navigateTo('owner-dashboard')}
+          onNavigatePublic={() => navigateTo('public')}
+        />
+      </Suspense>
     );
   }
 
@@ -149,30 +172,36 @@ function AppRouter() {
     if (!authLoading && !isOwner) {
       // Unauthorized or not logged in: redirect to owner login
       return (
-        <OwnerLogin
-          onLoginSuccess={() => navigateTo(currentRoute === 'owner-security' ? 'owner-security' : 'owner-dashboard')}
-          onNavigatePublic={() => navigateTo('public')}
-        />
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <OwnerLogin
+            onLoginSuccess={() => navigateTo(currentRoute === 'owner-security' ? 'owner-security' : 'owner-dashboard')}
+            onNavigatePublic={() => navigateTo('public')}
+          />
+        </Suspense>
       );
     }
 
     return (
-      <OwnerEditorProvider initialTab={currentRoute === 'owner-security' ? 'security' : 'overview'}>
-        <OwnerDashboard
-          onNavigatePublic={() => navigateTo('public')}
-          onLogout={() => navigateTo('owner-login')}
-        />
-      </OwnerEditorProvider>
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <OwnerEditorProvider initialTab={currentRoute === 'owner-security' ? 'security' : 'overview'}>
+          <OwnerDashboard
+            onNavigatePublic={() => navigateTo('public')}
+            onLogout={() => navigateTo('owner-login')}
+          />
+        </OwnerEditorProvider>
+      </Suspense>
     );
   }
 
   // Route 4: Custom 404 Not Found Page
   if (currentRoute === 'not-found') {
     return (
-      <NotFoundPage
-        onNavigateHome={() => navigateTo('public')}
-        onNavigateLogin={() => navigateTo('owner-login')}
-      />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <NotFoundPage
+          onNavigateHome={() => navigateTo('public')}
+          onNavigateLogin={() => navigateTo('owner-login')}
+        />
+      </Suspense>
     );
   }
 

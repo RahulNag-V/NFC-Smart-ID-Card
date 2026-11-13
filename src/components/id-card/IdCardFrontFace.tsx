@@ -99,8 +99,21 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
               mixBlendMode: 'soft-light',
             }}
           />
+          {/* Subtle Holographic Shimmer Sweep on Tilt */}
+          {isHovered && glarePos && (
+            <div
+              className="absolute inset-0 pointer-events-none rounded-2xl z-25 overflow-hidden transition-opacity duration-200"
+              style={{
+                background: `linear-gradient(${glarePos.x * 2.5}deg, transparent 20%, rgba(212,175,55,0.12) 38%, rgba(56,189,248,0.14) 50%, rgba(236,72,153,0.12) 62%, transparent 80%)`,
+                mixBlendMode: 'color-dodge',
+              }}
+            />
+          )}
         </>
       )}
+
+      {/* Micro-Noise Grain Texture Overlay */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:4px_4px]" />
 
       {/* Subtle Security Micro-Guilloche Texture */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[radial-gradient(#704a29_1px,transparent_1px)] [background-size:8px_8px]" />
@@ -188,7 +201,28 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
       </div>
 
       {/* MIDDLE SECTION: Photo, Name, USN, Department */}
-      <div className="flex-1 flex flex-col items-center justify-center px-3 py-1 z-10 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center px-3 py-1 z-10 text-center relative">
+        {/* Realistic Metallic Gold EMV / NFC Smart Chip Contact Pad */}
+        <div
+          aria-hidden="true"
+          className="absolute top-2 left-2.5 w-7 h-6 rounded-[3px] border border-[#a8823b] bg-gradient-to-br from-[#f5d78e] via-[#d4af37] to-[#997320] shadow-xs p-[1.5px] flex flex-col justify-between overflow-hidden opacity-85 select-none pointer-events-none"
+          title="Contactless NFC Smart Identity Module"
+        >
+          <div className="w-full h-full border border-[#7d5f19]/40 rounded-[2px] flex flex-col justify-between">
+            <div className="flex justify-between h-[30%] border-b border-[#7d5f19]/40">
+              <span className="w-1/2 border-r border-[#7d5f19]/40" />
+              <span className="w-1/2" />
+            </div>
+            <div className="h-[40%] border-b border-[#7d5f19]/40 flex items-center justify-center">
+              <div className="w-2.5 h-1.5 rounded-[1px] border border-[#7d5f19]/40" />
+            </div>
+            <div className="flex justify-between h-[30%]">
+              <span className="w-1/2 border-r border-[#7d5f19]/40" />
+              <span className="w-1/2" />
+            </div>
+          </div>
+        </div>
+
         {/* 2. Student Photograph */}
         <div className="relative w-25 h-32 sm:w-27 sm:h-35 rounded-lg overflow-hidden border-2 border-[#704a29] ring-2 ring-[#d9cdbd]/80 bg-[#f8f5ee] shadow-sm shrink-0">
           <img

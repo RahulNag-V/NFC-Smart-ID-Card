@@ -20,6 +20,7 @@ import {
 } from 'firebase/storage';
 import { PublishedProfileData } from '../types/content';
 import { defaultInitialContent } from '../data/initialContent';
+import { defaultStudentData, maskPhone, maskEmail, maskAddress, maskBloodGroup } from '../data/student';
 
 // Firebase configuration from environment
 const firebaseConfig = {
@@ -58,6 +59,49 @@ export { auth, db, storage };
 // Storage keys for offline/local simulation fallback
 const LOCAL_PUBLISHED_KEY = 'ananta_sparsha_published_content';
 const LOCAL_DRAFT_KEY = 'ananta_sparsha_draft_content';
+const LOCAL_PRIVATE_DETAILS_KEY = 'ananta_sparsha_private_details';
+
+/**
+ * Strips and masks sensitive private fields from public payload based on visibility toggles.
+ * Ensures raw confidential phone, email, and home addresses are never published over the public network.
+ */
+export function sanitizePublicPayload(data: PublishedProfileData): PublishedProfileData {
+  const vis = data.visibility || {};
+  const student = data.student ? { ...data.student } : { ...defaultStudentData };
+
+  if (!vis.showPhone) {
+    student.phone = maskPhone(student.phone, false);
+  }
+  if (!vis.showEmail) {
+    student.email = maskEmail(student.email, false);
+  }
+  if (!vis.showPermanentAddress) {
+    student.permanentAddress = maskAddress(student.permanentAddress, false);
+  }
+  if (!vis.showCurrentAddress) {
+    student.currentAddress = maskAddress(student.currentAddress, false);
+  }
+  if (!vis.showBloodGroup) {
+    student.bloodGroup = maskBloodGroup(student.bloodGroup, false);
+  }
+  if (!vis.showDob) {
+    student.dateOfBirth = '•••• •••••••• •••• (Protected by Privacy Toggle)';
+  }
+
+  // Also sanitize social channels phone/whatsapp link if phone visibility is off
+  const sanitizedSocialChannels = (data.socialChannels || []).map((ch) => {
+    if (ch.id === 'whatsapp' && !vis.showPhone) {
+      return { ...ch, handle: '+91 ••••• •••••', url: 'https://wa.me/' };
+    }
+    return ch;
+  });
+
+  return {
+    ...data,
+    student,
+    socialChannels: sanitizedSocialChannels,
+  };
+}
 
 // Configured Owner UID, Email, and Phone (from environment or defaults)
 export const CONFIGURED_OWNER_UID = import.meta.env.VITE_OWNER_UID || '';
@@ -182,6 +226,16 @@ export async function fetchDraftProfile(profileId: string = 'rahulnagv'): Promis
           return mergeWithDefaults(data.draftContent);
         }
       }
+
+      // Fallback to private details if draft document is empty
+      const detailsRef = doc(db, 'profiles', profileId, 'private', 'details');
+      const detailsSnap = await getDoc(detailsRef);
+      if (detailsSnap.exists()) {
+        const d = detailsSnap.data();
+        if (d.draftContent) {
+          return mergeWithDefaults(d.draftContent);
+        }
+      }
     } catch (err) {
       console.warn('Could not load draft from Firestore, checking local storage:', err);
     }
@@ -189,7 +243,7 @@ export async function fetchDraftProfile(profileId: string = 'rahulnagv'): Promis
 
   // Local draft fallback
   try {
-    const local = localStorage.getItem(LOCAL_DRAFT_KEY);
+    const local = localStorage.getItem(LOCAL_DRAFT_KEY) || localStorage.getItem(LOCAL_PRIVATE_DETAILS_KEY);
     if (local) {
       return mergeWithDefaults(JSON.parse(local));
     }
@@ -227,6 +281,7 @@ export async function saveDraftProfile(
 
 /**
  * Publish profile live to public document
+ * Strips masked confidential fields from the public document while saving full unmasked data in private storage
  */
 export async function publishProfile(
   profileId: string = 'rahulnagv',
@@ -236,16 +291,21 @@ export async function publishProfile(
   const newVersion = (dataToPublish.version || 1) + 1;
   const now = new Date().toISOString();
 
-  const publishedData: PublishedProfileData = {
+  // Full unmasked master dataset for owner's private storage
+  const unmaskedMasterData: PublishedProfileData = {
     ...dataToPublish,
     version: newVersion,
     updatedAt: now,
     publishedAt: now,
   };
 
-  // Sync to local published key and clear draft
+  // Sanitized public dataset stripping any fields that are not toggled visible
+  const publicPayload = sanitizePublicPayload(unmaskedMasterData);
+
+  // Sync to local storage
   try {
-    localStorage.setItem(LOCAL_PUBLISHED_KEY, JSON.stringify(publishedData));
+    localStorage.setItem(LOCAL_PUBLISHED_KEY, JSON.stringify(publicPayload));
+    localStorage.setItem(LOCAL_PRIVATE_DETAILS_KEY, JSON.stringify(unmaskedMasterData));
     localStorage.removeItem(LOCAL_DRAFT_KEY);
   } catch (err) {
     console.warn('Local publish storage warning:', err);
@@ -253,25 +313,34 @@ export async function publishProfile(
 
   // Sync to Cloud Firestore
   if (db && isFirebaseConfigured) {
+    // 1. Public profile document (Sanitized payload ONLY)
     const profileRef = doc(db, 'profiles', profileId);
     await setDoc(profileRef, {
       ownerUid,
-      publishedContent: publishedData,
+      publishedContent: publicPayload,
       publishedVersion: newVersion,
       updatedAt: now,
       publishedAt: now,
     }, { merge: true });
 
-    // Also update private draft with published data
+    // 2. Private details document (Full unmasked master data for owner)
+    const detailsRef = doc(db, 'profiles', profileId, 'private', 'details');
+    await setDoc(detailsRef, {
+      draftContent: unmaskedMasterData,
+      updatedAt: now,
+      ownerUid,
+    }, { merge: true });
+
+    // 3. Update private draft document
     const draftRef = doc(db, 'profiles', profileId, 'private', 'draft');
     await setDoc(draftRef, {
-      draftContent: publishedData,
+      draftContent: unmaskedMasterData,
       updatedAt: now,
       ownerUid,
     }, { merge: true });
   }
 
-  return publishedData;
+  return unmaskedMasterData;
 }
 
 /**
