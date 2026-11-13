@@ -64,6 +64,8 @@ export const StudentInfoSections: React.FC<StudentInfoSectionsProps> = ({
               <img
                 src={student.photoUrl}
                 alt={student.fullName}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover object-top"
               />
               <div className="absolute bottom-1.5 inset-x-1.5 py-0.5 rounded bg-[#221b16]/85 backdrop-blur-xs text-[9px] font-mono font-bold text-center text-[#f0eae1]">
@@ -252,9 +254,18 @@ export const StudentInfoSections: React.FC<StudentInfoSectionsProps> = ({
               <span className="text-[10px] font-mono uppercase font-bold text-[#73685c] tracking-wider block">
                 Primary Phone / WhatsApp
               </span>
-              <p className="text-xs font-mono font-bold text-[#2b241e] mt-1">
-                {maskPhone(student.phone, isSensitiveVisible)}
-              </p>
+              {isSensitiveVisible ? (
+                <a
+                  href={`tel:${student.phone.replace(/[^0-9+]/g, '')}`}
+                  className="text-xs font-mono font-bold text-[#2b241e] hover:text-[#704a29] hover:underline mt-1 block"
+                >
+                  {student.phone}
+                </a>
+              ) : (
+                <p className="text-xs font-mono font-bold text-[#2b241e] mt-1">
+                  {maskPhone(student.phone, false)}
+                </p>
+              )}
               <span className="text-[10px] text-[#73685c]">Registered Student Mobile</span>
             </div>
           </div>
@@ -267,9 +278,18 @@ export const StudentInfoSections: React.FC<StudentInfoSectionsProps> = ({
               <span className="text-[10px] font-mono uppercase font-bold text-[#73685c] tracking-wider block">
                 Email Communications
               </span>
-              <p className="text-xs font-mono font-bold text-[#2b241e] mt-1 truncate">
-                {maskEmail(student.email, isSensitiveVisible)}
-              </p>
+              {isSensitiveVisible ? (
+                <a
+                  href={`mailto:${student.email}`}
+                  className="text-xs font-mono font-bold text-[#2b241e] hover:text-[#704a29] hover:underline mt-1 truncate block"
+                >
+                  {student.email}
+                </a>
+              ) : (
+                <p className="text-xs font-mono font-bold text-[#2b241e] mt-1 truncate">
+                  {maskEmail(student.email, false)}
+                </p>
+              )}
               <span className="text-[10px] text-[#73685c]">Academic Dispatch &amp; Alerts</span>
             </div>
           </div>
@@ -371,18 +391,24 @@ export const StudentInfoSections: React.FC<StudentInfoSectionsProps> = ({
                 <span className="text-[10px] font-mono uppercase font-bold text-[#73685c] tracking-wider block">
                   Campus Control Helpline
                 </span>
-                <p className="text-xs font-mono font-semibold text-[#2b241e] mt-0.5">
+                <a
+                  href={`tel:${student.college.phone.replace(/[^0-9+]/g, '')}`}
+                  className="text-xs font-mono font-semibold text-[#2b241e] hover:text-[#704a29] hover:underline mt-0.5 block"
+                >
                   {student.college.phone}
-                </p>
+                </a>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#fbf8f3] border border-[#d9cdbd]/60">
                 <span className="text-[10px] font-mono uppercase font-bold text-[#73685c] tracking-wider block">
                   Registrar Secretariat
                 </span>
-                <p className="text-xs font-mono font-semibold text-[#2b241e] mt-0.5">
+                <a
+                  href={`mailto:${student.college.email}`}
+                  className="text-xs font-mono font-semibold text-[#2b241e] hover:text-[#704a29] hover:underline mt-0.5 block truncate"
+                >
                   {student.college.email}
-                </p>
+                </a>
               </div>
             </div>
           </div>

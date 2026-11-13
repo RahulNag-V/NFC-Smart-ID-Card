@@ -182,6 +182,8 @@ export function ProjectCard({ project }: { project: Project }) {
               <img
                 src={project.imageUrl}
                 alt={project.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover/img:scale-105 transition duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />

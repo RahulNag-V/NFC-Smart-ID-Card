@@ -277,39 +277,50 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Student Profile Photo / Avatar with Verified Dot Badge (36x36px) */}
-          <div className="relative shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-[#704a29] text-[#fffefb] flex items-center justify-center shadow-xs overflow-hidden border border-[#d9cdbd]/60">
-              {studentPhoto && !headerPhotoError ? (
-                <img
-                  src={studentPhoto}
-                  alt={studentName || 'Student Avatar'}
-                  className="w-full h-full object-cover"
-                  onError={() => setHeaderPhotoError(true)}
-                />
-              ) : (
-                <User className="w-5 h-5 text-[#f0eae1]" />
-              )}
+          {/* Student Profile Photo / Avatar with Verified Dot Badge (36x36px) - Navigates to Overview */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className="flex items-center gap-2 sm:gap-2.5 min-w-0 text-left group cursor-pointer focus:outline-none"
+            title="Return to Overview Dashboard"
+          >
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-[#704a29] text-[#fffefb] flex items-center justify-center shadow-xs overflow-hidden border border-[#d9cdbd]/60 group-hover:scale-105 transition-transform">
+                {studentPhoto && !headerPhotoError ? (
+                  <img
+                    src={studentPhoto}
+                    alt={studentName || 'Student Avatar'}
+                    className="w-full h-full object-cover"
+                    onError={() => setHeaderPhotoError(true)}
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-[#f0eae1]" />
+                )}
+              </div>
+              {/* Green active/verified dot badge on bottom-right corner */}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#16a34a] border-2 border-[#fffefb] rounded-full shadow-xs"
+                title="Verified & Active"
+              />
             </div>
-            {/* Green active/verified dot badge on bottom-right corner */}
-            <span
-              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#16a34a] border-2 border-[#fffefb] rounded-full shadow-xs"
-              title="Verified & Active"
-            />
-          </div>
 
-          {/* Student Name & Status Line */}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {studentName ? (
-                <span className="text-xs font-bold tracking-wider text-[#704a29] uppercase font-serif truncate max-w-[110px] sm:max-w-[160px] md:max-w-xs block">
-                  {studentName}
+            {/* Student Name & Role Badge */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {studentName ? (
+                  <span className="text-xs font-bold tracking-wider text-[#704a29] group-hover:text-[#593a1f] uppercase font-serif truncate max-w-[110px] sm:max-w-[160px] md:max-w-xs block transition-colors">
+                    {studentName}
+                  </span>
+                ) : null}
+                <span className="px-1.5 py-0.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[9.5px] font-sans font-medium text-[#73685c] tracking-normal shrink-0">
+                  Owner
                 </span>
-              ) : null}
-              <span className="px-1.5 py-0.5 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[9.5px] font-sans font-medium text-[#73685c] tracking-normal shrink-0">
-                Owner
-              </span>
+              </div>
             </div>
+          </button>
+
+          {/* Student Status Line */}
+          <div className="min-w-0">
 
             {/* Desktop Only Status Line (Hidden on Mobile to Prevent Awkward Wrapping & Overflow) */}
             <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[#73685c] mt-0.5">

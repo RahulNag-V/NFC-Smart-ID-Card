@@ -74,6 +74,8 @@ export const StudentIdCardFront: React.FC<StudentIdCardFrontProps> = ({ student 
             <img
               src={student.photoUrl}
               alt={student.fullName}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-top"
             />
             {/* Hologram security overlay stamp */}

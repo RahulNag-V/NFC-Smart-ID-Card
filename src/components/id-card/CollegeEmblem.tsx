@@ -21,6 +21,10 @@ export const CollegeEmblem: React.FC<CollegeEmblemProps> = ({
         <img
           src={btiLogo}
           alt="BTI Watermark"
+          loading="lazy"
+          decoding="async"
+          width={size}
+          height={size}
           style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
           className="w-full h-full object-contain filter grayscale invert opacity-20"
         />
@@ -36,6 +40,9 @@ export const CollegeEmblem: React.FC<CollegeEmblemProps> = ({
       <img
         src={btiLogo}
         alt="Bangalore Technological Institute"
+        loading="lazy"
+        decoding="async"
+        height={Math.max(12, size - 4)}
         style={{ maxHeight: `${Math.max(12, size - 4)}px` }}
         className="h-full w-auto object-contain"
       />

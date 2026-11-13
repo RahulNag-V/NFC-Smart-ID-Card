@@ -246,9 +246,19 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
             <span className="block text-[7px] sm:text-[7.5px] font-sans uppercase text-[#8c6239] font-bold tracking-wide">
               Phone Number
             </span>
-            <p className="font-mono font-bold text-[#1e1713] text-[10px] sm:text-[10.5px] truncate">
-              {student.phone}
-            </p>
+            {student.phone && !student.phone.includes('*') ? (
+              <a
+                href={`tel:${student.phone.replace(/[^0-9+]/g, '')}`}
+                className="font-mono font-bold text-[#1e1713] hover:text-[#704a29] text-[10px] sm:text-[10.5px] truncate block hover:underline"
+                title="Call phone number"
+              >
+                {student.phone}
+              </a>
+            ) : (
+              <p className="font-mono font-bold text-[#1e1713] text-[10px] sm:text-[10.5px] truncate">
+                {student.phone}
+              </p>
+            )}
           </div>
         </div>
 
@@ -261,9 +271,19 @@ export const IdCardBackFace: React.FC<IdCardBackFaceProps> = ({
             <span className="block text-[7px] sm:text-[7.5px] font-sans uppercase text-[#8c6239] font-bold tracking-wide">
               Email
             </span>
-            <p className="font-mono font-bold text-[#1e1713] text-[9.5px] sm:text-[10px] truncate">
-              {student.email}
-            </p>
+            {student.email && !student.email.includes('*') ? (
+              <a
+                href={`mailto:${student.email}`}
+                className="font-mono font-bold text-[#1e1713] hover:text-[#704a29] text-[9.5px] sm:text-[10px] truncate block hover:underline"
+                title="Send email"
+              >
+                {student.email}
+              </a>
+            ) : (
+              <p className="font-mono font-bold text-[#1e1713] text-[9.5px] sm:text-[10px] truncate">
+                {student.email}
+              </p>
+            )}
           </div>
         </div>
 

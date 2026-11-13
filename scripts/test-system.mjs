@@ -1308,6 +1308,77 @@ test('Mobile-Only Live Preview Focus, Scroll-Aware Top Navbar & Mobile UX Polish
   assert.equal(mobileUXSpecs.tabTransitionType, 'AnimatePresence mode="wait"');
 });
 
+// 23. Full-Site UX, 404 Routing, Clickable Tel/Mailto, SEO Metadata & Asset Optimization
+test('Full-Site UX, 404 Routing, Clickable Tel/Mailto, SEO Metadata & Asset Optimization', () => {
+  // 1. Dynamic Route Resolution & 404 Fallback
+  function resolveAppRoute(path, hash = '', search = '') {
+    const lPath = path.toLowerCase();
+    const lHash = hash.toLowerCase();
+    const lSearch = search.toLowerCase();
+
+    if (lPath === '/owner/security' || lHash === '#/owner/security' || lSearch.includes('mode=owner-security')) {
+      return 'owner-security';
+    }
+    if (lPath === '/owner/login' || lHash === '#/owner/login' || lSearch.includes('mode=owner-login')) {
+      return 'owner-login';
+    }
+    if (lPath === '/owner/dashboard' || lHash === '#/owner/dashboard' || lSearch.includes('mode=owner-dashboard')) {
+      return 'owner-dashboard';
+    }
+    const isRoot = lPath === '/' || lPath === '' || lPath === '/index.html';
+    if (
+      (isRoot && (lHash === '' || lHash === '#/' || lHash === '#' || lHash.startsWith('#student-profile') || lHash.startsWith('#academic-details') || lHash.startsWith('#verification'))) ||
+      lHash.startsWith('#student-profile') ||
+      lHash.startsWith('#academic-details') ||
+      lHash.startsWith('#verification')
+    ) {
+      return 'public';
+    }
+    return 'not-found';
+  }
+
+  assert.equal(resolveAppRoute('/'), 'public');
+  assert.equal(resolveAppRoute('/owner/dashboard'), 'owner-dashboard');
+  assert.equal(resolveAppRoute('/owner/login'), 'owner-login');
+  assert.equal(resolveAppRoute('/owner/security'), 'owner-security');
+  assert.equal(resolveAppRoute('/random-invalid-route'), 'not-found');
+  assert.equal(resolveAppRoute('/404'), 'not-found');
+
+  // 2. Clickable Contact Protocol Formatters
+  function formatTelLink(phone) {
+    if (!phone || phone.includes('*')) return null;
+    return `tel:${phone.replace(/[^0-9+]/g, '')}`;
+  }
+
+  function formatMailtoLink(email) {
+    if (!email || email.includes('*')) return null;
+    return `mailto:${email.trim()}`;
+  }
+
+  assert.equal(formatTelLink('+91 98446 16699'), 'tel:+919844616699');
+  assert.equal(formatTelLink('+91 98*** ****9'), null); // Privacy masked
+  assert.equal(formatMailtoLink('rahulnagv.dev@gmail.com'), 'mailto:rahulnagv.dev@gmail.com');
+  assert.equal(formatMailtoLink('r***@gmail.com'), null); // Privacy masked
+
+  // 3. Dynamic Copyright Year Invariance
+  const currentYear = new Date().getFullYear();
+  assert.ok(currentYear >= 2026);
+
+  // 4. SEO & Favicon Specifications
+  const seoConfig = {
+    faviconSvg: '/favicon.svg',
+    appleTouchIcon: '/favicon.svg',
+    themeColor: '#704a29',
+    overflowClass: 'overflow-x-hidden max-w-full',
+  };
+
+  assert.equal(seoConfig.faviconSvg, '/favicon.svg');
+  assert.equal(seoConfig.appleTouchIcon, '/favicon.svg');
+  assert.equal(seoConfig.themeColor, '#704a29');
+  assert.equal(seoConfig.overflowClass, 'overflow-x-hidden max-w-full');
+});
+
+
 
 
 

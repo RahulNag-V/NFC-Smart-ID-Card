@@ -180,6 +180,8 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           <img
             src={btiLogo}
             alt="Bangalore Technological Institute"
+            loading="lazy"
+            decoding="async"
             className="w-full h-auto object-cover block"
           />
         </div>
@@ -192,6 +194,8 @@ export const IdCardFrontFace: React.FC<IdCardFrontFaceProps> = ({
           <img
             src={student.photoUrl}
             alt={student.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover object-top"
           />
         </div>

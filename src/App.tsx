@@ -5,9 +5,10 @@ import { OwnerEditorProvider } from './context/OwnerEditorContext';
 import { PublicPortfolioView } from './components/public/PublicPortfolioView';
 import { OwnerLogin } from './components/owner/OwnerLogin';
 import { OwnerDashboard } from './components/owner/OwnerDashboard';
+import { NotFoundPage } from './components/common/NotFoundPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
-type AppRoute = 'public' | 'owner-login' | 'owner-dashboard' | 'owner-security';
+type AppRoute = 'public' | 'owner-login' | 'owner-dashboard' | 'owner-security' | 'not-found';
 
 function getInitialRoute(): AppRoute {
   if (typeof window === 'undefined') return 'public';
@@ -43,12 +44,64 @@ function getInitialRoute(): AppRoute {
     return 'owner-dashboard';
   }
 
-  return 'public';
+  // Root or valid section anchor hashes on public page
+  const isRootPath = path === '/' || path === '' || path === '/index.html';
+  if (
+    isRootPath &&
+    (hash === '' ||
+      hash === '#/' ||
+      hash === '#' ||
+      hash.startsWith('#student-profile') ||
+      hash.startsWith('#academic-details') ||
+      hash.startsWith('#verification') ||
+      hash.startsWith('#nfc') ||
+      hash.startsWith('#verify'))
+  ) {
+    return 'public';
+  }
+
+  if (hash.startsWith('#student-profile') || hash.startsWith('#academic-details') || hash.startsWith('#verification')) {
+    return 'public';
+  }
+
+  return 'not-found';
+
+  return 'not-found';
 }
 
 function AppRouter() {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(getInitialRoute);
   const { isOwner, loading: authLoading } = useAuth();
+
+  // Dynamic SEO metadata updates per route
+  useEffect(() => {
+    let title = 'Digital Student ID • Rahul Nag V (24CS051) | Bangalore Technological Institute';
+    let description =
+      'Official Digital Student Identity Card and verified academic profile for Rahul Nag V (USN: 24CS051), Department of Computer Science & Engineering, Bangalore Technological Institute.';
+
+    if (currentRoute === 'owner-login') {
+      title = 'Owner Sign In • Ananta Sparsha Digital ID Console';
+      description =
+        'Secure administrative sign-in for Rahul Nag V to manage verified Smart ID parameters and credentials.';
+    } else if (currentRoute === 'owner-dashboard') {
+      title = 'Owner Console • Ananta Sparsha Smart ID Management';
+      description =
+        'Administrative portal to configure profile modules, appearance, academic transcripts, and live credentials.';
+    } else if (currentRoute === 'owner-security') {
+      title = 'Security & OTP Access Controls • Ananta Sparsha Console';
+      description =
+        'Cryptographic governance, phone MFA authentication, password updates, and session management.';
+    } else if (currentRoute === 'not-found') {
+      title = '404 Page Not Found • Ananta Sparsha Digital ID';
+      description = 'The requested digital ID page or resource could not be found.';
+    }
+
+    document.title = title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', description);
+    }
+  }, [currentRoute]);
 
   // Listen for browser forward/back buttons and hash changes
   useEffect(() => {
@@ -69,6 +122,7 @@ function AppRouter() {
     if (route === 'owner-login') targetPath = '/owner/login';
     if (route === 'owner-dashboard') targetPath = '/owner/dashboard';
     if (route === 'owner-security') targetPath = '/owner/security';
+    if (route === 'not-found') targetPath = '/404';
 
     // Support both pushState and hash fallback for static hosting
     try {
@@ -112,7 +166,17 @@ function AppRouter() {
     );
   }
 
-  // Route 3: Public Read-Only Portfolio
+  // Route 4: Custom 404 Not Found Page
+  if (currentRoute === 'not-found') {
+    return (
+      <NotFoundPage
+        onNavigateHome={() => navigateTo('public')}
+        onNavigateLogin={() => navigateTo('owner-login')}
+      />
+    );
+  }
+
+  // Route 5: Public Read-Only Portfolio
   return (
     <PublicPortfolioView
       onNavigateOwnerLogin={() => navigateTo('owner-login')}

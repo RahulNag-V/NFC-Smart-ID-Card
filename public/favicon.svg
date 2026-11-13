@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="crestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8a5c33"/>
+      <stop offset="100%" stop-color="#4a2e16"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Shield -->
+  <rect x="4" y="4" width="120" height="120" rx="32" fill="url(#crestGrad)" stroke="#d9cdbd" stroke-width="4"/>
+  <!-- Inner Rim -->
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.85"/>
+  <!-- Graduation Cap Crest -->
+  <path d="M64 28 L104 46 L64 64 L24 46 Z" fill="url(#goldGrad)" stroke="#1e1713" stroke-width="1.5"/>
+  <path d="M40 54 L40 76 C40 88 88 88 88 76 L88 54" fill="none" stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Tassel -->
+  <path d="M96 50 L98 74 C98 78 94 82 90 82" fill="none" stroke="#fef08a" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Smart NFC Waves -->
+  <path d="M52 94 A14 14 0 0 1 76 94" fill="none" stroke="#fef08a" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M44 103 A26 26 0 0 1 84 103" fill="none" stroke="#fef08a" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+</svg>

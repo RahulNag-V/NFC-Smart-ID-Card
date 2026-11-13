@@ -64,9 +64,18 @@ export const StudentIdCardBack: React.FC<StudentIdCardBackProps> = ({
                   <span className="block text-[6.5px] sm:text-[7.5px] font-mono uppercase tracking-wider text-[#d9cdbd]">
                     Emergency Contact
                   </span>
-                  <p className="font-mono font-semibold text-white truncate">
-                    {maskPhone(student.phone, isSensitiveVisible)}
-                  </p>
+                  {isSensitiveVisible ? (
+                    <a
+                      href={`tel:${student.phone.replace(/[^0-9+]/g, '')}`}
+                      className="font-mono font-semibold text-white hover:text-[#d4af37] truncate block hover:underline"
+                    >
+                      {student.phone}
+                    </a>
+                  ) : (
+                    <p className="font-mono font-semibold text-white truncate">
+                      {maskPhone(student.phone, false)}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -76,9 +85,18 @@ export const StudentIdCardBack: React.FC<StudentIdCardBackProps> = ({
                   <span className="block text-[6.5px] sm:text-[7.5px] font-mono uppercase tracking-wider text-[#d9cdbd]">
                     Official Student Mail
                   </span>
-                  <p className="font-mono font-semibold text-white truncate">
-                    {maskEmail(student.email, isSensitiveVisible)}
-                  </p>
+                  {isSensitiveVisible ? (
+                    <a
+                      href={`mailto:${student.email}`}
+                      className="font-mono font-semibold text-white hover:text-[#d4af37] truncate block hover:underline"
+                    >
+                      {student.email}
+                    </a>
+                  ) : (
+                    <p className="font-mono font-semibold text-white truncate">
+                      {maskEmail(student.email, false)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -103,7 +121,13 @@ export const StudentIdCardBack: React.FC<StudentIdCardBackProps> = ({
               <AlertCircle className="w-2.5 h-2.5 text-[#a67c52]" />
               <span>Institutional Card Conditions:</span>
             </p>
-            This card is non-transferable property of {student.college.name}. If found, please return to the Administrative Block, {student.college.address}, {student.college.city} or call security: {student.college.phone}.
+            This card is non-transferable property of {student.college.name}. If found, please return to the Administrative Block, {student.college.address}, {student.college.city} or call security:{' '}
+            <a
+              href={`tel:${student.college.phone.replace(/[^0-9+]/g, '')}`}
+              className="text-white hover:text-[#d4af37] underline font-mono"
+            >
+              {student.college.phone}
+            </a>.
           </div>
         </div>
 

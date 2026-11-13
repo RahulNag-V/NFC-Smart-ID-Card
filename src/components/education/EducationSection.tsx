@@ -570,6 +570,8 @@ export const EducationSection: React.FC = () => {
                             <img
                               src={imgUrl}
                               alt={`${cert.title} scan ${imgIdx + 1}`}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover/thumb:scale-110 transition duration-300"
                             />
                             <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
