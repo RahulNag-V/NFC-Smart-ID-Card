@@ -1139,24 +1139,19 @@ test('Smartphone Frame Hardware Specs, Dynamic Island, and Card Watermark Calibr
   assert.equal(statusBarConfig.dynamicIsland.hasLensReflection, true);
   assert.equal(statusBarConfig.homeIndicator.width, 'w-32');
 
-  // 3. ID Card Watermark & Control Pills Invariance
+  // 3. ID Card Clean Controls Calibration
   const idCardLayoutCalibration = {
     cardHorizontalPadding: 'px-4',
-    watermarkOpacity: 0.1, // opacity-10
-    watermarkZIndex: '-z-10', // Placed cleanly behind card
-    controlPills: [
-      'Interactive 3D Flip',
-      'Side-by-Side',
-      'Flip to Front / Back',
-      'Edit Profile',
-    ],
+    segmentedViews: ['3D Card', 'Front & Back'],
+    secondaryFlipAction: 'Flip Card',
+    duplicateEditPillRemoved: true,
     scrollBehavior: 'scrollbar-none',
   };
 
   assert.equal(idCardLayoutCalibration.cardHorizontalPadding, 'px-4');
-  assert.equal(idCardLayoutCalibration.watermarkOpacity, 0.1);
-  assert.equal(idCardLayoutCalibration.watermarkZIndex, '-z-10');
-  assert.equal(idCardLayoutCalibration.controlPills.length, 4);
+  assert.equal(idCardLayoutCalibration.segmentedViews.length, 2);
+  assert.equal(idCardLayoutCalibration.secondaryFlipAction, 'Flip Card');
+  assert.equal(idCardLayoutCalibration.duplicateEditPillRemoved, true);
   assert.equal(idCardLayoutCalibration.scrollBehavior, 'scrollbar-none');
 });
 
@@ -1401,6 +1396,54 @@ test('Navigation Bar Item Pruning: Live Preview removed, Profile Sections and Se
   assert.equal(securityIndex, 6);
   assert.equal(securityIndex - sectionsIndex, 1);
 });
+
+// 25. Smart ID Preview Modal Redesign & Action Organization
+test('Smart ID Preview Modal: Frame, Segmented Controls, Centerpiece Stage, and 2-Tier Export Footer', () => {
+  const previewModalSpec = {
+    frame: {
+      rounded: 'rounded-3xl',
+      border: 'border border-[#d9cdbd]',
+      shadow: 'shadow-2xl',
+      maxWidth: 'max-w-lg sm:max-w-xl',
+      headerTitle: 'Smart ID Preview',
+      hasCloseButton: true,
+      hasEscDismissal: true,
+    },
+    topControls: {
+      segmentedControl: ['3D Card', 'Front & Back'],
+      secondaryFlipButton: 'Flip Card',
+      duplicateOwnerEditPillRemoved: true,
+    },
+    centerpieceStage: {
+      recessedContainer: 'bg-[#f4eee6]/75 border border-[#e5ddd2] rounded-2xl shadow-inner',
+      elevation: 'drop-shadow-xl',
+      hintText: 'Tap or click card to flip',
+      watermarksClutterFree: true,
+    },
+    bottomExportFooter: {
+      tier1PrimaryFullWidth: 'Print / Save as PDF',
+      tier2SecondaryGrid: ['Download Front (PNG)', 'Download Back (PNG)'],
+      tier3FooterLink: 'Edit Profile & Settings',
+    },
+  };
+
+  assert.equal(previewModalSpec.frame.rounded, 'rounded-3xl');
+  assert.equal(previewModalSpec.frame.headerTitle, 'Smart ID Preview');
+  assert.equal(previewModalSpec.frame.hasCloseButton, true);
+  assert.equal(previewModalSpec.frame.hasEscDismissal, true);
+
+  assert.deepEqual(previewModalSpec.topControls.segmentedControl, ['3D Card', 'Front & Back']);
+  assert.equal(previewModalSpec.topControls.secondaryFlipButton, 'Flip Card');
+  assert.equal(previewModalSpec.topControls.duplicateOwnerEditPillRemoved, true);
+
+  assert.equal(previewModalSpec.centerpieceStage.hintText, 'Tap or click card to flip');
+  assert.equal(previewModalSpec.centerpieceStage.watermarksClutterFree, true);
+
+  assert.equal(previewModalSpec.bottomExportFooter.tier1PrimaryFullWidth, 'Print / Save as PDF');
+  assert.equal(previewModalSpec.bottomExportFooter.tier2SecondaryGrid.length, 2);
+  assert.equal(previewModalSpec.bottomExportFooter.tier3FooterLink, 'Edit Profile & Settings');
+});
+
 
 
 

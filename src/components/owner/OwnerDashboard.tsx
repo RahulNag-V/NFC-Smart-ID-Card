@@ -155,6 +155,19 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userMenuOpen]);
 
+  // Close preview or share QR modals on Escape key
+  useEffect(() => {
+    if (!showPreviewModal && !showShareQrModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPreviewModal(false);
+        setShowShareQrModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPreviewModal, showShareQrModal]);
+
   const publicShareUrl =
     typeof window !== 'undefined' && window.location.origin
       ? window.location.origin
@@ -831,7 +844,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
             onClick={() => setShowPreviewModal(false)}
           >
             <motion.div
@@ -839,81 +852,44 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#fffefb] border border-[#d9cdbd] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden my-8"
+              className="bg-[#fffefb] border border-[#d9cdbd] rounded-3xl shadow-2xl max-w-lg sm:max-w-xl w-full overflow-hidden my-auto max-h-[94vh] flex flex-col"
             >
-              {/* Header */}
-              <div className="p-4 sm:p-5 border-b border-[#d9cdbd] flex items-center justify-between bg-[#fbf8f3]">
+              {/* Header Bar */}
+              <div className="px-5 py-4 border-b border-[#d9cdbd] flex items-center justify-between bg-[#FAF7F2] shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#704a29] text-white flex items-center justify-center shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#704a29] text-white flex items-center justify-center shadow-xs">
                     <Eye className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#2b241e] font-serif uppercase tracking-wider">
-                      Smart ID Card Preview
+                    <h3 className="text-sm sm:text-base font-bold text-[#2b241e] font-serif tracking-wide">
+                      Smart ID Preview
                     </h3>
                     <p className="text-[11px] text-[#73685c]">
-                      Interactive rendering of your physical & digital Smart ID
+                      Interactive rendering &amp; export console
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowPreviewModal(false)}
-                  className="p-1.5 rounded-lg text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1] transition cursor-pointer border border-transparent hover:border-[#d9cdbd]"
+                  title="Close preview (Esc)"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* ID Card Display Area */}
-              <div className="p-6 bg-[#fbf8f3] flex flex-col items-center justify-center min-h-[460px]">
-                <div className="scale-90 sm:scale-100 transition-transform origin-center">
-                  <VerticalStudentIdCard
-                    student={draftContent.student}
-                    isOwner={true}
-                    onEditProfile={() => {
-                      setShowPreviewModal(false);
-                      setActiveTab('basic-info');
-                    }}
-                  />
-                </div>
-                <p className="text-[11px] text-[#73685c] mt-3 font-sans">
-                  Tap or hover over the card to flip between front face and PVC backface.
-                </p>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="p-4 border-t border-[#d9cdbd] bg-[#fffefb] flex items-center justify-between gap-3 font-sans">
-                <button
-                  type="button"
-                  onClick={() => {
+              <div className="p-4 sm:p-6 bg-[#fbf8f3] overflow-y-auto flex-1 flex flex-col items-center">
+                <VerticalStudentIdCard
+                  student={draftContent.student}
+                  isOwner={true}
+                  inModal={true}
+                  onEditProfile={() => {
                     setShowPreviewModal(false);
                     setActiveTab('basic-info');
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#704a29] hover:bg-[#f0eae1] transition cursor-pointer"
-                >
-                  Edit Card Details
-                </button>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPreviewModal(false);
-                      onNavigatePublic();
-                    }}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#f0eae1] hover:bg-[#e4ddd2] text-xs font-medium text-[#2b241e] transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Open Portfolio</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowPreviewModal(false)}
-                    className="px-4 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-semibold shadow-xs transition cursor-pointer"
-                  >
-                    Close
-                  </button>
-                </div>
+                />
               </div>
             </motion.div>
           </motion.div>

@@ -12,12 +12,14 @@ interface VerticalStudentIdCardProps {
   student?: StudentProfile;
   onEditProfile?: () => void;
   isOwner?: boolean;
+  inModal?: boolean;
 }
 
 export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
   student: studentProp,
   onEditProfile,
   isOwner = false,
+  inModal = false,
 }) => {
   const { activeContent } = useSiteContent();
   const currentStudent = studentProp || activeContent.student || defaultStudentData;
@@ -164,66 +166,48 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col items-center px-4 pb-24 sm:pb-28">
-      {/* Top View Mode & Quick Flip Controls */}
-      <div className="mb-3.5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-2 max-w-full print:hidden">
-        <div className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-[11px] font-medium shadow-2xs">
+    <div className={`w-full flex flex-col items-center px-4 ${inModal ? 'pb-2 pt-1' : 'pb-24 sm:pb-28'}`}>
+      {/* ================= TOP VIEW MODE & SEGMENTED CONTROLS ================= */}
+      <div className="mb-4 flex items-center justify-center gap-2 print:hidden select-none">
+        {/* Segmented Control Bar: "3D Card" vs "Front & Back" */}
+        <div className="inline-flex p-1 rounded-full bg-[#f0eae1] border border-[#d9cdbd] text-xs font-medium shadow-2xs">
           <button
             type="button"
             onClick={() => setViewMode('flip')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer text-xs ${
               viewMode === 'flip'
-                ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
+                ? 'bg-[#704a29] text-white font-bold shadow-xs'
                 : 'text-[#73685c] hover:text-[#2b241e]'
             }`}
           >
-            <RotateCw className="w-3 h-3" />
-            <span>Interactive 3D Flip</span>
+            <RotateCw className="w-3.5 h-3.5" />
+            <span>3D Card</span>
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode('side-by-side')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer text-xs ${
               viewMode === 'side-by-side'
-                ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-xs'
+                ? 'bg-[#704a29] text-white font-bold shadow-xs'
                 : 'text-[#73685c] hover:text-[#2b241e]'
             }`}
           >
-            <LayoutGrid className="w-3 h-3" />
-            <span>Side-by-Side</span>
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Front &amp; Back</span>
           </button>
         </div>
 
+        {/* Secondary "Flip Card" Button (Visible only in "3D Card" mode) */}
         {viewMode === 'flip' && (
           <button
             type="button"
             onClick={handleFlip}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
-            title="Click to flip card"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
+            title="Click to flip ID card"
           >
-            <RotateCw className="w-3 h-3" />
-            <span>{isFlipped ? 'Flip to Front' : 'Flip to Back'}</span>
-          </button>
-        )}
-
-        {/* Owner-Only Edit Profile Entry Point */}
-        {onEditProfile && (
-          <button
-            type="button"
-            onClick={onEditProfile}
-            id="btn-edit-profile-top"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-bold text-[#704a29] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 group"
-            title={isOwner ? "Edit Profile (Owner Active — Click to open Dashboard)" : "Edit Profile (Owner Login)"}
-          >
-            <Pencil className="w-3 h-3 text-[#704a29] group-hover:rotate-12 transition-transform" />
-            <span>Edit Profile</span>
-            {isOwner && (
-              <span className="inline-flex items-center gap-0.5 pl-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                <span className="text-[9.5px] text-[#10B981] font-mono uppercase font-bold">Owner</span>
-              </span>
-            )}
+            <RotateCw className="w-3.5 h-3.5 text-[#704a29]" />
+            <span>Flip Card</span>
           </button>
         )}
       </div>
@@ -231,230 +215,183 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
       {/* ================= VIEW MODE 1: 3D FLIPPABLE CARD ================= */}
       {viewMode === 'flip' && (
         <div className="w-full flex flex-col items-center print:hidden relative py-1">
-          {/* Card & Flanking Page Watermarks Container */}
-          <div className="relative w-full max-w-[255px] sm:max-w-[275px] flex items-center justify-center">
-            {/* Left Vertical Page Watermark: CSE (Cleanly tucked behind ID card, opacity-10, no bezel collision) */}
-            <div
-              className="absolute right-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] flex items-center justify-center pointer-events-none select-none -z-10"
-              aria-hidden="true"
-            >
-              <svg
-                viewBox="0 0 170 360"
-                className="h-full w-auto block overflow-visible"
-                style={{ overflow: 'visible' }}
-              >
-                <text
-                  x="85"
-                  y="180"
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  transform="rotate(-90 85 180)"
-                  fill="#855b33"
-                  fillOpacity="0.10"
-                  style={{
-                    fontFamily:
-                      '"Times New Roman", Times, "Tinos", Georgia, serif',
-                    fontWeight: 900,
-                    fontSize: '125px',
-                    letterSpacing: '-3px',
-                  }}
-                >
-                  CSE
-                </text>
-              </svg>
-            </div>
-
-            {/* 3D Flippable Card */}
-            <div
-              ref={cardContainerRef}
-              onClick={handleFlip}
-              onMouseMove={handleMouseMove}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleFlip();
-                }
-              }}
-              title="Click to flip ID card"
-              className="w-full aspect-[1/1.58] relative [perspective:1400px] cursor-pointer select-none group focus:outline-none py-1"
-            >
-              {/* Ambient Floor Shadow (Responsive to perspective & lift) */}
-              <motion.div
-                animate={{
-                  scaleX: isHovered ? 1.08 : 0.94,
-                  scaleY: isHovered ? 1.15 : 0.9,
-                  opacity: isHovered ? 0.7 : 0.42,
-                  y: isHovered ? 26 : 16,
-                  x: isHovered ? -tilt.y * 1.4 : -tilt.y * 0.7,
-                  filter: isHovered ? 'blur(16px)' : 'blur(10px)',
-                }}
-                transition={{
-                  duration: isHovered ? 0.18 : 0.55,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[84%] h-8 rounded-[50%] bg-[#22160e]/45 pointer-events-none -z-10"
-              />
-
-              <motion.div
-                animate={{
-                  rotateY: isFlipped ? 180 - tilt.y : tilt.y,
-                  rotateX: isFlipped ? -tilt.x : tilt.x,
-                  y: isHovered ? -8 : 0,
-                  scale: isHovered ? 1.025 : 1,
-                }}
-                transition={{
-                  duration: isHovered ? 0.15 : 0.6,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="w-full h-full relative"
-                style={{ transformStyle: 'preserve-3d' }}
-              >
-                {/* FRONT FACE */}
+          {/* Subtly Recessed Stage Area */}
+          <div className="w-full max-w-[320px] sm:max-w-[350px] rounded-2xl bg-[#f4eee6]/75 border border-[#e5ddd2] p-4 sm:p-5 flex flex-col items-center shadow-inner relative">
+            {/* Card Showcase Container */}
+            <div className="relative w-full max-w-[255px] sm:max-w-[275px] flex items-center justify-center">
+              {/* Optional Subtle Page Watermarks: Softened or Hidden */}
+              {!inModal && (
                 <div
-                  className="w-full h-full absolute inset-0"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                  }}
+                  className="hidden xl:flex absolute right-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] items-center justify-center pointer-events-none select-none -z-10"
+                  aria-hidden="true"
                 >
-                  <IdCardFrontFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
+                  <svg
+                    viewBox="0 0 170 360"
+                    className="h-full w-auto block overflow-visible"
+                    style={{ overflow: 'visible' }}
+                  >
+                    <text
+                      x="85"
+                      y="180"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      transform="rotate(-90 85 180)"
+                      fill="#855b33"
+                      fillOpacity="0.04"
+                      style={{
+                        fontFamily:
+                          '"Times New Roman", Times, "Tinos", Georgia, serif',
+                        fontWeight: 900,
+                        fontSize: '125px',
+                        letterSpacing: '-3px',
+                      }}
+                    >
+                      CSE
+                    </text>
+                  </svg>
                 </div>
+              )}
 
-                {/* BACK FACE */}
-                <div
-                  className="w-full h-full absolute inset-0"
-                  style={{
-                    transform: 'rotateY(180deg)',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                  }}
-                >
-                  <IdCardBackFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Right Vertical Page Watermark: STUDENT (Cleanly tucked behind ID card, opacity-10, no bezel collision) */}
-            <div
-              className="absolute left-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] flex items-center justify-center pointer-events-none select-none -z-10"
-              aria-hidden="true"
-            >
-              <svg
-                viewBox="0 0 130 360"
-                className="h-full w-auto block overflow-visible"
-                style={{ overflow: 'visible' }}
+              {/* 3D Flippable Card with Elevation */}
+              <div
+                ref={cardContainerRef}
+                onClick={handleFlip}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleFlip();
+                  }
+                }}
+                title="Click or tap to flip card"
+                className="w-full aspect-[1/1.58] relative [perspective:1400px] cursor-pointer select-none group focus:outline-none drop-shadow-xl"
               >
-                <g transform="translate(65, 180) rotate(-90) scale(1, 1.15)">
-                  <text
-                    x="0"
-                    y="0"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fill="#855b33"
-                    fillOpacity="0.10"
+                {/* Ambient Floor Shadow */}
+                <motion.div
+                  animate={{
+                    scaleX: isHovered ? 1.08 : 0.94,
+                    scaleY: isHovered ? 1.15 : 0.9,
+                    opacity: isHovered ? 0.7 : 0.38,
+                    y: isHovered ? 24 : 14,
+                    x: isHovered ? -tilt.y * 1.4 : -tilt.y * 0.7,
+                    filter: isHovered ? 'blur(16px)' : 'blur(10px)',
+                  }}
+                  transition={{
+                    duration: isHovered ? 0.18 : 0.55,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[86%] h-7 rounded-[50%] bg-[#22160e]/35 pointer-events-none -z-10"
+                />
+
+                <motion.div
+                  animate={{
+                    rotateY: isFlipped ? 180 - tilt.y : tilt.y,
+                    rotateX: isFlipped ? -tilt.x : tilt.x,
+                    y: isHovered ? -8 : 0,
+                    scale: isHovered ? 1.025 : 1,
+                  }}
+                  transition={{
+                    duration: isHovered ? 0.15 : 0.6,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="w-full h-full relative"
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  {/* FRONT FACE */}
+                  <div
+                    className="w-full h-full absolute inset-0"
                     style={{
-                      fontFamily:
-                        '"Times New Roman", Times, "Tinos", Georgia, serif',
-                      fontWeight: 900,
-                      fontSize: '56px',
-                      letterSpacing: '-2px',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
                     }}
                   >
-                    STUDENT
-                  </text>
-                </g>
-              </svg>
+                    <IdCardFrontFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
+                  </div>
+
+                  {/* BACK FACE */}
+                  <div
+                    className="w-full h-full absolute inset-0"
+                    style={{
+                      transform: 'rotateY(180deg)',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                    }}
+                  >
+                    <IdCardBackFace isHovered={isHovered} glarePos={glarePos} student={currentStudent} />
+                  </div>
+                </motion.div>
+              </div>
+
+              {!inModal && (
+                <div
+                  className="hidden xl:flex absolute left-[calc(100%-1.25rem)] top-1/2 -translate-y-1/2 h-[52%] items-center justify-center pointer-events-none select-none -z-10"
+                  aria-hidden="true"
+                >
+                  <svg
+                    viewBox="0 0 130 360"
+                    className="h-full w-auto block overflow-visible"
+                    style={{ overflow: 'visible' }}
+                  >
+                    <g transform="translate(65, 180) rotate(-90) scale(1, 1.15)">
+                      <text
+                        x="0"
+                        y="0"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill="#855b33"
+                        fillOpacity="0.04"
+                        style={{
+                          fontFamily:
+                            '"Times New Roman", Times, "Tinos", Georgia, serif',
+                          fontWeight: 900,
+                          fontSize: '56px',
+                          letterSpacing: '-2px',
+                        }}
+                      >
+                        STUDENT
+                      </text>
+                    </g>
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Subtle clean hint below the card */}
+            <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs text-[#73685c] font-sans select-none">
+              <RotateCw className="w-3 h-3 text-[#704a29]" />
+              <span>Tap or click card to flip</span>
             </div>
           </div>
-
-          <span className="text-[11px] font-mono text-[#73685c] mt-2">
-            &bull; Click card to flip 360&deg;
-          </span>
         </div>
       )}
 
-      {/* ================= VIEW MODE 2: SIDE-BY-SIDE (FRONT & BACK) ================= */}
+      {/* ================= VIEW MODE 2: FRONT & BACK ================= */}
       {viewMode === 'side-by-side' && (
-        <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-6 py-2 print:hidden relative">
-          {/* Left Vertical Watermark: CSE */}
-          <div
-            className="hidden lg:flex absolute right-[calc(100%-1rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none -z-10"
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 170 360" className="w-auto h-[230px] block overflow-visible" style={{ overflow: 'visible' }}>
-              <text
-                x="85"
-                y="180"
-                textAnchor="middle"
-                dominantBaseline="central"
-                transform="rotate(-90 85 180)"
-                fill="#855b33"
-                fillOpacity="0.10"
-                style={{
-                  fontFamily:
-                    '"Times New Roman", Times, "Tinos", Georgia, serif',
-                  fontWeight: 900,
-                  fontSize: '125px',
-                  letterSpacing: '-3px',
-                }}
-              >
-                CSE
-              </text>
-            </svg>
-          </div>
-
+        <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-6 py-2 print:hidden relative">
           {/* Front Side Block */}
-          <div className="flex flex-col items-center w-full max-w-[255px] sm:max-w-[275px]">
+          <div className="flex flex-col items-center w-full max-w-[245px] sm:max-w-[265px]">
             <div className="mb-2 flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#704a29]">
               <span className="w-2 h-2 rounded-full bg-[#704a29]" />
-              Front Side (Student Identity)
+              Front Face (Identity)
             </div>
-            <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015]">
+            <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015] shadow-xl rounded-2xl overflow-hidden">
               <IdCardFrontFace isHovered={false} student={currentStudent} />
             </div>
           </div>
 
           {/* Back Side Block */}
-          <div className="flex flex-col items-center w-full max-w-[255px] sm:max-w-[275px]">
+          <div className="flex flex-col items-center w-full max-w-[245px] sm:max-w-[265px]">
             <div className="mb-2 flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#704a29]">
               <ShieldCheck className="w-3.5 h-3.5 text-[#704a29]" />
-              Back Side (Official Record &amp; Address)
+              Back Face (Official Record)
             </div>
-            <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015]">
+            <div className="w-full aspect-[1/1.58] transition-transform duration-300 hover:-translate-y-1.5 hover:scale-[1.015] shadow-xl rounded-2xl overflow-hidden">
               <IdCardBackFace isHovered={false} student={currentStudent} />
             </div>
-          </div>
-
-          {/* Right Vertical Watermark: STUDENT */}
-          <div
-            className="hidden lg:flex absolute left-[calc(100%-1rem)] top-1/2 -translate-y-1/2 pointer-events-none select-none -z-10"
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 130 360" className="w-auto h-[230px] block overflow-visible" style={{ overflow: 'visible' }}>
-              <g transform="translate(65, 180) rotate(-90) scale(1, 1.15)">
-                <text
-                  x="0"
-                  y="0"
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#855b33"
-                  fillOpacity="0.10"
-                  style={{
-                    fontFamily:
-                      '"Times New Roman", Times, "Tinos", Georgia, serif',
-                    fontWeight: 900,
-                    fontSize: '56px',
-                    letterSpacing: '-2px',
-                  }}
-                >
-                  STUDENT
-                </text>
-              </g>
-            </svg>
           </div>
         </div>
       )}
@@ -479,59 +416,66 @@ export const VerticalStudentIdCard: React.FC<VerticalStudentIdCardProps> = ({
         </div>
       </div>
 
-      {/* Export & Print Action Bar */}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 print:hidden max-w-md mx-auto">
-        <button
-          type="button"
-          onClick={() => handleDownload('front')}
-          disabled={isExporting !== null}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] text-[#2b241e] border border-[#d9cdbd] text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer disabled:opacity-50"
-          title="Download 300 DPI high-resolution PNG of Front Side"
-        >
-          {isExporting === 'front' ? (
-            <Check className="w-3.5 h-3.5 text-[#10B981]" />
-          ) : (
-            <Download className="w-3.5 h-3.5 text-[#704a29]" />
-          )}
-          <span>Download Front (PNG)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleDownload('back')}
-          disabled={isExporting !== null}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] text-[#2b241e] border border-[#d9cdbd] text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer disabled:opacity-50"
-          title="Download 300 DPI high-resolution PNG of Back Side"
-        >
-          {isExporting === 'back' ? (
-            <Check className="w-3.5 h-3.5 text-[#10B981]" />
-          ) : (
-            <Download className="w-3.5 h-3.5 text-[#704a29]" />
-          )}
-          <span>Download Back (PNG)</span>
-        </button>
-
+      {/* ================= ORGANIZED BOTTOM EXPORT & ACTION FOOTER ================= */}
+      <div className="mt-5 w-full max-w-[320px] sm:max-w-[350px] space-y-2.5 print:hidden font-sans">
+        {/* Tier 1: Primary Action Row (Prominent full-width dark-brown button) */}
         <button
           type="button"
           onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#704a29] hover:bg-[#593a1f] text-[#fffefb] text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-white font-serif font-bold text-xs uppercase tracking-wider shadow-xs transition active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
           title="Print or Save as PDF"
         >
-          <Printer className="w-3.5 h-3.5" />
+          <Printer className="w-4 h-4 text-white" />
           <span>Print / Save as PDF</span>
         </button>
 
-        {onEditProfile && (
+        {/* Tier 2: Secondary Action Row (2 equal columns grid-cols-2 gap-2.5) */}
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
-            onClick={onEditProfile}
-            id="btn-edit-profile-bottom"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fffefb] hover:bg-[#f0eae1] text-[#704a29] border border-[#d9cdbd] hover:border-[#704a29] text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer group"
-            title={isOwner ? "Open Owner Dashboard to Edit Profile" : "Owner Login to Edit Profile"}
+            onClick={() => handleDownload('front')}
+            disabled={isExporting !== null}
+            className="w-full py-2 px-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] text-[#2b241e] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-semibold shadow-2xs transition active:scale-[0.99] cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            title="Download 300 DPI high-resolution PNG of Front Side"
           >
-            <Pencil className="w-3.5 h-3.5 text-[#704a29] group-hover:rotate-12 transition-transform" />
-            <span>{isOwner ? 'Edit Profile & Settings' : 'Edit Profile'}</span>
+            {isExporting === 'front' ? (
+              <Check className="w-3.5 h-3.5 text-[#10B981]" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-[#704a29]" />
+            )}
+            <span className="truncate">Download Front (PNG)</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => handleDownload('back')}
+            disabled={isExporting !== null}
+            className="w-full py-2 px-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] text-[#2b241e] border border-[#d9cdbd] hover:border-[#704a29] text-xs font-semibold shadow-2xs transition active:scale-[0.99] cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            title="Download 300 DPI high-resolution PNG of Back Side"
+          >
+            {isExporting === 'back' ? (
+              <Check className="w-3.5 h-3.5 text-[#10B981]" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-[#704a29]" />
+            )}
+            <span className="truncate">Download Back (PNG)</span>
+          </button>
+        </div>
+
+        {/* Tier 3: Footer Link (Clean, subtle "Edit Profile & Settings" button) */}
+        {onEditProfile && (
+          <div className="pt-1 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={onEditProfile}
+              id="btn-edit-profile-bottom"
+              className="text-xs font-medium text-[#704a29] hover:text-[#593a1f] hover:underline transition flex items-center gap-1.5 py-1 px-3 rounded-lg border border-transparent hover:border-[#d9cdbd] cursor-pointer group"
+              title={isOwner ? "Open Owner Dashboard to Edit Profile" : "Owner Login to Edit Profile"}
+            >
+              <Pencil className="w-3.5 h-3.5 text-[#704a29] group-hover:rotate-12 transition-transform" />
+              <span>Edit Profile &amp; Settings</span>
+            </button>
+          </div>
         )}
       </div>
     </div>
