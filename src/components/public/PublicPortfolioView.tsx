@@ -353,8 +353,8 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
       style={themeStyles}
       className={`min-h-screen bg-background text-foreground antialiased selection:bg-[#704a29]/20 font-sans pb-32 overflow-x-hidden transition-colors duration-300 ${isLivePreview ? 'pb-16' : ''}`}
     >
-      {/* Floating Owner Indicator & Direct Edit Access */}
-      {isOwner && !isLivePreview && (
+      {/* Floating Owner Indicator & Direct Edit Access (Exclusively on Home page) */}
+      {isOwner && !isLivePreview && activePage === 'home' && (
         <aside
           aria-label="Owner Administration Mode"
           className="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 animate-in fade-in duration-300 print:hidden"
