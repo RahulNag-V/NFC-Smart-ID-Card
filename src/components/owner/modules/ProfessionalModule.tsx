@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase,
@@ -80,6 +80,27 @@ export const ProfessionalModule: React.FC = () => {
   } = useOwnerEditor();
 
   const [activeSubTab, setActiveSubTab] = useState<'projects' | 'academic' | 'skills' | 'certifications'>('projects');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside and Escape key listener for mobile/tablet category dropdown
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [dropdownOpen]);
 
   // Editing Project Modal / Form State
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -630,36 +651,129 @@ export const ProfessionalModule: React.FC = () => {
         </p>
       </div>
 
-      {/* Sub-Navigation Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] overflow-x-auto shadow-2xs">
-        {[
-          { id: 'projects', label: 'Projects Portfolio', icon: Briefcase, count: projects.length },
-          { id: 'academic', label: 'Academics & SGPA', icon: GraduationCap, count: academic.engineering?.length || 0 },
-          { id: 'skills', label: 'Technical Skills', icon: Code2, count: skills.length },
-          { id: 'certifications', label: 'Certifications', icon: Award, count: academic.certifications?.length || 0 },
-        ].map((tab) => {
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition shrink-0 cursor-pointer ${
-                isActive
-                  ? 'bg-[#704a29] text-white font-bold shadow-xs'
-                  : 'text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1]'
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                isActive ? 'bg-white/20 text-white' : 'bg-[#f0eae1] text-[#704a29]'
-              }`}>
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Category Navigation (Dropdown on mobile/tablet < 1024px, Horizontal pills on desktop >= 1024px) */}
+      {(() => {
+        const professionalTabs = [
+          { id: 'projects' as const, label: 'Projects Portfolio', icon: Briefcase, count: projects.length },
+          { id: 'academic' as const, label: 'Academics & SGPA', icon: GraduationCap, count: academic.engineering?.length || 0 },
+          { id: 'skills' as const, label: 'Technical Skills', icon: Code2, count: skills.length },
+          { id: 'certifications' as const, label: 'Certifications', icon: Award, count: academic.certifications?.length || 0 },
+        ];
+        const currentTab = professionalTabs.find((t) => t.id === activeSubTab) || professionalTabs[0];
+
+        return (
+          <>
+            {/* Mobile & Tablet Dropdown Selector (lg:hidden) */}
+            <div ref={dropdownRef} className="relative lg:hidden select-none">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full min-h-[48px] px-4 py-3 rounded-xl bg-[#FAF7F2] border border-stone-300/90 shadow-sm flex items-center justify-between text-left transition cursor-pointer hover:border-[#704a29]/50 active:scale-[0.99]"
+                aria-haspopup="listbox"
+                aria-expanded={dropdownOpen}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#704a29] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <currentTab.icon className="w-4 h-4" />
+                  </div>
+                  <span className="font-serif font-bold text-sm text-[#2b241e] truncate">
+                    {currentTab.label}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#704a29]/15 text-[#704a29] shrink-0">
+                    {currentTab.count}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#704a29] shrink-0 transition-transform duration-200 ${
+                    dropdownOpen ? 'rotate-180' : 'rotate-0'
+                  }`}
+                />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute mt-2 w-full rounded-xl bg-[#FAF7F2] border border-stone-200 shadow-lg overflow-hidden z-30 p-1.5 space-y-1 font-serif"
+                    role="listbox"
+                  >
+                    {professionalTabs.map((tab) => {
+                      const isActive = activeSubTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          onClick={() => {
+                            setActiveSubTab(tab.id);
+                            setDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition cursor-pointer ${
+                            isActive
+                              ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-2xs'
+                              : 'text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <tab.icon
+                              className={`w-4 h-4 shrink-0 ${
+                                isActive ? 'text-[#fffefb]' : 'text-[#704a29]'
+                              }`}
+                            />
+                            <span className="text-sm font-semibold truncate">{tab.label}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
+                                isActive
+                                  ? 'bg-white/20 text-white'
+                                  : 'bg-[#f0eae1] text-[#704a29]'
+                              }`}
+                            >
+                              {tab.count}
+                            </span>
+                          </div>
+                          {isActive && <Check className="w-4 h-4 text-[#fffefb] shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Desktop Sub-Navigation Tabs (hidden lg:flex) */}
+            <div className="hidden lg:flex items-center gap-2 p-1.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] overflow-x-auto shadow-2xs">
+              {professionalTabs.map((tab) => {
+                const isActive = activeSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveSubTab(tab.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition shrink-0 cursor-pointer ${
+                      isActive
+                        ? 'bg-[#704a29] text-white font-bold shadow-xs'
+                        : 'text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1]'
+                    }`}
+                  >
+                    <tab.icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-[#f0eae1] text-[#704a29]'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        );
+      })()}
 
       {/* ================= PROJECTS SUB-MODULE ================= */}
       {activeSubTab === 'projects' && (

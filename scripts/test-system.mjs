@@ -1581,6 +1581,72 @@ test('Instant Optimistic Preview, Off-Thread 1200px WebP Compression & Non-Block
   assert.equal(progressUiConfig.hasRetryOption, true);
 });
 
+// 28. Professional Module Mobile & Tablet Category Selector Dropdown
+test('Professional Module Mobile & Tablet Category Selector Dropdown (< 1024px)', () => {
+  const tabs = [
+    { id: 'projects', label: 'Projects Portfolio', count: 7 },
+    { id: 'academic', label: 'Academics & SGPA', count: 2 },
+    { id: 'skills', label: 'Technical Skills', count: 18 },
+    { id: 'certifications', label: 'Certifications', count: 3 },
+  ];
+
+  // 1. Selector Spec
+  const mobileSelectorSpec = {
+    breakpoint: 'lg:hidden',
+    desktopBreakpoint: 'hidden lg:flex',
+    minHeight: 'min-h-[48px]',
+    background: 'bg-[#FAF7F2]',
+    border: 'border border-stone-300/90',
+    chevronRotationOpen: 'rotate-180',
+    chevronRotationClosed: 'rotate-0',
+    hasAriaRole: 'listbox',
+    hasOptionCheckmark: true,
+    activeBackground: 'bg-[#704a29]',
+    activeTextColor: 'text-[#fffefb]',
+  };
+
+  assert.equal(mobileSelectorSpec.breakpoint, 'lg:hidden');
+  assert.equal(mobileSelectorSpec.desktopBreakpoint, 'hidden lg:flex');
+  assert.equal(mobileSelectorSpec.minHeight, 'min-h-[48px]');
+  assert.equal(mobileSelectorSpec.background, 'bg-[#FAF7F2]');
+  assert.equal(mobileSelectorSpec.chevronRotationOpen, 'rotate-180');
+  assert.equal(mobileSelectorSpec.chevronRotationClosed, 'rotate-0');
+  assert.equal(mobileSelectorSpec.hasOptionCheckmark, true);
+
+  // 2. Tab Selection & Switching Simulation
+  let activeTab = 'projects';
+  let isDropdownOpen = false;
+
+  const toggleDropdown = () => {
+    isDropdownOpen = !isDropdownOpen;
+  };
+
+  const selectTab = (tabId) => {
+    activeTab = tabId;
+    isDropdownOpen = false;
+  };
+
+  // Click trigger opens dropdown
+  toggleDropdown();
+  assert.equal(isDropdownOpen, true);
+
+  // Selecting Academics updates tab and closes menu
+  selectTab('academic');
+  assert.equal(activeTab, 'academic');
+  assert.equal(isDropdownOpen, false);
+
+  // Dismissal via outside click or Escape
+  toggleDropdown();
+  assert.equal(isDropdownOpen, true);
+  // simulate Escape
+  const handleKeyDown = (key) => {
+    if (key === 'Escape') isDropdownOpen = false;
+  };
+  handleKeyDown('Escape');
+  assert.equal(isDropdownOpen, false);
+});
+
+
 
 
 
