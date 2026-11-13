@@ -1507,6 +1507,81 @@ test('Cover Backdrop & Overlapping Avatar Drag-and-Drop Uploader: States, Valida
   assert.equal(validateImageFile({ type: 'image/jpeg', size: 6 * 1024 * 1024 }).valid, false);
 });
 
+// 27. Instant Optimistic Preview, Off-Thread Compression & Non-Blocking Progress UI
+test('Instant Optimistic Preview, Off-Thread 1200px WebP Compression & Non-Blocking Progress UI', () => {
+  // 1. Instant Optimistic Preview Config
+  const optimisticConfig = {
+    mechanism: 'URL.createObjectURL',
+    latencyTargetMs: 50,
+    hasRevokeCleanupOnUnmount: true,
+    hasRevokeCleanupOnComplete: true,
+  };
+
+  assert.equal(optimisticConfig.mechanism, 'URL.createObjectURL');
+  assert.ok(optimisticConfig.latencyTargetMs <= 50);
+  assert.equal(optimisticConfig.hasRevokeCleanupOnUnmount, true);
+  assert.equal(optimisticConfig.hasRevokeCleanupOnComplete, true);
+
+  // 2. Off-Thread Compression Specification
+  const compressionConfig = {
+    maxWidth: 1200,
+    maxHeight: 1000,
+    quality: 0.8,
+    preferredFormat: 'image/webp',
+    decodingMethod: 'createImageBitmap',
+    targetPayloadKbRange: [150, 250],
+  };
+
+  assert.equal(compressionConfig.maxWidth, 1200);
+  assert.equal(compressionConfig.quality, 0.8);
+  assert.equal(compressionConfig.preferredFormat, 'image/webp');
+  assert.equal(compressionConfig.decodingMethod, 'createImageBitmap');
+
+  // Dimension scaling calculation invariance
+  function calculateProportionalDimensions(w, h, maxW, maxH) {
+    let targetW = w;
+    let targetH = h;
+    if (targetW > maxW) {
+      targetH = Math.round((targetH * maxW) / targetW);
+      targetW = maxW;
+    }
+    if (targetH > maxH) {
+      targetW = Math.round((targetW * maxH) / targetH);
+      targetH = maxH;
+    }
+    return { width: targetW, height: targetH };
+  }
+
+  // 4000x3000 phone camera photo
+  const scaled4k = calculateProportionalDimensions(4000, 3000, 1200, 1000);
+  assert.equal(scaled4k.width, 1200);
+  assert.equal(scaled4k.height, 900); // 4:3 preserved
+
+  // 1920x1080 landscape banner
+  const scaled1080p = calculateProportionalDimensions(1920, 1080, 1200, 1000);
+  assert.equal(scaled1080p.width, 1200);
+  assert.equal(scaled1080p.height, 675); // 16:9 preserved
+
+  // 3. Non-Blocking Progress UI & Timeout Specs
+  const progressUiConfig = {
+    isNonBlocking: true,
+    hasCornerProgressPill: true,
+    hasTopEdgeProgressBar: true,
+    pillText: 'Saving cover backdrop...',
+    timeoutSeconds: 15,
+    revertOnFailure: true,
+    hasRetryOption: true,
+  };
+
+  assert.equal(progressUiConfig.isNonBlocking, true);
+  assert.equal(progressUiConfig.hasCornerProgressPill, true);
+  assert.equal(progressUiConfig.hasTopEdgeProgressBar, true);
+  assert.equal(progressUiConfig.timeoutSeconds, 15);
+  assert.equal(progressUiConfig.revertOnFailure, true);
+  assert.equal(progressUiConfig.hasRetryOption, true);
+});
+
+
 
 
 

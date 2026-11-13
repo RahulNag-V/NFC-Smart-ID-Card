@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   User,
   MapPin,
@@ -25,7 +26,7 @@ import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { defaultStudentData } from '../../../data/student';
 import { defaultVisibility } from '../../../data/initialContent';
 
-// Image validation and client-side canvas compression utility
+// Image validation and fast client-side canvas compression utility
 export const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -47,77 +48,103 @@ export async function validateAndCompressImage(
     throw new Error('File size exceeds the 5MB limit. Please choose a smaller image.');
   }
 
-  // 3. Client-side Canvas Compression & Resizing
-  const { maxWidth = 1920, maxHeight = 1080, quality = 0.88 } = options;
+  // 3. Fast Client-side Resize & Compression (1200px max, 0.8 quality WebP/JPEG)
+  const { maxWidth = 1200, maxHeight = 1000, quality = 0.8 } = options;
+
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return file;
+  }
+
+  if (file.type === 'image/svg+xml') {
+    return file;
+  }
+
+  let sourceWidth = 0;
+  let sourceHeight = 0;
+  let bitmap: ImageBitmap | null = null;
+  let fallbackImg: HTMLImageElement | null = null;
+
+  // Use createImageBitmap off the main thread to avoid UI lag
+  try {
+    if (typeof createImageBitmap === 'function') {
+      bitmap = await createImageBitmap(file);
+      sourceWidth = bitmap.width;
+      sourceHeight = bitmap.height;
+    } else {
+      throw new Error('createImageBitmap not supported');
+    }
+  } catch {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      fallbackImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = objectUrl;
+      });
+      sourceWidth = fallbackImg.width;
+      sourceHeight = fallbackImg.height;
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  // If already compact and within bounds, avoid re-encoding
+  if (sourceWidth <= maxWidth && sourceHeight <= maxHeight && file.size < 250 * 1024) {
+    if (bitmap) bitmap.close();
+    return file;
+  }
+
+  // Calculate proportional dimensions
+  let targetWidth = sourceWidth;
+  let targetHeight = sourceHeight;
+
+  if (targetWidth > maxWidth) {
+    targetHeight = Math.round((targetHeight * maxWidth) / targetWidth);
+    targetWidth = maxWidth;
+  }
+  if (targetHeight > maxHeight) {
+    targetWidth = Math.round((targetWidth * maxHeight) / targetHeight);
+    targetHeight = maxHeight;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    if (bitmap) bitmap.close();
+    return file;
+  }
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  if (bitmap) {
+    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+    bitmap.close();
+  } else if (fallbackImg) {
+    ctx.drawImage(fallbackImg, 0, 0, targetWidth, targetHeight);
+  }
 
   return new Promise((resolve) => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      return resolve(file);
-    }
-
-    if (file.type === 'image/svg+xml') {
-      return resolve(file);
-    }
-
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      let { width, height } = img;
-
-      // If dimensions are small and file size is already light (< 1.2MB), no need to compress
-      if (width <= maxWidth && height <= maxHeight && file.size < 1.2 * 1024 * 1024) {
-        return resolve(file);
-      }
-
-      // Calculate proportional scale
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
-      }
-      if (height > maxHeight) {
-        width = Math.round((width * maxHeight) / height);
-        height = maxHeight;
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        return resolve(file);
-      }
-
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            return resolve(file);
-          }
-          const compressedFile = new File([blob], file.name, {
-            type: mimeType,
-            lastModified: Date.now(),
-          });
-          resolve(compressedFile);
-        },
-        mimeType,
-        quality
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(file); // Fallback to original file
-    };
-
-    img.src = objectUrl;
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          return resolve(file);
+        }
+        const ext = blob.type === 'image/webp' ? '.webp' : '.jpg';
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const compressedFile = new File([blob], `${baseName}${ext}`, {
+          type: blob.type || 'image/webp',
+          lastModified: Date.now(),
+        });
+        resolve(compressedFile);
+      },
+      'image/webp',
+      quality
+    );
   });
 }
 
@@ -176,43 +203,131 @@ export const BasicInfoModule: React.FC = () => {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const [optimisticCoverUrl, setOptimisticCoverUrl] = useState<string | null>(null);
+  const [optimisticPhotoUrl, setOptimisticPhotoUrl] = useState<string | null>(null);
+  const [failedCoverFile, setFailedCoverFile] = useState<File | null>(null);
+
+  const activeCoverObjectUrlRef = useRef<string | null>(null);
+  const activePhotoObjectUrlRef = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Revoke object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      if (activeCoverObjectUrlRef.current) {
+        URL.revokeObjectURL(activeCoverObjectUrlRef.current);
+      }
+      if (activePhotoObjectUrlRef.current) {
+        URL.revokeObjectURL(activePhotoObjectUrlRef.current);
+      }
+    };
+  }, []);
+
+  const displayCoverUrl = optimisticCoverUrl || student.coverUrl;
+  const displayPhotoUrl = optimisticPhotoUrl || student.photoUrl || '/src/assets/student-photo.png';
+
   const processAndUploadCover = async (file: File) => {
+    // 1. Validation
+    if (!VALID_IMAGE_TYPES.includes(file.type)) {
+      showToast('Unsupported file type. Please upload a PNG, JPG, or WebP image.', 'error');
+      return;
+    }
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      showToast('File size exceeds the 5MB limit. Please choose a smaller image.', 'error');
+      return;
+    }
+
+    // 2. Instant Optimistic Preview (< 50ms)
+    if (activeCoverObjectUrlRef.current) {
+      URL.revokeObjectURL(activeCoverObjectUrlRef.current);
+      activeCoverObjectUrlRef.current = null;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    activeCoverObjectUrlRef.current = previewUrl;
+    setOptimisticCoverUrl(previewUrl);
+    setFailedCoverFile(null);
     setIsUploadingCover(true);
+
+    // 3. Fast Client-side Resize, Compression & Upload with 15s Timeout
     try {
-      const compressedFile = await validateAndCompressImage(file, {
-        maxWidth: 1920,
-        maxHeight: 1080,
-        quality: 0.88,
-      });
-      const url = await uploadMedia(compressedFile, 'cover');
-      updateBasicInfo({ coverUrl: url });
+      const uploadTask = (async () => {
+        const compressedFile = await validateAndCompressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1000,
+          quality: 0.8,
+        });
+        return await uploadMedia(compressedFile, 'cover');
+      })();
+
+      const timeoutTask = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out after 15 seconds. Please try again.')), 15000)
+      );
+
+      const uploadedUrl = await Promise.race([uploadTask, timeoutTask]);
+      updateBasicInfo({ coverUrl: uploadedUrl });
       showToast('Cover backdrop updated successfully.', 'success');
+      setFailedCoverFile(null);
     } catch (err: any) {
-      showToast(err?.message || 'Failed to update cover backdrop.', 'error');
+      // Revert smoothly to previous backdrop and store failed file for Retry
+      setOptimisticCoverUrl(null);
+      setFailedCoverFile(file);
+      showToast(err?.message || 'Failed to upload cover backdrop. Click Retry on the banner to attempt again.', 'error');
     } finally {
       setIsUploadingCover(false);
+      if (activeCoverObjectUrlRef.current) {
+        URL.revokeObjectURL(activeCoverObjectUrlRef.current);
+        activeCoverObjectUrlRef.current = null;
+      }
       if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
 
   const processAndUploadPhoto = async (file: File) => {
+    if (!VALID_IMAGE_TYPES.includes(file.type)) {
+      showToast('Unsupported file type. Please upload a PNG, JPG, or WebP image.', 'error');
+      return;
+    }
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      showToast('File size exceeds the 5MB limit. Please choose a smaller image.', 'error');
+      return;
+    }
+
+    if (activePhotoObjectUrlRef.current) {
+      URL.revokeObjectURL(activePhotoObjectUrlRef.current);
+      activePhotoObjectUrlRef.current = null;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    activePhotoObjectUrlRef.current = previewUrl;
+    setOptimisticPhotoUrl(previewUrl);
     setIsUploadingPhoto(true);
+
     try {
-      const compressedFile = await validateAndCompressImage(file, {
-        maxWidth: 800,
-        maxHeight: 800,
-        quality: 0.9,
-      });
-      const url = await uploadMedia(compressedFile, 'profile');
-      updateBasicInfo({ photoUrl: url });
+      const uploadTask = (async () => {
+        const compressedFile = await validateAndCompressImage(file, {
+          maxWidth: 600,
+          maxHeight: 600,
+          quality: 0.85,
+        });
+        return await uploadMedia(compressedFile, 'profile');
+      })();
+
+      const timeoutTask = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Profile photo upload timed out. Please try again.')), 15000)
+      );
+
+      const uploadedUrl = await Promise.race([uploadTask, timeoutTask]);
+      updateBasicInfo({ photoUrl: uploadedUrl });
       showToast('Profile photo updated successfully.', 'success');
     } catch (err: any) {
+      setOptimisticPhotoUrl(null);
       showToast(err?.message || 'Failed to update profile photo.', 'error');
     } finally {
       setIsUploadingPhoto(false);
+      if (activePhotoObjectUrlRef.current) {
+        URL.revokeObjectURL(activePhotoObjectUrlRef.current);
+        activePhotoObjectUrlRef.current = null;
+      }
       if (photoInputRef.current) photoInputRef.current.value = '';
     }
   };
@@ -253,6 +368,12 @@ export const BasicInfoModule: React.FC = () => {
 
   const handleResetCover = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (activeCoverObjectUrlRef.current) {
+      URL.revokeObjectURL(activeCoverObjectUrlRef.current);
+      activeCoverObjectUrlRef.current = null;
+    }
+    setOptimisticCoverUrl(null);
+    setFailedCoverFile(null);
     updateBasicInfo({ coverUrl: '' });
     showToast('Cover backdrop restored to default.', 'info');
   };
@@ -302,7 +423,7 @@ export const BasicInfoModule: React.FC = () => {
             }
           }}
           className={`h-40 sm:h-52 w-full relative transition-all duration-200 select-none cursor-pointer group outline-none overflow-hidden ${
-            student.coverUrl
+            displayCoverUrl
               ? 'bg-[#2b241e]'
               : 'border-2 border-dashed border-stone-300/80 hover:border-amber-900/50 bg-gradient-to-r from-[#f0eae1] via-[#f7f2ea] to-[#f0eae1]'
           } ${
@@ -311,21 +432,51 @@ export const BasicInfoModule: React.FC = () => {
               : ''
           }`}
           title={
-            student.coverUrl
+            displayCoverUrl
               ? 'Click or drag & drop to change cover backdrop'
               : 'Click or drag & drop image to set cover backdrop'
           }
         >
-          {/* Uploading Spinner Overlay */}
+          {/* Subtle Non-Blocking Top Progress Bar while uploading */}
           {isUploadingCover && (
-            <div className="absolute inset-0 bg-[#2b241e]/60 backdrop-blur-xs z-30 flex flex-col items-center justify-center text-white gap-2">
-              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span className="text-xs font-serif font-bold">Uploading Cover Backdrop...</span>
+            <div className="absolute top-0 inset-x-0 h-1 bg-black/20 overflow-hidden z-30 pointer-events-none">
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: '250%' }}
+                transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                className="h-full w-1/2 bg-[#704a29]"
+              />
+            </div>
+          )}
+
+          {/* Subtle Progress Pill in Top-Left Corner (Non-blocking) */}
+          {isUploadingCover && (
+            <div className="absolute top-3 left-3 z-30 px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white text-xs font-sans flex items-center gap-2 shadow-md pointer-events-none animate-fade-in">
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="font-medium text-[11px] tracking-wide">Saving cover backdrop...</span>
+            </div>
+          )}
+
+          {/* Failed Upload Alert Pill with Retry Button */}
+          {failedCoverFile && !isUploadingCover && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-3 left-3 z-30 px-3 py-1.5 rounded-full bg-[#bc473b]/90 backdrop-blur-md border border-white/30 text-white text-xs font-sans flex items-center gap-2 shadow-md"
+            >
+              <AlertCircle className="w-3.5 h-3.5 text-white" />
+              <span className="text-[11px] font-medium">Upload failed</span>
+              <button
+                type="button"
+                onClick={() => processAndUploadCover(failedCoverFile)}
+                className="px-2 py-0.5 rounded-full bg-white text-[#bc473b] hover:bg-[#fff5f5] text-[10px] font-bold transition cursor-pointer ml-1 active:scale-95"
+              >
+                Retry
+              </button>
             </div>
           )}
 
           {/* Active Drag-Over Highlight State Overlay */}
-          {isDraggingCover && !isUploadingCover && (
+          {isDraggingCover && (
             <div className="absolute inset-0 bg-amber-900/15 backdrop-blur-xs z-20 flex flex-col items-center justify-center text-[#704a29] p-4 text-center pointer-events-none">
               <div className="w-12 h-12 rounded-2xl bg-[#704a29] text-white flex items-center justify-center shadow-md mb-2 animate-bounce">
                 <Upload className="w-6 h-6" />
@@ -340,10 +491,10 @@ export const BasicInfoModule: React.FC = () => {
           )}
 
           {/* Uploaded Image or Empty/Default State */}
-          {student.coverUrl ? (
+          {displayCoverUrl ? (
             <>
               <img
-                src={student.coverUrl}
+                src={displayCoverUrl}
                 alt="Profile Cover Backdrop"
                 className="w-full h-full object-cover"
               />
@@ -359,7 +510,7 @@ export const BasicInfoModule: React.FC = () => {
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
                   disabled={isUploadingCover}
-                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white backdrop-blur-md border border-[#d9cdbd] hover:border-[#704a29] text-xs font-semibold text-[#2b241e] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white backdrop-blur-md border border-[#d9cdbd] hover:border-[#704a29] text-xs font-semibold text-[#2b241e] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
                   title="Choose a new cover image"
                 >
                   <Upload className="w-3.5 h-3.5 text-[#704a29]" />
@@ -369,7 +520,7 @@ export const BasicInfoModule: React.FC = () => {
                   type="button"
                   onClick={handleResetCover}
                   disabled={isUploadingCover}
-                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-[#fef2f2] backdrop-blur-md border border-[#d9cdbd] hover:border-[#bc473b] text-xs font-semibold text-[#bc473b] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-[#fef2f2] backdrop-blur-md border border-[#d9cdbd] hover:border-[#bc473b] text-xs font-semibold text-[#bc473b] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
                   title="Remove custom cover and restore default backdrop"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-[#bc473b]" />
@@ -449,7 +600,7 @@ export const BasicInfoModule: React.FC = () => {
             >
               {/* Profile Image */}
               <img
-                src={student.photoUrl || '/src/assets/student-photo.png'}
+                src={displayPhotoUrl}
                 alt={student.fullName}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -460,9 +611,9 @@ export const BasicInfoModule: React.FC = () => {
 
               {/* Uploading State */}
               {isUploadingPhoto && (
-                <div className="absolute inset-0 bg-[#2b241e]/70 backdrop-blur-xs flex flex-col items-center justify-center text-white z-20">
+                <div className="absolute inset-0 bg-[#2b241e]/70 backdrop-blur-xs flex flex-col items-center justify-center text-white z-20 pointer-events-none">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mb-1" />
-                  <span className="text-[10px] font-bold">Uploading...</span>
+                  <span className="text-[10px] font-bold">Saving...</span>
                 </div>
               )}
 
