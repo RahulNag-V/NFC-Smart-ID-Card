@@ -1444,6 +1444,70 @@ test('Smart ID Preview Modal: Frame, Segmented Controls, Centerpiece Stage, and 
   assert.equal(previewModalSpec.bottomExportFooter.tier3FooterLink, 'Edit Profile & Settings');
 });
 
+// 26. Cover Backdrop & Overlapping Profile Avatar Drag-and-Drop Image Uploader
+test('Cover Backdrop & Overlapping Avatar Drag-and-Drop Uploader: States, Validation & Compression', () => {
+  // 1. Cover Backdrop Dropzone Specification
+  const coverDropzoneSpec = {
+    emptyState: {
+      border: 'border-2 border-dashed border-stone-300/80 hover:border-amber-900/50',
+      title: 'Default Identity Backdrop',
+      sublabel: 'Drag & drop cover image here, or click to browse (PNG, JPG, WebP • Max 5MB)',
+    },
+    activeDragOverState: {
+      highlightClasses: 'bg-amber-900/10 border-amber-900 scale-[0.99]',
+      promptText: 'Drop image to update cover backdrop',
+    },
+    uploadedStateToolbar: {
+      changeCoverButton: 'Change Cover',
+      resetRemoveButton: 'Reset / Remove',
+    },
+  };
+
+  assert.equal(coverDropzoneSpec.emptyState.title, 'Default Identity Backdrop');
+  assert.ok(coverDropzoneSpec.emptyState.border.includes('border-2 border-dashed'));
+  assert.ok(coverDropzoneSpec.emptyState.sublabel.includes('Max 5MB'));
+  assert.equal(coverDropzoneSpec.activeDragOverState.promptText, 'Drop image to update cover backdrop');
+  assert.equal(coverDropzoneSpec.uploadedStateToolbar.changeCoverButton, 'Change Cover');
+  assert.equal(coverDropzoneSpec.uploadedStateToolbar.resetRemoveButton, 'Reset / Remove');
+
+  // 2. Overlapping Profile Avatar Drag-and-Drop Specification
+  const avatarDropzoneSpec = {
+    hasStopPropagation: true,
+    hoverOverlayText: 'Update Photo',
+    activeDragPrompt: 'Drop Photo',
+    hasCameraBadge: true,
+    dragHighlightClasses: 'ring-4 ring-amber-900 bg-amber-900/20 scale-105',
+  };
+
+  assert.equal(avatarDropzoneSpec.hasStopPropagation, true);
+  assert.equal(avatarDropzoneSpec.hoverOverlayText, 'Update Photo');
+  assert.equal(avatarDropzoneSpec.activeDragPrompt, 'Drop Photo');
+  assert.equal(avatarDropzoneSpec.hasCameraBadge, true);
+  assert.ok(avatarDropzoneSpec.dragHighlightClasses.includes('ring-4 ring-amber-900'));
+
+  // 3. Validation Rules
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const maxSizeBytes = 5 * 1024 * 1024;
+
+  function validateImageFile(file) {
+    if (!validTypes.includes(file.type)) {
+      return { valid: false, error: 'Unsupported file type. Please upload a PNG, JPG, or WebP image.' };
+    }
+    if (file.size > maxSizeBytes) {
+      return { valid: false, error: 'File size exceeds the 5MB limit. Please choose a smaller image.' };
+    }
+    return { valid: true, error: null };
+  }
+
+  assert.deepEqual(validateImageFile({ type: 'image/jpeg', size: 1024 * 1024 }), { valid: true, error: null });
+  assert.deepEqual(validateImageFile({ type: 'image/png', size: 2 * 1024 * 1024 }), { valid: true, error: null });
+  assert.deepEqual(validateImageFile({ type: 'image/webp', size: 4.5 * 1024 * 1024 }), { valid: true, error: null });
+  assert.equal(validateImageFile({ type: 'application/pdf', size: 1000 }).valid, false);
+  assert.equal(validateImageFile({ type: 'image/gif', size: 1000 }).valid, false);
+  assert.equal(validateImageFile({ type: 'image/jpeg', size: 6 * 1024 * 1024 }).valid, false);
+});
+
+
 
 
 

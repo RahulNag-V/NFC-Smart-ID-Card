@@ -19,10 +19,107 @@ import {
   Calendar,
   Home,
   GraduationCap,
+  RotateCcw,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { defaultStudentData } from '../../../data/student';
 import { defaultVisibility } from '../../../data/initialContent';
+
+// Image validation and client-side canvas compression utility
+export const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+export async function validateAndCompressImage(
+  file: File,
+  options: {
+    maxWidth?: number;
+    maxHeight?: number;
+    quality?: number;
+  } = {}
+): Promise<File> {
+  // 1. File Type Validation
+  if (!VALID_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('Unsupported file type. Please upload a PNG, JPG, or WebP image.');
+  }
+
+  // 2. File Size Validation (Max 5MB)
+  if (file.size > MAX_IMAGE_FILE_SIZE) {
+    throw new Error('File size exceeds the 5MB limit. Please choose a smaller image.');
+  }
+
+  // 3. Client-side Canvas Compression & Resizing
+  const { maxWidth = 1920, maxHeight = 1080, quality = 0.88 } = options;
+
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return resolve(file);
+    }
+
+    if (file.type === 'image/svg+xml') {
+      return resolve(file);
+    }
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+
+      // If dimensions are small and file size is already light (< 1.2MB), no need to compress
+      if (width <= maxWidth && height <= maxHeight && file.size < 1.2 * 1024 * 1024) {
+        return resolve(file);
+      }
+
+      // Calculate proportional scale
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      if (height > maxHeight) {
+        width = Math.round((width * maxHeight) / height);
+        height = maxHeight;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return resolve(file);
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            return resolve(file);
+          }
+          const compressedFile = new File([blob], file.name, {
+            type: mimeType,
+            lastModified: Date.now(),
+          });
+          resolve(compressedFile);
+        },
+        mimeType,
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // Fallback to original file
+    };
+
+    img.src = objectUrl;
+  });
+}
 
 export const BasicInfoModule: React.FC = () => {
   const {
@@ -77,41 +174,87 @@ export const BasicInfoModule: React.FC = () => {
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isDraggingCover, setIsDraggingCover] = useState(false);
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processAndUploadCover = async (file: File) => {
+    setIsUploadingCover(true);
+    try {
+      const compressedFile = await validateAndCompressImage(file, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 0.88,
+      });
+      const url = await uploadMedia(compressedFile, 'cover');
+      updateBasicInfo({ coverUrl: url });
+      showToast('Cover backdrop updated successfully.', 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update cover backdrop.', 'error');
+    } finally {
+      setIsUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = '';
+    }
+  };
 
+  const processAndUploadPhoto = async (file: File) => {
     setIsUploadingPhoto(true);
     try {
-      const url = await uploadMedia(file, 'profile');
+      const compressedFile = await validateAndCompressImage(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.9,
+      });
+      const url = await uploadMedia(compressedFile, 'profile');
       updateBasicInfo({ photoUrl: url });
-      showToast('Profile photo uploaded successfully.', 'success');
+      showToast('Profile photo updated successfully.', 'success');
     } catch (err: any) {
-      showToast(err?.message || 'Failed to upload profile photo.', 'error');
+      showToast(err?.message || 'Failed to update profile photo.', 'error');
     } finally {
       setIsUploadingPhoto(false);
       if (photoInputRef.current) photoInputRef.current.value = '';
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processAndUploadPhoto(file);
+    }
+  };
+
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingCover(true);
-    try {
-      const url = await uploadMedia(file, 'cover');
-      updateBasicInfo({ coverUrl: url });
-      showToast('Cover image updated successfully.', 'success');
-    } catch (err: any) {
-      showToast(err?.message || 'Failed to upload cover banner.', 'error');
-    } finally {
-      setIsUploadingCover(false);
-      if (coverInputRef.current) coverInputRef.current.value = '';
+    if (file) {
+      await processAndUploadCover(file);
     }
+  };
+
+  const handleCoverDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingCover(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processAndUploadCover(file);
+    }
+  };
+
+  const handlePhotoDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPhoto(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processAndUploadPhoto(file);
+    }
+  };
+
+  const handleResetCover = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateBasicInfo({ coverUrl: '' });
+    showToast('Cover backdrop restored to default.', 'info');
   };
 
   return (
@@ -128,69 +271,225 @@ export const BasicInfoModule: React.FC = () => {
 
       {/* Avatar & Cover Imagery Card */}
       <div className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] overflow-hidden shadow-2xs">
-        {/* Cover Banner Area */}
-        <div className="h-40 sm:h-48 w-full bg-[#f0eae1] relative group">
-          {student.coverUrl ? (
-            <img
-              src={student.coverUrl}
-              alt="Profile Cover"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-[#f0eae1] via-[#f7f2ea] to-[#f0eae1] flex items-center justify-center">
-              <span className="text-xs text-[#73685c] flex items-center gap-1.5 font-semibold">
-                <ImageIcon className="w-4 h-4 text-[#704a29]" />
-                Default Identity Backdrop
-              </span>
+        {/* Interactive Drag-and-Drop Cover Banner Area */}
+        <div
+          onClick={() => coverInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer.types.includes('Files') && !isDraggingCover) {
+              setIsDraggingCover(true);
+            }
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDraggingCover(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsDraggingCover(false);
+          }}
+          onDrop={handleCoverDrop}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              coverInputRef.current?.click();
+            }
+          }}
+          className={`h-40 sm:h-52 w-full relative transition-all duration-200 select-none cursor-pointer group outline-none overflow-hidden ${
+            student.coverUrl
+              ? 'bg-[#2b241e]'
+              : 'border-2 border-dashed border-stone-300/80 hover:border-amber-900/50 bg-gradient-to-r from-[#f0eae1] via-[#f7f2ea] to-[#f0eae1]'
+          } ${
+            isDraggingCover
+              ? 'bg-amber-900/10 border-2 border-dashed border-amber-900 scale-[0.99] ring-4 ring-amber-900/10'
+              : ''
+          }`}
+          title={
+            student.coverUrl
+              ? 'Click or drag & drop to change cover backdrop'
+              : 'Click or drag & drop image to set cover backdrop'
+          }
+        >
+          {/* Uploading Spinner Overlay */}
+          {isUploadingCover && (
+            <div className="absolute inset-0 bg-[#2b241e]/60 backdrop-blur-xs z-30 flex flex-col items-center justify-center text-white gap-2">
+              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="text-xs font-serif font-bold">Uploading Cover Backdrop...</span>
             </div>
           )}
 
-          {/* Cover upload overlay button */}
-          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => coverInputRef.current?.click()}
-              disabled={isUploadingCover}
-              className="px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-[#d9cdbd] text-xs font-bold text-[#2b241e] hover:bg-white transition flex items-center gap-2 cursor-pointer shadow-md"
-            >
-              <Upload className="w-3.5 h-3.5 text-[#704a29]" />
-              <span>{isUploadingCover ? 'Uploading...' : 'Change Cover Banner'}</span>
-            </button>
-            <input
-              type="file"
-              ref={coverInputRef}
-              onChange={handleCoverUpload}
-              accept="image/png, image/jpeg, image/webp"
-              className="hidden"
-            />
-          </div>
+          {/* Active Drag-Over Highlight State Overlay */}
+          {isDraggingCover && !isUploadingCover && (
+            <div className="absolute inset-0 bg-amber-900/15 backdrop-blur-xs z-20 flex flex-col items-center justify-center text-[#704a29] p-4 text-center pointer-events-none">
+              <div className="w-12 h-12 rounded-2xl bg-[#704a29] text-white flex items-center justify-center shadow-md mb-2 animate-bounce">
+                <Upload className="w-6 h-6" />
+              </div>
+              <p className="text-sm font-bold font-serif text-[#704a29]">
+                Drop image to update cover backdrop
+              </p>
+              <p className="text-[11px] text-[#73685c] mt-0.5">
+                PNG, JPG, or WebP up to 5MB
+              </p>
+            </div>
+          )}
+
+          {/* Uploaded Image or Empty/Default State */}
+          {student.coverUrl ? (
+            <>
+              <img
+                src={student.coverUrl}
+                alt="Profile Cover Backdrop"
+                className="w-full h-full object-cover"
+              />
+              {/* Subtle top scrim for toolbar contrast */}
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
+
+              {/* Uploaded Image Toolbar (Top-Right Corner) */}
+              <div
+                className="absolute top-3 right-3 flex items-center gap-2 z-20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={isUploadingCover}
+                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white backdrop-blur-md border border-[#d9cdbd] hover:border-[#704a29] text-xs font-semibold text-[#2b241e] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                  title="Choose a new cover image"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#704a29]" />
+                  <span>Change Cover</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetCover}
+                  disabled={isUploadingCover}
+                  className="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-[#fef2f2] backdrop-blur-md border border-[#d9cdbd] hover:border-[#bc473b] text-xs font-semibold text-[#bc473b] transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                  title="Remove custom cover and restore default backdrop"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-[#bc473b]" />
+                  <span>Reset / Remove</span>
+                </button>
+              </div>
+            </>
+          ) : (
+            /* Default / Empty State Prompt */
+            !isDraggingCover && (
+              <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] shadow-2xs mb-2 group-hover:scale-105 transition-transform">
+                  <ImageIcon className="w-5 h-5 text-[#704a29]" />
+                </div>
+                <h4 className="text-sm font-bold text-[#2b241e] font-serif tracking-wide">
+                  Default Identity Backdrop
+                </h4>
+                <p className="text-xs text-[#73685c] mt-1 max-w-sm">
+                  Drag &amp; drop cover image here, or click to browse (PNG, JPG, WebP &bull; Max 5MB)
+                </p>
+              </div>
+            )
+          )}
+
+          <input
+            type="file"
+            ref={coverInputRef}
+            onChange={handleCoverUpload}
+            accept="image/png, image/jpeg, image/webp"
+            className="hidden"
+          />
         </div>
 
         {/* Profile Avatar & Quick Name Header */}
         <div className="p-6 sm:p-8 pt-0 relative flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-16">
           <div className="flex items-end gap-4">
-            <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#fffefb] border-4 border-[#fffefb] overflow-hidden shadow-md">
-                <img
-                  src={student.photoUrl || '/src/assets/student-photo.png'}
-                  alt={student.fullName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-                  }}
-                />
+            {/* Overlapping Profile Photo Box with Drag-and-Drop */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                photoInputRef.current?.click();
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.types.includes('Files') && !isDraggingPhoto) {
+                  setIsDraggingPhoto(true);
+                }
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDraggingPhoto(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setIsDraggingPhoto(false);
+              }}
+              onDrop={handlePhotoDrop}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  photoInputRef.current?.click();
+                }
+              }}
+              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#fffefb] border-4 border-[#fffefb] overflow-hidden shadow-md relative cursor-pointer group transition-all select-none ${
+                isDraggingPhoto
+                  ? 'ring-4 ring-amber-900 bg-amber-900/20 scale-105'
+                  : 'hover:shadow-lg'
+              }`}
+              title="Click or drag & drop to update profile photo"
+            >
+              {/* Profile Image */}
+              <img
+                src={student.photoUrl || '/src/assets/student-photo.png'}
+                alt={student.fullName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+                }}
+              />
+
+              {/* Uploading State */}
+              {isUploadingPhoto && (
+                <div className="absolute inset-0 bg-[#2b241e]/70 backdrop-blur-xs flex flex-col items-center justify-center text-white z-20">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mb-1" />
+                  <span className="text-[10px] font-bold">Uploading...</span>
+                </div>
+              )}
+
+              {/* Active Drag-Over Overlay */}
+              {isDraggingPhoto && !isUploadingPhoto && (
+                <div className="absolute inset-0 bg-amber-900/80 backdrop-blur-xs flex flex-col items-center justify-center text-white z-20 p-1 text-center pointer-events-none">
+                  <Camera className="w-6 h-6 animate-bounce mb-1" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Drop Photo</span>
+                </div>
+              )}
+
+              {/* Hover Overlay ("Update Photo") */}
+              {!isDraggingPhoto && !isUploadingPhoto && (
+                <div className="absolute inset-0 bg-black/45 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-bold gap-1 cursor-pointer">
+                  <Camera className="w-4 h-4 text-white" />
+                  <span>Update Photo</span>
+                </div>
+              )}
+
+              {/* Permanent Camera Badge on Bottom-Right */}
+              <div
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#704a29] border-2 border-white text-white flex items-center justify-center shadow-md pointer-events-none group-hover:scale-110 transition-transform"
+                title="Update Photo"
+              >
+                <Camera className="w-3.5 h-3.5" />
               </div>
 
-              {/* Avatar upload trigger */}
-              <button
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={isUploadingPhoto}
-                className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center text-white text-[11px] font-bold gap-1 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-white" />
-                <span>{isUploadingPhoto ? '...' : 'Upload'}</span>
-              </button>
               <input
                 type="file"
                 ref={photoInputRef}
@@ -214,9 +513,10 @@ export const BasicInfoModule: React.FC = () => {
             <button
               type="button"
               onClick={() => photoInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-lg bg-[#f0eae1] hover:bg-[#e5ded5] border border-[#d9cdbd] text-xs font-semibold text-[#704a29] transition cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 rounded-lg bg-[#f0eae1] hover:bg-[#e5ded5] border border-[#d9cdbd] text-xs font-semibold text-[#704a29] transition cursor-pointer shadow-2xs flex items-center gap-1.5"
             >
-              Replace Photo
+              <Camera className="w-3.5 h-3.5" />
+              <span>Replace Photo</span>
             </button>
           </div>
         </div>
