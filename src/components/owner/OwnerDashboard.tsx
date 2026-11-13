@@ -211,7 +211,6 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     { id: 'professional' as DashboardTab, label: 'Professional Info', icon: Briefcase },
     { id: 'social' as DashboardTab, label: 'Social Links', icon: Share2 },
     { id: 'sections' as DashboardTab, label: 'Profile Sections', icon: Layers },
-    { id: 'preview' as DashboardTab, label: 'Live Preview', icon: Smartphone },
     { id: 'security' as DashboardTab, label: 'Security & Access', icon: ShieldCheck },
   ];
 

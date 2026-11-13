@@ -108,11 +108,11 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateTab })
             )}
 
             <button
-              onClick={() => onNavigateTab('preview')}
+              onClick={() => onNavigateTab('security')}
               className="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#2b241e] bg-[#f0eae1] hover:bg-[#e5ded5] border border-[#d9cdbd] transition flex items-center gap-2 cursor-pointer shadow-2xs"
             >
-              <Smartphone className="w-4 h-4 text-[#704a29]" />
-              <span>Live Preview</span>
+              <ShieldCheck className="w-4 h-4 text-[#704a29]" />
+              <span>Security & Access</span>
             </button>
           </div>
         </div>
@@ -226,10 +226,10 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateTab })
               Public visitors cannot view dashboard or editing controls.
             </span>
             <button
-              onClick={() => onNavigateTab('preview')}
+              onClick={() => onNavigateTab('security')}
               className="text-xs text-[#704a29] hover:underline flex items-center gap-1 transition cursor-pointer font-bold"
             >
-              <span>Live Preview Simulator</span>
+              <span>Security Settings</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
@@ -279,11 +279,11 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateTab })
               tag: `${draftContent.sections?.filter(s => s.visible).length || 0} Enabled`,
             },
             {
-              tab: 'preview' as DashboardTab,
-              title: 'Live Preview Simulator',
-              desc: 'Simulate mobile, tablet, and desktop visitor experiences in real time.',
-              icon: Smartphone,
-              tag: 'Interactive',
+              tab: 'security' as DashboardTab,
+              title: 'Security & Access',
+              desc: 'Passcode management, active sessions, and access control audit logs.',
+              icon: ShieldCheck,
+              tag: 'Protected',
             },
           ].map((item) => (
             <motion.div

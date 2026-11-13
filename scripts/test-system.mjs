@@ -1210,7 +1210,7 @@ test('Mobile Single-Row Header, Slide-Out Drawer & Sticky Bottom Action Bar Layo
       hasCopyableHandle: true,
       handleText: '@rahulnagv',
     },
-    navigationTabsCount: 8,
+    navigationTabsCount: 7,
     tabMinTouchTarget: 'min-h-[44px]',
     footerActions: ['Share QR', 'Public Site', 'Sign Out'],
   };
@@ -1218,7 +1218,7 @@ test('Mobile Single-Row Header, Slide-Out Drawer & Sticky Bottom Action Bar Layo
   assert.equal(mobileDrawerSpec.width, 'w-80 max-w-[85vw]');
   assert.equal(mobileDrawerSpec.header.avatarSize, 'w-12 h-12');
   assert.equal(mobileDrawerSpec.header.handleText, '@rahulnagv');
-  assert.equal(mobileDrawerSpec.navigationTabsCount, 8);
+  assert.equal(mobileDrawerSpec.navigationTabsCount, 7);
   assert.equal(mobileDrawerSpec.tabMinTouchTarget, 'min-h-[44px]');
   assert.equal(mobileDrawerSpec.footerActions.length, 3);
 
@@ -1377,6 +1377,31 @@ test('Full-Site UX, 404 Routing, Clickable Tel/Mailto, SEO Metadata & Asset Opti
   assert.equal(seoConfig.themeColor, '#704a29');
   assert.equal(seoConfig.overflowClass, 'overflow-x-hidden max-w-full');
 });
+
+// 24. Navigation Bar Item Pruning & Seamless Stacking
+test('Navigation Bar Item Pruning: Live Preview removed, Profile Sections and Security & Access stack seamlessly', () => {
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: 'LayoutDashboard' },
+    { id: 'basic-info', label: 'Edit Profile', icon: 'UserCheck' },
+    { id: 'appearance', label: 'Appearance', icon: 'Palette' },
+    { id: 'professional', label: 'Professional Info', icon: 'Briefcase' },
+    { id: 'social', label: 'Social Links', icon: 'Share2' },
+    { id: 'sections', label: 'Profile Sections', icon: 'Layers' },
+    { id: 'security', label: 'Security & Access', icon: 'ShieldCheck' },
+  ];
+
+  // Exactly 7 items, 'preview' removed
+  assert.equal(navItems.length, 7);
+  assert.equal(navItems.some((item) => item.id === 'preview'), false);
+
+  // 'sections' is at index 5 and 'security' is at index 6 (directly adjacent)
+  const sectionsIndex = navItems.findIndex((item) => item.id === 'sections');
+  const securityIndex = navItems.findIndex((item) => item.id === 'security');
+  assert.equal(sectionsIndex, 5);
+  assert.equal(securityIndex, 6);
+  assert.equal(securityIndex - sectionsIndex, 1);
+});
+
 
 
 
