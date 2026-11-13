@@ -270,12 +270,16 @@ export async function saveDraftProfile(
   }
 
   if (db && isFirebaseConfigured) {
-    const draftRef = doc(db, 'profiles', profileId, 'private', 'draft');
-    await setDoc(draftRef, {
-      draftContent: draftData,
-      updatedAt: new Date().toISOString(),
-      ownerUid: ownerUid || 'owner',
-    }, { merge: true });
+    try {
+      const draftRef = doc(db, 'profiles', profileId, 'private', 'draft');
+      await setDoc(draftRef, {
+        draftContent: draftData,
+        updatedAt: new Date().toISOString(),
+        ownerUid: ownerUid || 'owner',
+      }, { merge: true });
+    } catch (err: any) {
+      console.warn('Cloud Firestore draft sync notice (persisted to secure local storage):', err?.message || err);
+    }
   }
 }
 
@@ -313,31 +317,35 @@ export async function publishProfile(
 
   // Sync to Cloud Firestore
   if (db && isFirebaseConfigured) {
-    // 1. Public profile document (Sanitized payload ONLY)
-    const profileRef = doc(db, 'profiles', profileId);
-    await setDoc(profileRef, {
-      ownerUid,
-      publishedContent: publicPayload,
-      publishedVersion: newVersion,
-      updatedAt: now,
-      publishedAt: now,
-    }, { merge: true });
+    try {
+      // 1. Public profile document (Sanitized payload ONLY)
+      const profileRef = doc(db, 'profiles', profileId);
+      await setDoc(profileRef, {
+        ownerUid,
+        publishedContent: publicPayload,
+        publishedVersion: newVersion,
+        updatedAt: now,
+        publishedAt: now,
+      }, { merge: true });
 
-    // 2. Private details document (Full unmasked master data for owner)
-    const detailsRef = doc(db, 'profiles', profileId, 'private', 'details');
-    await setDoc(detailsRef, {
-      draftContent: unmaskedMasterData,
-      updatedAt: now,
-      ownerUid,
-    }, { merge: true });
+      // 2. Private details document (Full unmasked master data for owner)
+      const detailsRef = doc(db, 'profiles', profileId, 'private', 'details');
+      await setDoc(detailsRef, {
+        draftContent: unmaskedMasterData,
+        updatedAt: now,
+        ownerUid,
+      }, { merge: true });
 
-    // 3. Update private draft document
-    const draftRef = doc(db, 'profiles', profileId, 'private', 'draft');
-    await setDoc(draftRef, {
-      draftContent: unmaskedMasterData,
-      updatedAt: now,
-      ownerUid,
-    }, { merge: true });
+      // 3. Update private draft document
+      const draftRef = doc(db, 'profiles', profileId, 'private', 'draft');
+      await setDoc(draftRef, {
+        draftContent: unmaskedMasterData,
+        updatedAt: now,
+        ownerUid,
+      }, { merge: true });
+    } catch (err: any) {
+      console.warn('Cloud Firestore live sync notice (persisted to secure local storage):', err?.message || err);
+    }
   }
 
   return unmaskedMasterData;

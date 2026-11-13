@@ -1320,13 +1320,11 @@ test('Full-Site UX, 404 Routing, Clickable Tel/Mailto, SEO Metadata & Asset Opti
     if (lPath === '/owner/dashboard' || lHash === '#/owner/dashboard' || lSearch.includes('mode=owner-dashboard')) {
       return 'owner-dashboard';
     }
+    if (lPath === '/404' || lHash === '#/404') {
+      return 'not-found';
+    }
     const isRoot = lPath === '/' || lPath === '' || lPath === '/index.html';
-    if (
-      (isRoot && (lHash === '' || lHash === '#/' || lHash === '#' || lHash.startsWith('#student-profile') || lHash.startsWith('#academic-details') || lHash.startsWith('#verification'))) ||
-      lHash.startsWith('#student-profile') ||
-      lHash.startsWith('#academic-details') ||
-      lHash.startsWith('#verification')
-    ) {
+    if (isRoot || lHash.startsWith('#')) {
       return 'public';
     }
     return 'not-found';

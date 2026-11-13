@@ -79,3 +79,4 @@ export function loadThemeFonts(theme?: Partial<ThemeConfig>): void {
   if (headingFont) loadFontFamily(headingFont);
   if (bodyFont) loadFontFamily(bodyFont);
 }
+

@@ -38,6 +38,12 @@ function getInitialRoute(): AppRoute {
   const hash = window.location.hash.toLowerCase();
   const search = window.location.search.toLowerCase();
 
+  // Explicit 404 paths
+  if (path === '/404' || path === '/404/' || hash === '#/404' || hash === '#404') {
+    return 'not-found';
+  }
+
+  // Owner security & access portal
   if (
     path === '/owner/security' ||
     path === '/owner/security/' ||
@@ -47,6 +53,7 @@ function getInitialRoute(): AppRoute {
     return 'owner-security';
   }
 
+  // Owner login portal
   if (
     path === '/owner/login' ||
     path === '/owner/login/' ||
@@ -56,6 +63,7 @@ function getInitialRoute(): AppRoute {
     return 'owner-login';
   }
 
+  // Owner dashboard console
   if (
     path === '/owner/dashboard' ||
     path === '/owner/dashboard/' ||
@@ -65,27 +73,28 @@ function getInitialRoute(): AppRoute {
     return 'owner-dashboard';
   }
 
-  // Root or valid section anchor hashes on public page
+  // Root path or SPA index on public portfolio
   const isRootPath = path === '/' || path === '' || path === '/index.html';
-  if (
-    isRootPath &&
-    (hash === '' ||
-      hash === '#/' ||
-      hash === '#' ||
-      hash.startsWith('#student-profile') ||
-      hash.startsWith('#academic-details') ||
-      hash.startsWith('#verification') ||
-      hash.startsWith('#nfc') ||
-      hash.startsWith('#verify'))
-  ) {
+  if (isRootPath) {
     return 'public';
   }
 
-  if (hash.startsWith('#student-profile') || hash.startsWith('#academic-details') || hash.startsWith('#verification')) {
+  // Common public SPA sub-paths or anchor-friendly routes
+  const isPublicSectionPath =
+    path === '/home' ||
+    path === '/works' ||
+    path === '/contact' ||
+    path === '/verify' ||
+    path === '/profile';
+
+  if (isPublicSectionPath) {
     return 'public';
   }
 
-  return 'not-found';
+  // Any anchor hash on public page (e.g. #works, #contact, #home, #verify, #student-profile)
+  if (hash.startsWith('#')) {
+    return 'public';
+  }
 
   return 'not-found';
 }
