@@ -696,8 +696,8 @@ export const ProfessionalModule: React.FC = () => {
                     initial={{ opacity: 0, y: -4, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute mt-2 w-full rounded-xl bg-[#FAF7F2] border border-stone-200 shadow-lg overflow-hidden z-30 p-1.5 space-y-1 font-serif"
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="absolute mt-2 w-full rounded-xl bg-[#FAF7F2] border border-stone-200 shadow-lg overflow-hidden z-30 p-1.5 space-y-1 font-serif transition-all duration-200"
                     role="listbox"
                   >
                     {professionalTabs.map((tab) => {
@@ -712,7 +712,7 @@ export const ProfessionalModule: React.FC = () => {
                             setActiveSubTab(tab.id);
                             setDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition cursor-pointer ${
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition cursor-pointer select-none active:scale-[0.99] ${
                             isActive
                               ? 'bg-[#704a29] text-[#fffefb] font-bold shadow-2xs'
                               : 'text-[#73685c] hover:text-[#2b241e] hover:bg-[#f0eae1]'
@@ -728,7 +728,7 @@ export const ProfessionalModule: React.FC = () => {
                             <span
                               className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
                                 isActive
-                                  ? 'bg-white/20 text-white'
+                                  ? 'bg-white/20 text-[#fffefb]'
                                   : 'bg-[#f0eae1] text-[#704a29]'
                               }`}
                             >

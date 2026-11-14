@@ -1583,9 +1583,9 @@ test('Instant Optimistic Preview, Off-Thread 1200px WebP Compression & Non-Block
 test('Professional Module Mobile & Tablet Category Selector Dropdown (< 1024px)', () => {
   const tabs = [
     { id: 'projects', label: 'Projects Portfolio', count: 7 },
-    { id: 'academic', label: 'Academics & SGPA', count: 2 },
-    { id: 'skills', label: 'Technical Skills', count: 18 },
-    { id: 'certifications', label: 'Certifications', count: 3 },
+    { id: 'academic', label: 'Academics & SGPA', count: 3 },
+    { id: 'skills', label: 'Technical Skills', count: 24 },
+    { id: 'certifications', label: 'Certifications', count: 0 },
   ];
 
   // 1. Selector Spec
