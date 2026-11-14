@@ -134,7 +134,11 @@ export const schoolEducationData: SchoolRecord[] = [
 ];
 
 // ================= MAIN COMPONENT =================
-export const EducationSection: React.FC = () => {
+export interface EducationSectionProps {
+  activeSubSection?: 'all' | 'academic' | 'certifications';
+}
+
+export const EducationSection: React.FC<EducationSectionProps> = ({ activeSubSection = 'all' }) => {
   const { activeContent } = useSiteContent();
 
   const engineering = activeContent?.academic?.engineering || engineeringAcademicData;
@@ -163,8 +167,11 @@ export const EducationSection: React.FC = () => {
 
   return (
     <section className="space-y-3.5 pt-3 text-[#1e1713]">
-      {/* 1. EDUCATION SECTION HEADER WITH PROMINENT OVERALL CGPA BADGE */}
-      <div className="p-4 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] shadow-2xs space-y-3">
+      {/* 1, 2, 3: ACADEMIC DETAILS & SEMESTERS */}
+      {activeSubSection !== 'certifications' && (
+        <>
+          {/* 1. EDUCATION SECTION HEADER WITH PROMINENT OVERALL CGPA BADGE */}
+          <div className="p-4 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] shadow-2xs space-y-3">
         {/* Top: Heading & Academic Breadcrumb */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#704a29] text-[#fffefb] flex items-center justify-center shrink-0 shadow-xs">
@@ -485,9 +492,12 @@ export const EducationSection: React.FC = () => {
           ))}
         </div>
       </motion.div>
+      </>
+      )}
 
       {/* 4. CERTIFICATIONS & PROFESSIONAL CREDENTIALS */}
-      {certifications.length > 0 && (
+      {activeSubSection !== 'academic' && (
+        certifications.length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -602,6 +612,19 @@ export const EducationSection: React.FC = () => {
             })}
           </div>
         </motion.div>
+        ) : activeSubSection === 'certifications' ? (
+          <div className="p-8 text-center rounded-2xl bg-[#fffefb] border border-[#d9cdbd] shadow-2xs space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#f4ece1] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] mx-auto shadow-2xs mb-2">
+              <Award className="w-5 h-5 text-[#704a29]" />
+            </div>
+            <h3 className="text-sm font-bold font-serif text-[#1e1713]">
+              Certifications &amp; Credentials (0)
+            </h3>
+            <p className="text-xs text-[#73685c] max-w-sm mx-auto leading-relaxed">
+              Official VTU engineering accreditations, verified certificates, and licenses will appear here once authenticated.
+            </p>
+          </div>
+        ) : null
       )}
 
       {/* Fullscreen Certificate Lightbox Modal */}
