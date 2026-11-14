@@ -422,7 +422,7 @@ export const BasicInfoModule: React.FC = () => {
               coverInputRef.current?.click();
             }
           }}
-          className={`h-40 sm:h-52 w-full relative transition-all duration-200 select-none cursor-pointer group outline-none overflow-hidden ${
+          className={`h-48 sm:h-56 w-full relative transition-all duration-200 select-none cursor-pointer group outline-none overflow-hidden ${
             displayCoverUrl
               ? 'bg-[#2b241e]'
               : 'border-2 border-dashed border-stone-300/80 hover:border-amber-900/50 bg-gradient-to-r from-[#f0eae1] via-[#f7f2ea] to-[#f0eae1]'
@@ -531,7 +531,7 @@ export const BasicInfoModule: React.FC = () => {
           ) : (
             /* Default / Empty State Prompt */
             !isDraggingCover && (
-              <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+              <div className="w-full h-full flex flex-col items-center justify-center p-4 pb-14 sm:pb-8 text-center">
                 <div className="w-10 h-10 rounded-2xl bg-[#fffefb] border border-[#d9cdbd] flex items-center justify-center text-[#704a29] shadow-2xs mb-2 group-hover:scale-105 transition-transform">
                   <ImageIcon className="w-5 h-5 text-[#704a29]" />
                 </div>
@@ -555,8 +555,8 @@ export const BasicInfoModule: React.FC = () => {
         </div>
 
         {/* Profile Avatar & Quick Name Header */}
-        <div className="p-6 sm:p-8 pt-0 relative flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-16">
-          <div className="flex items-end gap-4">
+        <div className="p-4 sm:p-6 lg:p-8 pt-0 relative flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 -mt-12 sm:-mt-14">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 min-w-0">
             {/* Overlapping Profile Photo Box with Drag-and-Drop */}
             <div
               onClick={(e) => {

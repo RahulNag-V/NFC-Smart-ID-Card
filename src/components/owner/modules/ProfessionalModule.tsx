@@ -1294,13 +1294,13 @@ export const ProfessionalModule: React.FC = () => {
                   className="p-5 rounded-2xl bg-[#fbf8f3] border border-[#d9cdbd] space-y-4 shadow-2xs transition-all hover:border-[#b89574]"
                 >
                   {/* Year Header Controls */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#d9cdbd]/70 gap-3">
-                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#d9cdbd]/70 gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
                       <input
                         type="text"
                         value={yearData.yearTitle}
                         onChange={(e) => handleUpdateYear(yIdx, { yearTitle: e.target.value })}
-                        className="px-2.5 py-1 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-sm font-bold font-serif text-[#2b241e] focus:outline-none focus:border-[#704a29] max-w-[180px]"
+                        className="px-2.5 py-1 rounded-lg bg-[#fffefb] border border-[#d9cdbd] text-sm font-bold font-serif text-[#2b241e] focus:outline-none focus:border-[#704a29] w-full sm:w-auto min-w-[140px] sm:max-w-[180px]"
                         placeholder="e.g. 3rd Year B.E."
                       />
 
@@ -1311,7 +1311,7 @@ export const ProfessionalModule: React.FC = () => {
                             status: e.target.value as 'Completed' | 'In Progress',
                           })
                         }
-                        className={`text-xs px-2.5 py-1 rounded-lg border font-semibold focus:outline-none cursor-pointer ${
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-semibold focus:outline-none cursor-pointer shrink-0 ${
                           isCompleted
                             ? 'bg-[#f2f8f2] border-[#86efac] text-[#166534]'
                             : 'bg-amber-50 border-amber-300 text-amber-800'
@@ -1322,13 +1322,13 @@ export const ProfessionalModule: React.FC = () => {
                       </select>
 
                       {yearData.yearlyAverageSgpa ? (
-                        <span className="text-xs font-mono font-bold text-[#704a29] bg-[#f0eae1] px-2 py-0.5 rounded border border-[#d9cdbd] whitespace-nowrap">
+                        <span className="text-xs font-mono font-bold text-[#704a29] bg-[#f0eae1] px-2 py-0.5 rounded border border-[#d9cdbd] whitespace-nowrap shrink-0">
                           Avg: {yearData.yearlyAverageSgpa.toFixed(2)} / 10
                         </span>
                       ) : null}
                     </div>
 
-                    <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0 pt-1 sm:pt-0">
                       <button
                         type="button"
                         onClick={() => handleMoveYear(yIdx, 'up')}

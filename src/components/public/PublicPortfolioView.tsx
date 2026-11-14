@@ -351,7 +351,7 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
   return (
     <div
       style={themeStyles}
-      className={`min-h-screen bg-background text-foreground antialiased selection:bg-[#704a29]/20 font-sans pb-32 overflow-x-hidden transition-colors duration-300 ${isLivePreview ? 'pb-16' : ''}`}
+      className={`min-h-screen bg-background text-foreground antialiased selection:bg-[#704a29]/20 font-sans ${isLivePreview ? 'pb-28' : 'pb-32'} overflow-x-hidden transition-colors duration-300`}
     >
       {/* Floating Owner Indicator & Direct Edit Access (Exclusively on Home page) */}
       {isOwner && !isLivePreview && activePage === 'home' && (

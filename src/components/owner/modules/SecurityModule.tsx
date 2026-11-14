@@ -344,7 +344,7 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ onLogout }) => {
       </div>
 
       {/* ================= PRIMARY SECTION 1: ACCOUNT SECURITY ================= */}
-      <section aria-labelledby="section-account-security" className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-6 sm:p-8 space-y-6 shadow-2xs">
+      <section aria-labelledby="section-account-security" className="rounded-2xl bg-[#fffefb] border border-[#d9cdbd] p-4 sm:p-6 lg:p-8 space-y-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#d9cdbd]">
           <div>
             <h3 id="section-account-security" className="text-base font-bold text-[#2b241e] flex items-center gap-2">
@@ -432,10 +432,10 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ onLogout }) => {
         </div>
 
         {/* Security Info & Recent Activity */}
-        <div className="p-4 rounded-xl bg-[#f0eae1]/50 border border-[#d9cdbd] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-[#73685c]">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#f0eae1]/50 border border-[#d9cdbd] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 text-xs">
+          <div className="flex items-center gap-2 text-[#73685c] min-w-0">
             <Clock className="w-4 h-4 text-[#704a29] shrink-0" />
-            <span>
+            <span className="break-words">
               Last password change:{' '}
               <strong className="text-[#2b241e]">
                 {lastPasswordChange
@@ -448,20 +448,20 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ onLogout }) => {
             </span>
           </div>
 
-          <div className="text-[11px] font-mono text-[#73685c]">
+          <div className="text-[11px] font-mono text-[#73685c] shrink-0">
             UID: <span className="text-[#2b241e] font-semibold">{user?.uid || 'local-owner'}</span>
           </div>
         </div>
 
         {/* Primary Security Actions Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
           {/* Change Password (OTP-Gated) */}
           <button
             type="button"
             onClick={handleOpenChangePassword}
-            className="px-4 py-2.5 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-[#704a29] hover:bg-[#593a1f] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
           >
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="w-4 h-4 shrink-0" />
             <span>Change Master Password</span>
           </button>
 
@@ -469,9 +469,9 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ onLogout }) => {
           <button
             type="button"
             onClick={handleOpenUpdatePhone}
-            className="px-4 py-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-[#2b241e] text-xs font-semibold flex items-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-[#2b241e] text-xs font-semibold flex items-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer"
           >
-            <Smartphone className="w-4 h-4 text-[#704a29]" />
+            <Smartphone className="w-4 h-4 text-[#704a29] shrink-0" />
             <span>Update Phone Number</span>
           </button>
 
@@ -480,9 +480,9 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ onLogout }) => {
             type="button"
             onClick={handleEmailPasswordReset}
             disabled={isResettingEmail}
-            className="px-4 py-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] text-xs font-medium flex items-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-[#fffefb] hover:bg-[#f0eae1] border border-[#d9cdbd] text-[#73685c] hover:text-[#2b241e] text-xs font-medium flex items-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer disabled:opacity-50"
           >
-            <Mail className="w-4 h-4 text-[#704a29]" />
+            <Mail className="w-4 h-4 text-[#704a29] shrink-0" />
             <span>{isResettingEmail ? 'Dispatching...' : 'Dispatch Email Reset Link'}</span>
           </button>
         </div>

@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   BookOpen,
   RefreshCw,
+  ChevronDown,
 } from 'lucide-react';
 import { useOwnerEditor } from '../../../context/OwnerEditorContext';
 import { ThemePresetName, ThemeConfig } from '../../../types/content';
@@ -599,6 +600,33 @@ export const AppearanceModule: React.FC = () => {
 
   const [fontCategoryFilter, setFontCategoryFilter] = useState<'All' | 'Serif' | 'Sans' | 'Mono' | 'Display'>('All');
   const [fontSearch, setFontSearch] = useState('');
+  const [isFontCategoryDropdownOpen, setIsFontCategoryDropdownOpen] = useState(false);
+  const fontCategoryDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        fontCategoryDropdownRef.current &&
+        !fontCategoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFontCategoryDropdownOpen(false);
+      }
+    };
+    if (isFontCategoryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFontCategoryDropdownOpen]);
+
+  const fontCategoryTabs = [
+    { id: 'All', label: `All (${curatedFontFamilies.length})` },
+    { id: 'Serif', label: `Serif (${curatedFontFamilies.filter((f) => f.category === 'Serif').length})` },
+    { id: 'Sans', label: `Sans-Serif (${curatedFontFamilies.filter((f) => f.category === 'Sans').length})` },
+    { id: 'Mono', label: `Monospace (${curatedFontFamilies.filter((f) => f.category === 'Mono').length})` },
+    { id: 'Display', label: `Display (${curatedFontFamilies.filter((f) => f.category === 'Display').length})` },
+  ];
 
   const currentHeading = theme.typography?.headingFont || "'Times New Roman', Times, 'Tinos', Georgia, serif";
   const currentBody = theme.typography?.bodyFont || "'Times New Roman', Times, 'Tinos', Georgia, serif";
@@ -825,15 +853,67 @@ export const AppearanceModule: React.FC = () => {
         {/* Filter Pills & Search Input */}
         <div className="space-y-3 pt-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#f0eae1] border border-[#d9cdbd] overflow-x-auto">
-              {[
-                { id: 'All', label: `All (${curatedFontFamilies.length})` },
-                { id: 'Serif', label: `Serif (${curatedFontFamilies.filter((f) => f.category === 'Serif').length})` },
-                { id: 'Sans', label: `Sans-Serif (${curatedFontFamilies.filter((f) => f.category === 'Sans').length})` },
-                { id: 'Mono', label: `Monospace (${curatedFontFamilies.filter((f) => f.category === 'Mono').length})` },
-                { id: 'Display', label: `Display (${curatedFontFamilies.filter((f) => f.category === 'Display').length})` },
-              ].map((tab) => {
+            {/* Mobile Category Dropdown Selector (< 640px) */}
+            <div className="relative sm:hidden w-full" ref={fontCategoryDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsFontCategoryDropdownOpen((prev) => !prev)}
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] hover:border-[#704a29] shadow-2xs flex items-center justify-between transition cursor-pointer select-none active:scale-[0.99]"
+                aria-expanded={isFontCategoryDropdownOpen}
+                aria-haspopup="listbox"
+              >
+                <div className="flex items-center gap-2">
+                  <Type className="w-4 h-4 text-[#704a29]" />
+                  <span className="text-xs font-serif font-bold text-[#2b241e]">
+                    {fontCategoryTabs.find((t) => t.id === fontCategoryFilter)?.label || 'All'}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#704a29] transition-transform duration-200 ${
+                    isFontCategoryDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              <AnimatePresence>
+                {isFontCategoryDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute z-30 left-0 right-0 mt-1.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] shadow-lg p-1 space-y-0.5"
+                    role="listbox"
+                  >
+                    {fontCategoryTabs.map((tab) => {
+                      const isSelected = fontCategoryFilter === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setFontCategoryFilter(tab.id as any);
+                            setIsFontCategoryDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#704a29] text-white shadow-2xs'
+                              : 'text-[#2b241e] hover:bg-[#f0eae1]'
+                          }`}
+                        >
+                          <span>{tab.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Desktop Category Filter Pills (hidden on mobile, visible on sm+) */}
+            <div className="hidden sm:flex items-center gap-1.5 p-1 rounded-xl bg-[#f0eae1] border border-[#d9cdbd] overflow-x-auto">
+              {fontCategoryTabs.map((tab) => {
                 const isSelected = fontCategoryFilter === tab.id;
                 return (
                   <button
