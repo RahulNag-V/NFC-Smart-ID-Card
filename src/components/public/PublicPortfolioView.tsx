@@ -449,7 +449,7 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
 
                     case 'id-card':
                       return (
-                        <div key={section.id} className="relative space-y-6">
+                        <div key={section.id} className="relative space-y-4">
                           <VerticalStudentIdCard
                             student={activeContent.student}
                             onEditProfile={handleEditProfile}
@@ -459,7 +459,7 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                           {/* ================= PUBLIC CATEGORY NAVIGATION & DROPDOWN ================= */}
                           <div className="w-full pt-1">
                             {/* Mobile & Tablet Dropdown Selector (lg:hidden) */}
-                            <div ref={categoryDropdownRef} className="relative lg:hidden select-none mb-4">
+                            <div ref={categoryDropdownRef} className="relative lg:hidden select-none mb-3">
                               <button
                                 type="button"
                                 onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
@@ -506,6 +506,17 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                                           onClick={() => {
                                             setActiveCategoryTab(tab.id);
                                             setCategoryDropdownOpen(false);
+                                            if (tab.id === 'projects') {
+                                              const el = document.getElementById('featured-projects-section');
+                                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                              else navigateTo('works');
+                                            } else if (tab.id === 'academic' || tab.id === 'certifications') {
+                                              const el = document.getElementById('education-section');
+                                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            } else if (tab.id === 'skills') {
+                                              const el = document.getElementById('skills-section');
+                                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            }
                                           }}
                                           className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition cursor-pointer select-none active:scale-[0.99] ${
                                             isActive
@@ -540,14 +551,27 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                             </div>
 
                             {/* Desktop Horizontal Pill Tabs (hidden lg:flex) */}
-                            <div className="hidden lg:flex items-center gap-2 p-1.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] overflow-x-auto shadow-2xs mb-4 select-none">
+                            <div className="hidden lg:flex items-center gap-2 p-1.5 rounded-xl bg-[#fffefb] border border-[#d9cdbd] overflow-x-auto shadow-2xs mb-3 select-none">
                               {categoryTabs.map((tab) => {
                                 const isActive = activeCategoryTab === tab.id;
                                 return (
                                   <button
                                     key={tab.id}
                                     type="button"
-                                    onClick={() => setActiveCategoryTab(tab.id)}
+                                    onClick={() => {
+                                      setActiveCategoryTab(tab.id);
+                                      if (tab.id === 'projects') {
+                                        const el = document.getElementById('featured-projects-section');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        else navigateTo('works');
+                                      } else if (tab.id === 'academic' || tab.id === 'certifications') {
+                                        const el = document.getElementById('education-section');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                      } else if (tab.id === 'skills') {
+                                        const el = document.getElementById('skills-section');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                      }
+                                    }}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition shrink-0 cursor-pointer ${
                                       isActive
                                         ? 'bg-[#704a29] text-white font-bold shadow-xs'
@@ -567,67 +591,90 @@ export const PublicPortfolioView: React.FC<PublicPortfolioViewProps> = ({
                                 );
                               })}
                             </div>
-
-                            {/* Active Category Content Display */}
-                            <div className="transition-all duration-200">
-                              {activeCategoryTab === 'projects' && (
-                                <div className="space-y-4">
-                                  <div className="flex items-center justify-between px-1">
-                                    <h2 className="text-xs font-bold font-serif text-[#73685c] uppercase tracking-wider">
-                                      Projects Portfolio ({projects.length})
-                                    </h2>
-                                    <button
-                                      type="button"
-                                      onClick={() => navigateTo('works')}
-                                      className="text-[11px] font-semibold text-[#704a29] hover:underline cursor-pointer"
-                                    >
-                                      Explore Full Gallery &rarr;
-                                    </button>
-                                  </div>
-
-                                  <div className="flex flex-col gap-3">
-                                    {projects.slice(0, 4).map((project) => (
-                                      <ProjectCard key={project.id} project={project} />
-                                    ))}
-                                  </div>
-
-                                  {projects.length > 4 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => navigateTo('works')}
-                                      className="w-full py-2.5 px-4 rounded-xl bg-card hover:bg-muted text-foreground border border-border hover:border-[#704a29] text-xs font-semibold transition active:scale-98 cursor-pointer shadow-2xs flex items-center justify-center gap-2"
-                                    >
-                                      <span>View All {projects.length} Engineering Works</span>
-                                      <ArrowRight className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-
-                              {activeCategoryTab === 'academic' && (
-                                <EducationSection activeSubSection="academic" />
-                              )}
-
-                              {activeCategoryTab === 'skills' && (
-                                <SkillsSection />
-                              )}
-
-                              {activeCategoryTab === 'certifications' && (
-                                <EducationSection activeSubSection="certifications" />
-                              )}
-                            </div>
                           </div>
                         </div>
                       );
 
                     case 'education':
-                      return null;
+                      return (
+                        <div key={section.id} id="education-section">
+                          <EducationSection />
+                        </div>
+                      );
 
                     case 'skills':
-                      return null;
+                      return (
+                        <div key={section.id} id="skills-section">
+                          <SkillsSection />
+                        </div>
+                      );
 
                     case 'featured-projects':
-                      return null;
+                      return (
+                        <div key={section.id} id="featured-projects-section" className="space-y-3 pt-1">
+                          <div className="flex items-center justify-between px-1">
+                            <h2 className="text-xs font-bold font-serif text-[#73685c] uppercase tracking-wider">
+                              {section.title || 'Featured Systems • Live Work'}
+                            </h2>
+                            <button
+                              type="button"
+                              onClick={() => navigateTo('works')}
+                              className="text-[11px] font-semibold text-[#704a29] hover:underline cursor-pointer"
+                            >
+                              View All ({projects.length})
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col gap-3">
+                            {projects
+                              .filter((p) => p.featured)
+                              .slice(0, 3)
+                              .map((project) => (
+                                <div
+                                  key={project.id}
+                                  onClick={() => navigateTo('works')}
+                                  className="p-4 rounded-xl bg-card border border-border hover:border-[#704a29] transition-all cursor-pointer group shadow-2xs"
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span
+                                          className="w-2 h-2 rounded-full"
+                                          style={{ backgroundColor: project.badgeColor }}
+                                        />
+                                        <span className="text-[10px] font-mono text-muted-foreground font-medium">
+                                          {project.category}
+                                        </span>
+                                      </div>
+                                      <h4 className="text-sm font-bold font-serif text-foreground group-hover:text-[#704a29] transition-colors">
+                                        {project.title}
+                                      </h4>
+                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                        {project.description}
+                                      </p>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-[#704a29] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-1" />
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5 mt-3">
+                                    {project.technologies.slice(0, 4).map((tech) => (
+                                      <span
+                                        key={tech}
+                                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-background text-foreground border border-border/70"
+                                      >
+                                        {tech}
+                                      </span>
+                                    ))}
+                                    {project.technologies.length > 4 && (
+                                      <span className="text-[10px] font-mono text-muted-foreground self-center">
+                                        +{project.technologies.length - 4} more
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      );
 
                     case 'disciplines':
                       return (
